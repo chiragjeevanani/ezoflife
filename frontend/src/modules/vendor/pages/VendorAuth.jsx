@@ -6,6 +6,13 @@ const VendorAuth = () => {
     const navigate = useNavigate();
     const [isLogin, setIsLogin] = useState(true);
 
+    const [loginPhone, setLoginPhone] = useState('');
+    const [registerShop, setRegisterShop] = useState('');
+    const [registerPhone, setRegisterPhone] = useState('');
+
+    const isLoginValid = loginPhone.length === 10 && /^\d+$/.test(loginPhone);
+    const isRegisterValid = registerShop.length >= 3 && registerPhone.length === 10 && /^\d+$/.test(registerPhone);
+
     const containerVariants = {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.5, staggerChildren: 0.05 } },
@@ -81,22 +88,29 @@ const VendorAuth = () => {
                                         <div className="space-y-6">
                                             <motion.div variants={itemVariants} className="relative group">
                                                 <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Phone Number</label>
-                                                <div className="flex items-center bg-surface-container-low rounded-2xl p-1 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20">
+                                                <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 transition-all focus-within:bg-white focus-within:ring-2 ${loginPhone.length > 0 && !isLoginValid ? 'focus-within:ring-error/20 ring-error/10 ring-1' : 'focus-within:ring-primary/20'}`}>
                                                     <div className="px-4 font-black text-on-surface text-sm">+91</div>
                                                     <input
                                                         className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-outline-variant outline-none"
                                                         placeholder="98765 43210"
                                                         type="tel"
+                                                        maxLength={10}
+                                                        value={loginPhone}
+                                                        onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
                                                     />
                                                 </div>
+                                                {loginPhone.length > 0 && !isLoginValid && (
+                                                    <p className="text-[9px] text-error font-bold mt-2 ml-1 animate-pulse">Enter a valid 10-digit number</p>
+                                                )}
                                             </motion.div>
 
                                             <motion.button
                                                 variants={itemVariants}
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
-                                                onClick={() => navigate('/vendor/otp')}
-                                                className="w-full vendor-gradient text-on-primary font-headline font-black py-5 rounded-2xl shadow-xl shadow-primary/20 tracking-widest uppercase text-xs"
+                                                whileHover={isLoginValid ? { scale: 1.02 } : {}}
+                                                whileTap={isLoginValid ? { scale: 0.98 } : {}}
+                                                onClick={() => isLoginValid && navigate('/vendor/otp')}
+                                                disabled={!isLoginValid}
+                                                className={`w-full font-headline font-black py-5 rounded-2xl shadow-xl tracking-widest uppercase text-xs transition-all duration-300 ${isLoginValid ? 'vendor-gradient text-on-primary shadow-primary/20' : 'bg-surface-container-high text-outline-variant cursor-not-allowed opacity-50'}`}
                                             >
                                                 Send OTP
                                             </motion.button>
@@ -119,27 +133,39 @@ const VendorAuth = () => {
                                                     className="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary/20 rounded-2xl py-4 px-5 text-on-surface font-black placeholder:text-outline-variant outline-none"
                                                     placeholder="e.g. Pristine Cleaners"
                                                     type="text"
+                                                    value={registerShop}
+                                                    onChange={(e) => setRegisterShop(e.target.value)}
                                                 />
+                                                {registerShop.length > 0 && registerShop.length < 3 && (
+                                                    <p className="text-[9px] text-error font-bold mt-2 ml-1">Shop name must be at least 3 characters</p>
+                                                )}
                                             </motion.div>
 
                                             <motion.div variants={itemVariants}>
                                                 <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Phone Number</label>
-                                                <div className="flex items-center bg-surface-container-low rounded-2xl p-1 focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20">
+                                                <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 focus-within:bg-white focus-within:ring-2 ${registerPhone.length > 0 && registerPhone.length !== 10 ? 'focus-within:ring-error/20 ring-error/10 ring-1' : 'focus-within:ring-primary/20'}`}>
                                                     <div className="px-4 font-black text-on-surface text-sm">+91</div>
                                                     <input
                                                         className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-outline-variant outline-none"
                                                         placeholder="98765 43210"
                                                         type="tel"
+                                                        maxLength={10}
+                                                        value={registerPhone}
+                                                        onChange={(e) => setRegisterPhone(e.target.value.replace(/\D/g, ''))}
                                                     />
                                                 </div>
+                                                {registerPhone.length > 0 && registerPhone.length !== 10 && (
+                                                    <p className="text-[9px] text-error font-bold mt-2 ml-1">Enter a valid 10-digit number</p>
+                                                )}
                                             </motion.div>
 
                                             <motion.button
                                                 variants={itemVariants}
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
-                                                onClick={() => navigate('/vendor/otp')}
-                                                className="w-full vendor-gradient text-on-primary font-headline font-black py-5 rounded-2xl shadow-xl shadow-primary/20 tracking-widest uppercase text-xs mt-2"
+                                                whileHover={isRegisterValid ? { scale: 1.02 } : {}}
+                                                whileTap={isRegisterValid ? { scale: 0.98 } : {}}
+                                                onClick={() => isRegisterValid && navigate('/vendor/otp')}
+                                                disabled={!isRegisterValid}
+                                                className={`w-full font-headline font-black py-5 rounded-2xl shadow-xl tracking-widest uppercase text-xs mt-2 transition-all duration-300 ${isRegisterValid ? 'vendor-gradient text-on-primary shadow-primary/20' : 'bg-surface-container-high text-outline-variant cursor-not-allowed opacity-50'}`}
                                             >
                                                 Send OTP
                                             </motion.button>

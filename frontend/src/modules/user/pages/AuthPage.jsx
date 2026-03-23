@@ -6,6 +6,13 @@ const AuthPage = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
 
+  const [loginPhone, setLoginPhone] = useState('');
+  const [signupName, setSignupName] = useState('');
+  const [signupPhone, setSignupPhone] = useState('');
+
+  const isLoginValid = loginPhone.length === 10 && /^\d+$/.test(loginPhone);
+  const isSignupValid = signupName.length >= 3 && signupPhone.length === 10 && /^\d+$/.test(signupPhone);
+
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
@@ -107,21 +114,28 @@ const AuthPage = () => {
                     <div className="space-y-6">
                       <motion.div variants={itemVariants} className="relative group">
                         <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Phone Number</label>
-                        <div className="flex items-center bg-surface-container-low rounded-2xl p-1 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20">
+                        <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 transition-all focus-within:bg-white focus-within:ring-2 ${loginPhone.length > 0 && !isLoginValid ? 'focus-within:ring-error/20 ring-error/10 ring-1' : 'focus-within:ring-primary/20'}`}>
                           <div className="px-4 font-black text-on-surface text-sm">+91</div>
                           <input 
                             className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-outline-variant" 
                             placeholder="000 000 0000" 
                             type="tel"
+                            maxLength={10}
+                            value={loginPhone}
+                            onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
                           />
                         </div>
+                        {loginPhone.length > 0 && !isLoginValid && (
+                            <p className="text-[9px] text-error font-bold mt-2 ml-1 animate-pulse">Enter a valid 10-digit number</p>
+                        )}
                       </motion.div>
 
                       <motion.button 
                         variants={itemVariants}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => navigate('/user/otp')}
-                        className="w-full bg-primary-gradient text-on-primary font-headline font-black py-5 rounded-2xl shadow-xl shadow-primary/20 tracking-widest uppercase text-xs"
+                        whileTap={isLoginValid ? { scale: 0.98 } : {}}
+                        onClick={() => isLoginValid && navigate('/user/otp')}
+                        disabled={!isLoginValid}
+                        className={`w-full font-headline font-black py-5 rounded-2xl shadow-xl tracking-widest uppercase text-xs transition-all duration-300 ${isLoginValid ? 'bg-primary-gradient text-on-primary shadow-primary/20' : 'bg-surface-container-high text-outline-variant cursor-not-allowed opacity-50'}`}
                       >
                         Send Code
                       </motion.button>
@@ -139,22 +153,42 @@ const AuthPage = () => {
                     <div className="space-y-4">
                       <motion.div variants={itemVariants}>
                         <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Full Name</label>
-                        <input className="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary/20 rounded-2xl py-4 px-5 text-on-surface font-black placeholder:text-outline-variant" placeholder="John Doe" type="text" />
+                        <input 
+                            className="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary/20 rounded-2xl py-4 px-5 text-on-surface font-black placeholder:text-outline-variant" 
+                            placeholder="John Doe" 
+                            type="text" 
+                            value={signupName}
+                            onChange={(e) => setSignupName(e.target.value)}
+                        />
+                        {signupName.length > 0 && signupName.length < 3 && (
+                            <p className="text-[9px] text-error font-bold mt-2 ml-1">Name must be at least 3 characters</p>
+                        )}
                       </motion.div>
                       
                       <motion.div variants={itemVariants}>
                         <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Phone Number</label>
-                        <div className="flex items-center bg-surface-container-low rounded-2xl p-1 border border-transparent focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20">
-                          <div className="px-4 font-black text-on-surface text-sm">+1</div>
-                          <input className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black" placeholder="000 000 0000" type="tel" />
+                        <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 border border-transparent focus-within:bg-white focus-within:ring-2 ${signupPhone.length > 0 && signupPhone.length !== 10 ? 'focus-within:ring-error/20 ring-error/10 ring-1' : 'focus-within:ring-primary/20'}`}>
+                          <div className="px-4 font-black text-on-surface text-sm">+91</div>
+                          <input 
+                            className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black" 
+                            placeholder="000 000 0000" 
+                            type="tel" 
+                            maxLength={10}
+                            value={signupPhone}
+                            onChange={(e) => setSignupPhone(e.target.value.replace(/\D/g, ''))}
+                          />
                         </div>
+                        {signupPhone.length > 0 && signupPhone.length !== 10 && (
+                            <p className="text-[9px] text-error font-bold mt-2 ml-1">Enter a valid 10-digit number</p>
+                        )}
                       </motion.div>
 
                       <motion.button 
                         variants={itemVariants}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => navigate('/user/otp')}
-                        className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-headline font-black py-5 rounded-2xl shadow-xl shadow-primary/20 tracking-widest uppercase text-xs mt-4"
+                        whileTap={isSignupValid ? { scale: 0.98 } : {}}
+                        onClick={() => isSignupValid && navigate('/user/otp')}
+                        disabled={!isSignupValid}
+                        className={`w-full font-headline font-black py-5 rounded-2xl shadow-xl tracking-widest uppercase text-xs mt-4 transition-all duration-300 ${isSignupValid ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary shadow-primary/20' : 'bg-surface-container-high text-outline-variant cursor-not-allowed opacity-50'}`}
                       >
                         Create Account
                       </motion.button>
