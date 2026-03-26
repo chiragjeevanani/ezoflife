@@ -19,17 +19,22 @@ const VendorOrderHistory = () => {
     ];
 
     return (
-        <div className="bg-surface text-on-surface min-h-screen pb-32">
-            <VendorHeader title="Order History" showBack={true} />
+        <div className="bg-[#F8FAFC] text-[#1E293B] min-h-screen pb-32 font-sans">
+            <VendorHeader title="Archive" showBack={true} />
 
-            <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto px-6 py-8">
+            <motion.main 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                className="max-w-xl mx-auto px-6 py-8"
+            >
                 {/* Tabs */}
-                <div className="flex gap-1 p-1.5 bg-white rounded-full w-fit shadow-sm border border-outline-variant/5 mb-10">
+                <div className="flex bg-slate-100 p-1.5 rounded-full w-fit mb-10 border border-slate-200 ml-auto mr-auto">
                     {[{ key: 'active', label: 'Active' }, { key: 'completed', label: 'Completed' }].map(({ key, label }) => (
                         <motion.button 
                             key={key}
                             onClick={() => setTab(key)}
-                            className={`px-10 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all ${tab === key ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'text-on-surface-variant opacity-60 hover:opacity-100'}`}
+                            whileTap={{ scale: 0.95 }}
+                            className={`px-10 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${tab === key ? 'bg-white text-[#3D5AFE] shadow-sm' : 'text-slate-400 opacity-60 hover:opacity-100'}`}
                         >
                             {label}
                         </motion.button>
@@ -38,57 +43,49 @@ const VendorOrderHistory = () => {
 
                 <AnimatePresence mode="wait">
                     {tab === 'active' ? (
-                        <motion.div key="active" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="space-y-8">
+                        <motion.div key="active" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="space-y-6">
                             {activeOrders.map((order) => (
-                                <motion.div key={order.id} whileHover={{ scale: 1.01 }} className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-primary/5 border border-outline-variant/10 relative overflow-hidden group cursor-pointer" onClick={() => navigate(`/vendor/order/${order.id.replace('#', '')}`)}>
-                                    <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
+                                <motion.div key={order.id} whileHover={{ y: -5 }} className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 relative overflow-hidden group cursor-pointer" onClick={() => navigate(`/vendor/order/${order.id.replace('#', '')}`)}>
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#3D5AFE]/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
                                     <div className="flex justify-between items-start mb-6">
                                         <div>
                                             <div className="flex items-center gap-2 mb-2">
-                                                <motion.span animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="w-2.5 h-2.5 rounded-full bg-primary"></motion.span>
-                                                <span className="text-primary font-black text-[10px] tracking-widest uppercase">{order.status}</span>
+                                                <motion.span animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="w-2 h-2 rounded-full bg-[#3D5AFE]"></motion.span>
+                                                <span className="text-[#3D5AFE] font-bold text-[10px] tracking-widest uppercase">{order.status}</span>
                                             </div>
-                                            <h3 className="text-2xl font-black text-on-surface tracking-tighter">{order.id}</h3>
-                                            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60 mt-1">{order.date}</p>
+                                            <h3 className="text-xl font-bold text-slate-800 tracking-tight">{order.id}</h3>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 opacity-60">{order.date}</p>
                                         </div>
-                                        <p className="text-3xl font-headline font-black text-primary tracking-tighter">₹{order.price}</p>
+                                        <p className="text-2xl font-bold text-slate-800 tracking-tighter">₹{order.price}</p>
                                     </div>
                                     <div className="mb-6">
-                                        <div className="relative h-2.5 bg-surface-container-low rounded-full overflow-hidden shadow-inner">
-                                            <motion.div initial={{ width: 0 }} animate={{ width: `${order.progress}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="absolute inset-y-0 left-0 vendor-gradient rounded-full" />
+                                        <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <motion.div initial={{ width: 0 }} animate={{ width: `${order.progress}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="absolute inset-y-0 left-0 bg-[#3D5AFE] rounded-full" />
                                         </div>
                                     </div>
-                                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full vendor-gradient text-on-primary py-4 rounded-2xl font-headline font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20 flex items-center justify-center gap-3">
-                                        <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>
-                                        View Details
-                                    </motion.button>
+                                    <button className="w-full py-4 text-[#3D5AFE] font-bold text-xs uppercase tracking-widest border border-[#3D5AFE]/10 rounded-2xl flex items-center justify-center gap-3 hover:bg-[#3D5AFE]/5 transition-all">
+                                        Details
+                                    </button>
                                 </motion.div>
                             ))}
                         </motion.div>
                     ) : (
                         <motion.div key="completed" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40 px-2">Archive · {completedOrders.length} orders</p>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300 px-2 text-center">{completedOrders.length} completed orders</p>
                             {completedOrders.map((order, i) => (
-                                <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} whileHover={{ x: 5 }} className="bg-white/50 backdrop-blur-sm rounded-[2rem] p-8 border border-outline-variant/10 shadow-sm">
+                                <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} whileHover={{ y: -3 }} className="bg-white rounded-3xl p-8 border border-slate-50 shadow-sm opacity-90">
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
                                             <div className="flex items-center gap-2 mb-2">
-                                                <span className="material-symbols-outlined text-sm text-outline-variant" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                                                <span className="text-on-surface-variant/60 font-black text-[10px] tracking-widest uppercase">Delivered</span>
+                                                <span className="material-symbols-outlined text-[18px] text-slate-300">check_circle</span>
+                                                <span className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">Delivered</span>
                                             </div>
-                                            <h3 className="text-xl font-black text-on-surface tracking-tighter">{order.id}</h3>
-                                            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40 mt-1">{order.date}</p>
+                                            <h3 className="text-lg font-bold text-slate-800 tracking-tight">{order.id}</h3>
+                                            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mt-1">{order.date}</p>
                                         </div>
-                                        <p className="text-2xl font-black text-on-surface-variant/40 tracking-tighter">₹{order.price}</p>
+                                        <p className="text-xl font-bold text-slate-300 tracking-tighter">₹{order.price}</p>
                                     </div>
-                                    <div className="bg-surface-container-low/40 rounded-2xl p-4 mb-5">
-                                        <p className="text-xs font-bold text-on-surface-variant opacity-70 italic">{order.desc}</p>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <button className="flex-1 bg-surface-container text-on-surface py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-outline-variant/20 transition-all flex items-center justify-center gap-2 border border-outline-variant/10">
-                                            <span className="material-symbols-outlined text-sm">receipt</span> View Invoice
-                                        </button>
-                                    </div>
+                                    <p className="text-xs font-medium text-slate-400 bg-slate-50 p-4 rounded-xl leading-relaxed italic">{order.desc}</p>
                                 </motion.div>
                             ))}
                         </motion.div>

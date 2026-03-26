@@ -1,6 +1,12 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@plugin "tailwindcss-animate";
 
 @theme {
+  --font-inter: "Inter", sans-serif;
+  
+  /* Ez of Life Legacy Variables (for User/Vendor apps) */
   --color-on-secondary-fixed: #373f51;
   --color-background: #faf9fe;
   --color-outline: #787a84;
@@ -123,4 +129,96 @@
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/* Strategic Admin Overrides - Enterprise professional feel */
+.admin-theme {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  
+  /* Slate-based professional palette */
+  --color-slate-25: #fcfdfe;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+
+  /* Accent Colors */
+  --color-accent-blue: #0284c7;
+  --color-accent-emerald: #059669;
+  --color-accent-rose: #dc2626;
+
+  /* Enterprise flat radius */
+  --radius-none: 0px;
+  --radius-minimal: 2px;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+
+  /* Tactical Shadows */
+  --shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow-moderate: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  --shadow-elevated: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+
+  background-color: var(--color-slate-50);
+}
+
+.admin-theme * {
+    border-color: var(--color-slate-100);
+}
+
+.admin-theme .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Custom Tactical Scrollbar */
+.admin-theme ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.admin-theme ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-theme ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.admin-theme ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.admin-theme ::selection {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+/* Desktop-Feel Enterprise Overrides */
+@media (min-width: 1024px) {
+    .admin-theme .uppercase:not(.font-bold) {
+        text-transform: none !important;
+    }
+
+    .admin-theme .tracking-widest:not(.font-bold) {
+        letter-spacing: normal !important;
+    }
+
+    .admin-theme .font-bold:not(.font-black) {
+        font-weight: 600 !important; /* Semi-bold on desktop for sharper text */
+    }
+
+    .admin-theme .shadow-lg,
+    .admin-theme .shadow-xl {
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05) !important;
+        border: 1px solid var(--color-slate-100);
+    }
 }

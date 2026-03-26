@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const ShopDetails = () => {
     const navigate = useNavigate();
@@ -9,169 +9,143 @@ const ShopDetails = () => {
         <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-surface font-body text-on-surface min-h-screen"
+            className="bg-[#F8FAFC] text-[#1E293B] min-h-screen font-sans"
         >
-            {/* Header Navigation */}
-            <motion.nav 
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="bg-surface/70 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-outline-variant/5 shadow-sm"
-            >
+            {/* Header */}
+            <header className="bg-white px-6 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-slate-100">
                 <div className="flex items-center gap-4">
-                    <motion.button 
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => navigate(-1)} 
-                        className="p-2 hover:bg-surface-container-low transition-colors duration-300 rounded-full"
+                    <button 
+                        onClick={() => navigate(-1)}
+                        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-50 transition-colors"
                     >
-                        <span className="material-symbols-outlined text-on-surface">arrow_back</span>
-                    </motion.button>
-                    <h1 className="font-headline font-bold text-headline-sm tracking-tight text-on-surface">Shop Details</h1>
+                        <span className="material-symbols-outlined text-slate-600">arrow_back</span>
+                    </button>
+                    <h1 className="text-lg font-bold tracking-tight">Shop Profile</h1>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-outline-variant/20 shadow-inner">
-                        <img 
-                            className="w-full h-full object-cover" 
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJv0eL8fD2DkjwL6fX4Z5Vb5Q-tXJ1ZInU0U-V_2T_6_8_2X-T-V_X_2V_6_8_2X-T-V_X_2V_6_8_2X" 
-                            alt="Vendor Placeholder"
-                        />
-                    </div>
+                <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden border-2 border-white shadow-sm">
+                    <img 
+                        src="https://lh3.googleusercontent.com/a/ACg8ocL_X_X_X_X_X_X_X_X_X_X_X=s96-c" 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                    />
                 </div>
-            </motion.nav>
+            </header>
 
-            <motion.main 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="max-w-4xl mx-auto px-6 pt-12 pb-32"
-            >
-                {/* Progress Stepper */}
-                <div className="mb-12 flex items-center justify-between">
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 vendor-gradient rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-primary/20">1</div>
-                            <div>
-                                <p className="text-label-md uppercase tracking-widest font-bold text-primary">Step 1</p>
-                                <h2 className="font-headline font-bold text-headline-sm tracking-tight">Shop Details</h2>
-                            </div>
-                        </div>
+            <main className="max-w-xl mx-auto px-6 py-8 space-y-8">
+                {/* Compact Stepper */}
+                <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#3D5AFE] text-white flex items-center justify-center text-sm font-bold">1</div>
+                        <span className="text-sm font-bold text-[#3D5AFE]">Shop Details</span>
                     </div>
-                    <div className="w-24 h-1.5 bg-surface-container-high rounded-full mx-4 overflow-hidden">
+                    <div className="flex-1 mx-4 h-[2px] bg-slate-200 relative">
                         <motion.div 
                             initial={{ width: 0 }}
-                            animate={{ width: '40%' }}
-                            transition={{ duration: 1.5, ease: "circOut" }}
-                            className="h-full vendor-gradient rounded-full"
+                            animate={{ width: '50%' }}
+                            className="absolute inset-y-0 bg-[#3D5AFE]"
                         />
                     </div>
-                    <div className="flex-1 opacity-40 grayscale">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-surface-container-high rounded-full flex items-center justify-center text-on-surface-variant font-bold border border-outline-variant/10">2</div>
-                            <div>
-                                <p className="text-label-md uppercase tracking-widest font-bold text-on-surface-variant">Step 2</p>
-                                <h2 className="font-headline font-bold text-headline-sm tracking-tight opacity-50">Documents</h2>
-                            </div>
-                        </div>
+                    <div className="flex items-center gap-3 opacity-40">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">2</div>
+                        <span className="text-sm font-medium text-slate-500">Verification</span>
                     </div>
                 </div>
 
-                {/* Form Fields Section */}
-                <div className="space-y-8">
-                    {/* Input Group: Shop Name */}
-                    <motion.div whileFocus={{ scale: 1.01 }} className="flex flex-col gap-3 group">
-                        <label className="font-headline font-bold text-on-surface-variant text-sm uppercase tracking-widest px-1 group-focus-within:text-primary transition-colors">Shop Name</label>
-                        <input 
-                            className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 focus:bg-white p-5 rounded-2xl text-headline-sm font-bold text-on-surface transition-all outline-none shadow-inner group-hover:border-outline-variant/30" 
-                            placeholder="e.g. Pristine Cleaners" 
-                            type="text" 
-                        />
-                    </motion.div>
-
-                    {/* Input Group: GST Number */}
-                    <div className="flex flex-col gap-3 group">
-                        <label className="font-headline font-bold text-on-surface-variant text-sm uppercase tracking-widest px-1 group-focus-within:text-primary transition-colors">GST Number (Optional)</label>
-                        <input 
-                            className="w-full bg-surface-container-low border-2 border-transparent focus:border-primary/20 focus:bg-white p-5 rounded-2xl text-headline-sm font-bold text-on-surface transition-all outline-none shadow-inner group-hover:border-outline-variant/30" 
-                            placeholder="Enter 15-digit GSTIN" 
-                            type="text" 
-                        />
-                    </div>
-
-                    {/* Map Interaction Placeholder */}
-                    <div className="flex flex-col gap-3 group">
-                        <label className="font-headline font-bold text-on-surface-variant text-sm uppercase tracking-widest px-1 group-focus-within:text-primary transition-colors">Business Address</label>
-                        <motion.div 
-                            whileHover={{ y: -3 }}
-                            className="relative w-full h-80 rounded-2xl bg-surface-container overflow-hidden p-6 border-2 border-transparent hover:border-primary/10 transition-all shadow-sm group-hover:shadow-md"
-                        >
-                            <img 
-                                alt="Map Background" 
-                                className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-700" 
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-6L-D7t3S2e8R7_yX9G6L9p5V4X_mS-5V4X_mS-5V4X_mS-5V4X_mS-5V4X_mS" 
+                {/* Form Progress Card */}
+                <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 space-y-8">
+                    <section className="space-y-6">
+                        {/* Shop Name */}
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Shop Name</label>
+                            <input 
+                                type="text"
+                                placeholder="e.g. Pristine Cleaners"
+                                className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:bg-white focus:border-[#3D5AFE]/30 focus:ring-4 focus:ring-[#3D5AFE]/5 outline-none transition-all font-semibold text-slate-800"
                             />
-                            <div className="relative z-10 flex flex-col justify-between h-full">
-                                <div className="flex justify-end">
-                                    <button className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-2 shadow-xl hover:bg-white transition-all text-sm font-bold scale-95 hover:scale-100">
-                                        <span className="material-symbols-outlined text-primary text-[20px]">my_location</span>
-                                        Use Current Location
-                                    </button>
+                        </div>
+
+                        {/* GST Number */}
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">GST Number (Optional)</label>
+                            <input 
+                                type="text"
+                                placeholder="15-digit GSTIN"
+                                className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:bg-white focus:border-[#3D5AFE]/30 focus:ring-4 focus:ring-[#3D5AFE]/5 outline-none transition-all font-semibold text-slate-800"
+                            />
+                        </div>
+
+                        {/* Address Section */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between px-1">
+                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Store Location</label>
+                                <button className="text-[#3D5AFE] text-[11px] font-bold uppercase tracking-wider hover:underline flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-sm">my_location</span>
+                                    Current
+                                </button>
+                            </div>
+                            <div className="relative group">
+                                <div className="w-full h-48 rounded-2xl bg-slate-200 overflow-hidden relative border border-slate-100">
+                                    <img 
+                                        src="https://api.mapbox.com/styles/v1/mapbox/light-v10/static/pin-s+3D5AFE(-0.1278,51.5074)/-0.1278,51.5074,13/600x400?access_token=YOUR_MAPBOX_TOKEN_FALLBACK" 
+                                        alt="Map"
+                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent" />
                                 </div>
-                                <div className="bg-white shadow-2xl p-6 rounded-xl flex items-center gap-4 border border-outline-variant/10">
-                                    <div className="w-12 h-12 bg-primary-container/20 rounded-full flex items-center justify-center text-primary">
-                                        <span className="material-symbols-outlined">location_on</span>
+                                <div className="absolute bottom-3 left-3 right-3 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-100 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#3D5AFE]/10 rounded-full flex items-center justify-center text-[#3D5AFE]">
+                                        <span className="material-symbols-outlined text-[20px]">location_on</span>
                                     </div>
-                                    <div className="flex-1">
-                                        <p className="text-body-lg font-bold text-on-surface truncate">241 Baker Street, London, UK</p>
-                                        <p className="text-body-sm text-on-surface-variant font-medium">Tap to modify address pinpoint</p>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-slate-800 truncate">241 Baker Street, London</p>
+                                        <p className="text-[10px] text-slate-500 font-medium">Click to refine location</p>
                                     </div>
-                                    <span className="material-symbols-outlined text-on-surface-variant/40">chevron_right</span>
+                                    <span className="material-symbols-outlined text-slate-300">chevron_right</span>
                                 </div>
                             </div>
-                        </motion.div>
-                    </div>
+                        </div>
+                    </section>
 
-                    {/* Service Selection Checklist */}
-                    <div className="flex flex-col gap-6">
-                        <label className="font-headline font-bold text-on-surface-variant text-sm uppercase tracking-widest px-1">Services Offered</label>
-                        <div className="grid grid-cols-2 gap-4">
+                    {/* Services Section */}
+                    <section className="space-y-4 pt-4 border-t border-slate-50">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Services Offered</label>
+                        <div className="grid grid-cols-2 gap-3">
                             {[
-                                { title: 'Wash & Fold', icon: 'local_laundry_service' },
-                                { title: 'Dry Cleaning', icon: 'dry_cleaning' },
-                                { title: 'Steam Press', icon: 'iron' },
-                                { title: 'Shoe Laundry', icon: 'checkroom' }
-                            ].map((service, i) => (
-                                <motion.button 
-                                    key={service.title}
-                                    whileHover={{ y: -5, shadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className={`flex items-center justify-between p-6 rounded-2xl border-2 transition-all group/item ${i === 0 ? 'bg-primary/5 border-primary shadow-sm' : 'bg-surface border-outline-variant/10 hover:border-primary/20'}`}
+                                { id: 1, title: 'Wash & Fold', icon: 'local_laundry_service' },
+                                { id: 2, title: 'Dry Cleaning', icon: 'dry_cleaning' },
+                                { id: 3, title: 'Steam Press', icon: 'iron' },
+                                { id: 4, title: 'Shoe Care', icon: 'checkroom' }
+                            ].map((service) => (
+                                <button 
+                                    key={service.id}
+                                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${service.id === 1 ? 'bg-[#3D5AFE]/5 border-[#3D5AFE]/20 text-[#3D5AFE]' : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200'}`}
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-xl transition-colors ${i === 0 ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant group-hover/item:bg-primary-container/20'}`}>
-                                            <span className="material-symbols-outlined text-[24px]">{service.icon}</span>
-                                        </div>
-                                        <span className={`font-headline font-bold ${i === 0 ? 'text-primary' : 'text-on-surface-variant'}`}>{service.title}</span>
-                                    </div>
-                                    {i === 0 && <span className="material-symbols-outlined text-primary font-bold">check_circle</span>}
-                                </motion.button>
+                                    <span className={`material-symbols-outlined text-[18px] ${service.id === 1 ? 'text-[#3D5AFE]' : 'text-slate-400'}`}>
+                                        {service.icon}
+                                    </span>
+                                    <span className="text-xs font-bold">{service.title}</span>
+                                    {service.id === 1 && <span className="material-symbols-outlined text-[14px] ml-auto font-bold">check_circle</span>}
+                                </button>
                             ))}
                         </div>
-                    </div>
+                    </section>
                 </div>
 
-                {/* Confirm Action Button */}
-                <div className="mt-16 flex flex-col items-center gap-6">
+                {/* Footer Action */}
+                <div className="space-y-4">
                     <motion.button 
-                        whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => navigate('/vendor/upload-documents')}
-                        className="vendor-gradient text-white w-full md:w-auto md:min-w-[400px] py-6 px-12 rounded-2xl font-headline font-extrabold text-lg shadow-2xl shadow-primary/20 hover:shadow-primary/30 transition-all flex items-center justify-center gap-4 active:scale-95"
+                        className="w-full py-5 rounded-2xl bg-[#3D5AFE] text-white font-bold text-lg shadow-xl shadow-[#3D5AFE]/20 flex items-center justify-center gap-3 hover:bg-[#304FFE] transition-all"
                     >
-                        Continue to Documents
-                        <span className="material-symbols-outlined animate-bounce-horizontal">arrow_forward</span>
+                        <span>Next Step</span>
+                        <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                     </motion.button>
-                    <p className="text-on-surface-variant font-bold text-label-md uppercase tracking-widest opacity-60">Estimated Review: 24-48 Hours</p>
+                    <p className="text-center text-[11px] font-bold text-slate-300 uppercase tracking-[0.2em]">
+                        Standard verification: 24h
+                    </p>
                 </div>
-            </motion.main>
+            </main>
         </motion.div>
     );
 };

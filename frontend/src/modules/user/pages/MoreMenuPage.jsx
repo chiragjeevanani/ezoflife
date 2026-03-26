@@ -27,75 +27,75 @@ const MoreMenuPage = () => {
       className="bg-background text-on-background min-h-[100dvh] flex flex-col"
     >
       <main className="pt-24 pb-44 px-6 max-w-2xl mx-auto w-full">
-        {/* Header Section */}
+        {/* Header Section - More Compact */}
         <motion.section 
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          className="mb-12 ml-2 pt-8"
+          className="mb-10 ml-2 pt-4"
         >
-          <span className="font-label text-[10px] uppercase tracking-[0.3em] text-primary font-black opacity-60 mb-2 block">Enterprise Mode</span>
-          <h1 className="font-headline font-black text-5xl text-on-surface tracking-tighter leading-none">More</h1>
-          <p className="text-xs font-bold text-on-surface-variant opacity-60 mt-3 max-w-[280px] uppercase tracking-widest leading-relaxed italic">
+          <span className="font-label text-[9px] uppercase tracking-[0.3em] text-primary font-black opacity-60 mb-1.5 block">Enterprise Mode</span>
+          <h1 className="font-headline font-black text-3xl text-on-surface tracking-tighter leading-none">More</h1>
+          <p className="text-[10px] font-bold text-on-surface-variant opacity-60 mt-2 max-w-[280px] uppercase tracking-widest leading-relaxed italic">
             Management, logistics, and partner ecosystems.
           </p>
         </motion.section>
 
-        {/* Bento Grid for Primary Actions */}
+        {/* Bento Grid for Primary Actions - Compacted */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-2 gap-5 mb-12"
+          className="grid grid-cols-2 gap-4 mb-10"
         >
           {/* Help Center Card */}
           <motion.div 
             variants={itemVariants}
-            className="col-span-2 bg-primary/5 rounded-[2.5rem] p-10 relative overflow-hidden group cursor-pointer hover:bg-white transition-all border border-primary/10 hover:border-outline-variant/10 shadow-sm"
+            className="col-span-2 bg-primary/5 rounded-3xl p-8 relative overflow-hidden group cursor-pointer hover:bg-white transition-all border border-primary/10 hover:border-outline-variant/10 shadow-sm"
           >
             <div className="relative z-10">
-              <span className="material-symbols-outlined text-primary text-4xl mb-6 block" style={{ fontVariationSettings: "'FILL' 1" }}>help_center</span>
-              <h2 className="font-headline font-black text-3xl text-on-primary-container tracking-tighter leading-none mb-4">Help Center</h2>
-              <p className="text-xs font-bold text-on-surface-variant opacity-60 leading-relaxed uppercase tracking-widest max-w-[200px]">Interactive guides & specialized assistance.</p>
+              <span className="material-symbols-outlined text-primary text-3xl mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>help_center</span>
+              <h2 className="font-headline font-black text-2xl text-on-primary-container tracking-tighter leading-none mb-3">Help Center</h2>
+              <p className="text-[10px] font-bold text-on-surface-variant opacity-60 leading-relaxed uppercase tracking-widest max-w-[200px]">Interactive guides & specialized assistance.</p>
             </div>
-            <div className="absolute top-[-30px] right-[-30px] w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/20 transition-all"></div>
+            <div className="absolute top-[-20px] right-[-20px] w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/20 transition-all"></div>
           </motion.div>
 
           {/* FAQ Card */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white rounded-[2.5rem] p-8 flex flex-col justify-between hover:shadow-xl hover:shadow-primary/5 transition-all cursor-pointer border border-outline-variant/10 min-h-[180px]"
+            className="bg-white rounded-3xl p-6 flex flex-col justify-between hover:shadow-lg hover:shadow-primary/5 transition-all cursor-pointer border border-outline-variant/10 min-h-[140px]"
           >
-            <span className="material-symbols-outlined text-tertiary text-4xl mb-4">quiz</span>
+            <span className="material-symbols-outlined text-tertiary text-3xl mb-3">quiz</span>
             <div>
-              <h3 className="font-headline font-black text-2xl text-on-surface tracking-tighter leading-none mb-2">FAQ</h3>
-              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60 italic">Automated Answers</p>
+              <h3 className="font-headline font-black text-xl text-on-surface tracking-tighter leading-none mb-1">FAQ</h3>
+              <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60 italic">Automated Answers</p>
             </div>
           </motion.div>
 
           {/* Register as Vendor Card */}
           <motion.div 
             variants={itemVariants}
-            className="bg-primary-gradient rounded-[2.5rem] p-8 flex flex-col justify-between hover:scale-101 transition-transform cursor-pointer shadow-2xl shadow-primary/20 min-h-[180px] relative overflow-hidden"
+            className="bg-primary-gradient rounded-3xl p-6 flex flex-col justify-between hover:scale-101 transition-transform cursor-pointer shadow-xl shadow-primary/10 min-h-[140px] relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-white/10 group-hover:opacity-0 transition-opacity pointer-events-none"></div>
-            <span className="material-symbols-outlined text-on-primary text-4xl mb-4 relative z-10">storefront</span>
+            <span className="material-symbols-outlined text-on-primary text-3xl mb-3 relative z-10">storefront</span>
             <div className="relative z-10">
-              <h3 className="font-headline font-black text-xl text-on-primary tracking-tighter leading-none mb-1 shadow-sm">Partner</h3>
-              <p className="text-on-primary/70 text-[10px] font-bold uppercase tracking-widest leading-none mt-2">Scale as Vendor</p>
+              <h3 className="font-headline font-black text-lg text-on-primary tracking-tighter leading-none mb-1 shadow-sm">Partner</h3>
+              <p className="text-on-primary/70 text-[9px] font-bold uppercase tracking-widest leading-none mt-1">Scale as Vendor</p>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* List Section: Support & Settings */}
+        {/* List Section: Support & Settings - Optimized */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="space-y-4 px-2"
+          className="space-y-3 px-2"
         >
-          <h4 className="font-headline font-black text-[10px] uppercase tracking-[0.3em] text-on-surface-variant opacity-40 mb-6">Concierge Support</h4>
+          <h4 className="font-headline font-black text-[9px] uppercase tracking-[0.3em] text-on-surface-variant opacity-40 mb-4">Concierge Support</h4>
           
-          <div className="bg-white rounded-[2.5rem] overflow-hidden border border-outline-variant/10 shadow-sm shadow-primary/5">
+          <div className="bg-white rounded-3xl overflow-hidden border border-outline-variant/10 shadow-sm shadow-primary/5">
             {[
               { title: 'Contact Support', desc: "We're here 24/7", icon: 'support_agent', color: 'primary' },
               { title: 'Feedback', desc: "Share your thoughts", icon: 'rate_review', color: 'tertiary' }
@@ -103,43 +103,43 @@ const MoreMenuPage = () => {
               <motion.button 
                 key={idx}
                 whileHover={{ scale: 1.01, backgroundColor: 'rgba(71, 95, 139, 0.02)' }}
-                className={`w-full flex items-center justify-between p-8 text-left group transition-all ${idx === 0 ? 'border-b border-outline-variant/5' : ''}`}
+                className={`w-full flex items-center justify-between p-6 text-left group transition-all ${idx === 0 ? 'border-b border-outline-variant/5' : ''}`}
               >
-                <div className="flex items-center gap-6">
-                  <div className={`w-14 h-14 rounded-2xl bg-surface-container-low flex items-center justify-center text-${item.color} shadow-inner border border-white/50 group-hover:bg-${item.color}/5 transition-colors`}>
-                    <span className="material-symbols-outlined text-2xl">{item.icon}</span>
+                <div className="flex items-center gap-5">
+                  <div className={`w-12 h-12 rounded-2xl bg-surface-container-low flex items-center justify-center text-${item.color} shadow-inner border border-white/50 group-hover:bg-${item.color}/5 transition-colors`}>
+                    <span className="material-symbols-outlined text-xl">{item.icon}</span>
                   </div>
                   <div>
-                    <span className="block font-black text-lg text-on-surface tracking-tighter leading-none mb-1.5">{item.title}</span>
-                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60 leading-none italic">{item.desc}</span>
+                    <span className="block font-black text-md text-on-surface tracking-tighter leading-none mb-1">{item.title}</span>
+                    <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-50 leading-none italic">{item.desc}</span>
                   </div>
                 </div>
-                <motion.span whileHover={{ x: 5 }} className="material-symbols-outlined text-outline-variant group-hover:text-primary transition-all opacity-0 group-hover:opacity-100">
+                <motion.span whileHover={{ x: 5 }} className="material-symbols-outlined text-outline-variant text-[18px] group-hover:text-primary transition-all opacity-0 group-hover:opacity-100">
                   chevron_right
                 </motion.span>
               </motion.button>
             ))}
           </div>
 
-          <h4 className="font-headline font-black text-[10px] uppercase tracking-[0.3em] text-on-surface-variant opacity-40 mb-6 mt-12 flex items-center gap-4">
+          <h4 className="font-headline font-black text-[9px] uppercase tracking-[0.3em] text-on-surface-variant opacity-40 mb-4 mt-8 flex items-center gap-4">
             Legal & Policy
             <div className="flex-grow h-px bg-outline-variant/10"></div>
           </h4>
 
-          <div className="bg-white/40 backdrop-blur-sm rounded-[2.5rem] overflow-hidden border border-outline-variant/10">
+          <div className="bg-white/40 backdrop-blur-sm rounded-3xl overflow-hidden border border-outline-variant/10">
             {[
               { icon: 'gavel', title: 'Terms of Service' },
               { icon: 'verified_user', title: 'Privacy Policy' }
             ].map((item, i) => (
               <button 
                 key={i}
-                className={`w-full flex items-center justify-between p-8 hover:bg-white transition-all text-left group ${i === 0 ? 'border-b border-outline-variant/5' : ''}`}
+                className={`w-full flex items-center justify-between p-6 hover:bg-white transition-all text-left group ${i === 0 ? 'border-b border-outline-variant/5' : ''}`}
               >
-                <div className="flex items-center gap-6 text-on-surface opacity-80 group-hover:opacity-100">
-                  <span className="material-symbols-outlined text-outline-variant text-xl">{item.icon}</span>
-                  <span className="font-black text-sm uppercase tracking-widest">{item.title}</span>
+                <div className="flex items-center gap-5 text-on-surface opacity-80 group-hover:opacity-100">
+                  <span className="material-symbols-outlined text-outline-variant text-lg">{item.icon}</span>
+                  <span className="font-black text-[11px] uppercase tracking-widest">{item.title}</span>
                 </div>
-                <span className="material-symbols-outlined text-outline-variant text-xl group-hover:text-primary transition-all">open_in_new</span>
+                <span className="material-symbols-outlined text-outline-variant text-lg group-hover:text-primary transition-all">open_in_new</span>
               </button>
             ))}
           </div>

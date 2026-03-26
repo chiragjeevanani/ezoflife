@@ -1,9 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { MASTER_SERVICES } from '../../../shared/data/sharedData';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = React.useState('');
+  
+  // Mock active order state
+  const activeOrder = { id: '#EZ-8821', status: 'In Progress', type: 'Wash & Fold' };
+
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate(`/user/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -26,11 +37,38 @@ const HomePage = () => {
         animate="visible"
         className="flex-1 pt-24 pb-36 px-6 max-w-5xl mx-auto w-full overflow-y-auto hide-scrollbar"
       >
+        {/* Active Order Banner */}
+        {activeOrder && (
+          <motion.div 
+            variants={cardVariants}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/user/order-history')}
+            className="mb-8 bg-primary/5 border border-primary/20 p-4 rounded-3xl flex items-center justify-between cursor-pointer group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-lg shadow-primary/20">
+                <span className="material-symbols-outlined text-xl animate-spin-slow">sync</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none mb-1">Active Order</span>
+                <h3 className="text-sm font-black text-on-surface leading-none">{activeOrder.type} — {activeOrder.status}</h3>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-outline uppercase tracking-widest group-hover:text-primary transition-colors">Track</span>
+              <span className="material-symbols-outlined text-primary text-sm">arrow_forward</span>
+            </div>
+          </motion.div>
+        )}
+
         {/* Search Bar */}
         <motion.div variants={cardVariants} className="mb-8">
           <div className="relative flex items-center bg-white rounded-3xl px-6 py-4 shadow-sm border border-outline-variant/5 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
             <span className="material-symbols-outlined text-outline mr-3">search</span>
             <input 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearch}
               className="bg-transparent border-none focus:ring-0 p-0 text-md w-full placeholder:text-outline-variant font-semibold" 
               placeholder="How can we help today?" 
               type="text"
@@ -80,52 +118,51 @@ const HomePage = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Top Service */}
-            <motion.div 
-              variants={cardVariants}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('/user/service-info', { 
-                state: { 
-                  selectedService: { id: 'wash_fold', title: 'Wash & Fold', desc: 'Everyday wear, scented & stacked', icon: 'local_laundry_service', color: 'primary', price: '₹99.00' } 
-                } 
-              })}
-              className="bg-white rounded-3xl p-6.5 border border-outline-variant/10 shadow-sm flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-primary-container flex items-center justify-center text-primary shadow-sm shadow-primary/5">
-                  <span className="material-symbols-outlined text-3xl">local_laundry_service</span>
+            {MASTER_SERVICES.slice(0, 1).map((service) => (
+              <motion.div 
+                key={service.id}
+                variants={cardVariants}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/user/service-info', { 
+                  state: { 
+                    selectedService: { id: service.id, title: service.name, desc: service.description, icon: service.icon, color: 'primary', price: `₹${service.basePrice}.00` } 
+                  } 
+                })}
+                className="bg-white rounded-3xl p-6.5 border border-outline-variant/10 shadow-sm flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 rounded-2xl bg-primary-container flex items-center justify-center text-primary shadow-sm shadow-primary/5">
+                    <span className="material-symbols-outlined text-3xl">{service.icon}</span>
+                  </div>
+                  <div>
+                    <h3 className="font-headline font-black text-lg text-on-surface">{service.name}</h3>
+                    <p className="text-on-surface-variant text-xs font-semibold">{service.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-headline font-black text-lg text-on-surface">Wash & Fold</h3>
-                  <p className="text-on-surface-variant text-xs font-semibold">24h Express Turnaround</p>
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
-            </motion.div>
+                <span className="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
+              </motion.div>
+            ))}
 
             {/* Other Services Grid */}
             <div className="grid grid-cols-2 gap-4">
-              {[
-                { id: 'dry_clean', label: 'Dry Clean', icon: 'dry_cleaning', color: 'tertiary', desc: 'Suits & Silk', price: '₹149.00' },
-                { id: 'ironing', label: 'Ironing', icon: 'iron', color: 'secondary', desc: 'Crisp Finish', price: '₹49.00' },
-                { id: 'shoe_spa', label: 'Shoe Spa', icon: 'steps', color: 'primary', desc: 'Restoration', price: '₹199.00' }
-              ].map((item, i) => (
+              {MASTER_SERVICES.slice(1, 4).map((service, i) => (
                 <motion.div 
-                  key={i}
+                  key={service.id}
                   variants={cardVariants}
                   whileTap={{ scale: 0.96 }}
                   onClick={() => navigate('/user/service-info', { 
                     state: { 
-                      selectedService: { id: item.id, title: item.label, desc: item.desc, icon: item.icon, color: item.color, price: item.price } 
+                      selectedService: { id: service.id, title: service.name, desc: service.description, icon: service.icon, color: (i % 2 === 0 ? 'secondary' : 'tertiary'), price: `₹${service.basePrice}.00` } 
                     } 
                   })}
                   className="bg-surface-container-low rounded-3xl p-5 flex flex-col gap-4 border border-outline-variant/5 shadow-sm group cursor-pointer"
                 >
-                  <div className={`w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-${item.color} shadow-sm group-hover:bg-${item.color} group-hover:text-white transition-all`}>
-                    <span className="material-symbols-outlined text-2xl">{item.icon}</span>
+                  <div className={`w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-${i % 2 === 0 ? 'secondary' : 'tertiary'} shadow-sm group-hover:bg-${i % 2 === 0 ? 'secondary' : 'tertiary'} group-hover:text-white transition-all`}>
+                    <span className="material-symbols-outlined text-2xl">{service.icon}</span>
                   </div>
                   <div>
-                    <h4 className="font-headline font-black text-[15px] leading-none mb-1">{item.label}</h4>
-                    <p className="text-[11px] text-on-surface-variant font-bold opacity-60 leading-none">{item.desc}</p>
+                    <h4 className="font-headline font-black text-[15px] leading-none mb-1">{service.name}</h4>
+                    <p className="text-[11px] text-on-surface-variant font-bold opacity-60 leading-none truncate">{service.description}</p>
                   </div>
                 </motion.div>
               ))}

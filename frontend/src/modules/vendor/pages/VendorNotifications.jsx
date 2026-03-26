@@ -15,15 +15,15 @@ const VendorNotifications = () => {
     ];
 
     const iconColors = {
-        order: 'bg-primary/10 text-primary',
+        order: 'bg-[#3D5AFE]/10 text-[#3D5AFE]',
         payout: 'bg-green-50 text-green-600',
         rating: 'bg-amber-50 text-amber-500',
-        pickup: 'bg-secondary/10 text-secondary',
+        pickup: 'bg-slate-100 text-slate-600',
         system: 'bg-purple-50 text-purple-500',
     };
 
     return (
-        <div className="bg-surface text-on-surface min-h-screen">
+        <div className="bg-[#F8FAFC] text-[#1E293B] min-h-screen pb-32 font-sans">
             <VendorHeader title="Notifications" showBack={true} />
 
             <motion.main 
@@ -31,9 +31,9 @@ const VendorNotifications = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-2xl mx-auto px-6 py-8 space-y-4"
             >
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Today</span>
-                    <button className="text-primary font-black text-xs uppercase tracking-widest">Mark all read</button>
+                <div className="flex items-center justify-between mb-2 px-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Activity Feed</span>
+                    <button className="text-[#3D5AFE] font-bold text-[10px] uppercase tracking-widest hover:underline">Mark all read</button>
                 </div>
 
                 {notifications.map((notif, i) => (
@@ -43,18 +43,18 @@ const VendorNotifications = () => {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.07 }}
                         whileHover={{ x: 6 }}
-                        className={`flex items-start gap-5 p-6 rounded-2xl border transition-all cursor-pointer ${notif.unread ? 'bg-white border-primary/10 shadow-md shadow-primary/5' : 'bg-surface-container-low border-outline-variant/5 shadow-sm'}`}
+                        className={`flex items-start gap-5 p-5 rounded-2xl border transition-all cursor-pointer ${notif.unread ? 'bg-white border-[#3D5AFE]/10 shadow-lg shadow-[#3D5AFE]/5' : 'bg-white border-slate-50 shadow-sm opacity-80'}`}
                     >
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${iconColors[notif.type]}`}>
-                            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{notif.icon}</span>
+                            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>{notif.icon}</span>
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-3">
-                                <p className={`font-headline font-bold leading-tight ${notif.unread ? 'text-on-surface' : 'text-on-surface-variant'}`}>{notif.title}</p>
-                                {notif.unread && <span className="w-2 h-2 bg-primary rounded-full mt-1.5 flex-shrink-0"></span>}
+                                <p className={`text-sm font-bold leading-tight ${notif.unread ? 'text-slate-800' : 'text-slate-600'}`}>{notif.title}</p>
+                                {notif.unread && <span className="w-2 h-2 bg-[#3D5AFE] rounded-full mt-1.5 flex-shrink-0"></span>}
                             </div>
-                            <p className="text-sm text-on-surface-variant font-medium mt-1 leading-relaxed">{notif.desc}</p>
-                            <p className="text-[10px] text-on-surface-variant/50 font-bold uppercase tracking-widest mt-2">{notif.time}</p>
+                            <p className="text-xs text-slate-400 font-medium mt-1 leading-relaxed">{notif.desc}</p>
+                            <p className="text-[10px] text-slate-300 font-bold tracking-tight mt-2">{notif.time}</p>
                         </div>
                     </motion.div>
                 ))}

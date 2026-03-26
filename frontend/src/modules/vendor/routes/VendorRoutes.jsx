@@ -17,10 +17,17 @@ import OrderDetails from '../pages/OrderDetails';
 import RiderVerification from '../pages/RiderVerification';
 import Earnings from '../pages/Earnings';
 import ServiceManagement from '../pages/ServiceManagement';
+import AddServicePage from '../pages/AddServicePage';
 import PayoutSettings from '../pages/PayoutSettings';
 import VendorProfile from '../pages/VendorProfile';
 import VendorNotifications from '../pages/VendorNotifications';
 import VendorOrderHistory from '../pages/VendorOrderHistory';
+
+// Profile sub-pages
+import EditProfile from '../pages/EditProfile';
+import Support from '../pages/Support';
+import PrivacyPolicy from '../pages/PrivacyPolicy';
+import TermsConditions from '../pages/TermsConditions';
 
 import VendorLayout from '../layouts/VendorLayout';
 
@@ -44,10 +51,17 @@ const VendorRoutes = () => {
         <Route path="/rider-verification/:orderId" element={<RiderVerification />} />
         <Route path="/earnings" element={<Earnings />} />
         <Route path="/services" element={<ServiceManagement />} />
+        <Route path="/services/add" element={<AddServicePage />} />
         <Route path="/payouts" element={<PayoutSettings />} />
         <Route path="/profile" element={<VendorProfile />} />
         <Route path="/notifications" element={<VendorNotifications />} />
         <Route path="/order-history" element={<VendorOrderHistory />} />
+        
+        {/* Profile Sub-pages */}
+        <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-conditions" element={<TermsConditions />} />
 
         {/* Default */}
         <Route path="*" element={<Navigate to="/vendor/splash" replace />} />

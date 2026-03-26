@@ -7,162 +7,104 @@ const PayoutSettings = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="bg-surface font-body text-on-surface min-h-screen pb-32">
-            <VendorHeader />
+        <div className="bg-white text-[#1E293B] min-h-screen pb-32 font-sans overflow-x-hidden">
+            <VendorHeader title="Bank & Payouts" showBack={true} />
+
+            {/* Hero Section */}
+            <motion.section 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="bg-[#3D5AFE] px-6 py-10 text-white relative flex flex-col items-center text-center"
+            >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -ml-32 -mb-32"></div>
+                
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-60 mb-2">Available for Settlement</p>
+                <h2 className="text-4xl font-bold tracking-tighter mb-8">₹12,840.40</h2>
+                
+                <div className="flex items-center gap-12">
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Status</p>
+                        <div className="flex items-center justify-center gap-2">
+                            <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                            <span className="text-sm font-bold">Verified</span>
+                        </div>
+                    </div>
+                    <div className="w-[1px] h-6 bg-white/20"></div>
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Next Cycle</p>
+                        <p className="text-sm font-bold">Oct 27, 2026</p>
+                    </div>
+                </div>
+            </motion.section>
 
             <motion.main 
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="max-w-4xl mx-auto px-6 pt-12"
+                className="max-w-2xl mx-auto px-6 py-12 space-y-14"
             >
-                {/* Header Section */}
-                <section className="mb-12">
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                        <div className="space-y-2">
-                            <span className="font-label text-label-md uppercase tracking-widest text-primary font-bold">Financial Security</span>
-                            <h2 className="font-headline text-5xl font-extrabold tracking-tighter text-on-background line-clamp-2 leading-none">Bank & Payouts</h2>
-                        </div>
-                        <motion.div 
-                            initial={{ scale: 0.9 }}
-                            animate={{ scale: 1 }}
-                            whileHover={{ scale: 1.02 }}
-                            className="bg-surface-container-low p-6 rounded-2xl border-l-4 border-primary shadow-sm max-w-sm flex items-start gap-4"
-                        >
-                            <div className="p-3 bg-primary-container/20 text-primary rounded-xl">
-                                <span className="material-symbols-outlined animate-pulse">schedule</span>
+                {/* Bank Account Section */}
+                <section className="space-y-8">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-[#3D5AFE]">Linked Bank Account</h3>
+                        <button className="text-[11px] font-black text-slate-300 hover:text-[#3D5AFE] transition-colors uppercase tracking-widest">Update Details</button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                        {[
+                            { label: 'Beneficiary', value: 'Pristine Cleaners Pvt. Ltd.', icon: 'account_circle' },
+                            { label: 'Account number', value: 'SBIN •••• •••• 7781', icon: 'credit_card' },
+                            { label: 'IFSC Code', value: 'SBIN0001235', icon: 'verified' },
+                            { label: 'Bank Name', value: 'State Bank of India', icon: 'account_balance' }
+                        ].map((field, i) => (
+                            <div key={i} className="space-y-2 group">
+                                <div className="flex items-center gap-2 text-slate-300 mb-1 group-hover:text-[#3D5AFE] transition-colors">
+                                    <span className="material-symbols-outlined text-[16px]">{field.icon}</span>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest">{field.label}</p>
+                                </div>
+                                <p className="text-base font-bold text-slate-800 tracking-tight pl-6">{field.value}</p>
                             </div>
-                            <div>
-                                <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant font-bold leading-none mb-1">Next Settlement</p>
-                                <p className="font-headline text-xl font-bold text-on-background uppercase tracking-tighter">Friday, Oct 27</p>
-                            </div>
-                        </motion.div>
+                        ))}
                     </div>
                 </section>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                    {/* Linked Bank Account Card */}
-                    <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="md:col-span-8 bg-surface-container-lowest rounded-2xl p-10 relative overflow-hidden border border-outline-variant/10 shadow-sm"
-                    >
-                        <div className="absolute top-0 right-0 p-12 opacity-5 rotate-12 -mr-16 -mt-16">
-                            <span className="material-symbols-outlined text-[240px]">account_balance</span>
-                        </div>
-                        
-                        <div className="relative z-10">
-                            <div className="flex justify-between items-start mb-12">
-                                <div>
-                                    <h3 className="font-headline text-2xl font-bold text-on-background mb-2">Linked Bank Account</h3>
-                                    <p className="text-on-surface-variant text-body-lg font-medium opacity-80 max-w-sm">Active payout destination for all weekly service earnings.</p>
-                                </div>
-                                <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-full flex items-center gap-2">
-                                    <span className="w-2 h-2 bg-primary rounded-full animate-ping"></span>
-                                    <span className="text-[10px] font-extrabold uppercase tracking-widest">Verified</span>
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-8 max-w-md">
-                                {[
-                                    { label: 'Account Holder', value: 'Pristine Cleaners Pvt. Ltd.', icon: 'person' },
-                                    { label: 'Account Number', value: 'SBIN •••• •••• 7781', icon: 'credit_card', type: 'password' },
-                                    { label: 'Bank Name', value: 'State Bank of India', icon: 'account_balance' }
-                                ].map((field) => (
-                                    <motion.div key={field.label} className="group/field transition-all border-b border-outline-variant/5 pb-4 last:border-0 grow">
-                                        <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant font-bold opacity-60 flex items-center gap-2 mb-2 group-hover/field:text-primary transition-colors">
-                                            {field.label}
-                                        </label>
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center group-hover/field:bg-primary-container transition-all">
-                                                <span className="material-symbols-outlined text-[16px] group-hover/field:text-primary">{field.icon}</span>
-                                            </div>
-                                            <p className="font-headline text-xl font-bold text-on-background tracking-tighter truncate">{field.value}</p>
-                                            {field.type === 'password' && <span className="material-symbols-outlined text-sm text-primary cursor-pointer hover:scale-110 ml-auto">visibility</span>}
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                            
-                            <div className="mt-12">
-                                <motion.button 
-                                    whileHover={{ scale: 1.05, x: 5 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="vendor-gradient text-on-primary px-10 py-5 rounded-2xl font-bold flex items-center gap-3 hover:shadow-xl hover:shadow-primary/20 transition-all font-headline uppercase tracking-widest text-xs"
-                                >
-                                    <span className="material-symbols-outlined text-[18px]">edit</span>
-                                    Update Details
-                                </motion.button>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    <div className="md:col-span-4 space-y-6">
-                        {/* Payout Policy Card */}
-                        <motion.div 
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 shadow-sm"
-                        >
-                            <h4 className="font-headline font-bold text-on-background mb-6 text-xl tracking-tight">Payout Policy</h4>
-                            <ul className="space-y-6">
-                                <li className="flex gap-4 group">
-                                    <div className="shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:vendor-gradient group-hover:text-white transition-all">
-                                        <span className="material-symbols-outlined text-[16px]">event_repeat</span>
-                                    </div>
-                                    <p className="text-sm font-medium text-on-surface-variant leading-tight">Weekly settlements processed every <span className="font-bold text-on-surface">Friday</span>.</p>
-                                </li>
-                                <li className="flex gap-4 group">
-                                    <div className="shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:vendor-gradient group-hover:text-white transition-all">
-                                        <span className="material-symbols-outlined text-[16px]">payments</span>
-                                    </div>
-                                     <p className="text-sm font-medium text-on-surface-variant leading-tight">Minimum payout threshold: <span className="font-bold text-on-surface">₹500</span>.</p>
-                                </li>
-                            </ul>
-                        </motion.div>
-                        
-                        {/* Security Badge */}
-                        <motion.div 
-                            whileHover={{ y: -5 }}
-                            className="bg-primary/5 rounded-2xl p-8 border border-primary/20 group"
-                        >
-                            <div className="flex flex-col gap-4">
-                                <div className="w-16 h-16 vendor-gradient rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20 rotate-6 group-hover:rotate-0 transition-transform duration-500">
-                                    <span className="material-symbols-outlined text-[32px] font-black">lock_open</span>
-                                </div>
-                                <div>
-                                    <h4 className="font-headline font-extrabold text-on-background text-xl mb-2 tracking-tight">Vault-Grade Security</h4>
-                                    <p className="text-sm text-on-surface-variant font-medium leading-relaxed opacity-80">
-                                        All bank accounts are secured with AES-256 bank-level encryption. 
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
+                {/* Policies Section */}
+                <section className="space-y-8">
+                    <div className="border-b border-slate-100 pb-4">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-[#3D5AFE]">Payout Cycles & Policies</h3>
                     </div>
-                </div>
-
-                {/* Integration Info */}
-                <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="mt-16 p-8 bg-surface-container-low rounded-2xl border border-outline-variant/10 flex flex-col md:flex-row items-center justify-between gap-8 cursor-pointer hover:bg-white transition-all"
-                >
-                    <div className="flex items-center gap-6">
-                        <div className="p-4 bg-tertiary-container/30 text-tertiary rounded-full">
-                            <span className="material-symbols-outlined font-bold">help</span>
+                    <div className="space-y-10">
+                        <div className="flex gap-6 group">
+                            <span className="text-3xl font-black text-slate-100 group-hover:text-[#3D5AFE]/10 transition-colors">01</span>
+                            <div className="space-y-2">
+                                <h4 className="text-sm font-bold text-slate-800">Weekly Settlements</h4>
+                                <p className="text-xs text-slate-400 font-medium leading-relaxed max-w-sm">All earnings from completed orders are automatically settled to your bank account every <span className="text-slate-600 font-bold">Friday morning</span>.</p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 className="font-bold font-headline text-lg">Payout discrepancy?</h4>
-                            <p className="text-on-surface-variant font-medium text-sm">Our 24/7 financial support team is here to assist you.</p>
+                        <div className="flex gap-6 group">
+                            <span className="text-3xl font-black text-slate-100 group-hover:text-[#3D5AFE]/10 transition-colors">02</span>
+                            <div className="space-y-2">
+                                <h4 className="text-sm font-bold text-slate-800">Release Threshold</h4>
+                                <p className="text-xs text-slate-400 font-medium leading-relaxed max-w-sm">A minimum balance of <span className="text-slate-600 font-bold">₹500</span> is required for the system to initiate an automatic release. Smaller balances are carried forward.</p>
+                            </div>
                         </div>
                     </div>
-                    <motion.button whileHover={{ gap: '16px' }} className="text-primary font-extrabold flex items-center gap-3 uppercase tracking-widest text-xs">
-                        Open Financial Ticket
-                        <span className="material-symbols-outlined">arrow_forward_ios</span>
-                    </motion.button>
-                </motion.div>
+                </section>
+
+                {/* Footer Actions */}
+                <section className="pt-12 border-t border-slate-100 flex flex-col items-center gap-8">
+                    <div className="text-center space-y-2">
+                        <h4 className="text-base font-bold text-slate-800 tracking-tight">Financial Support Needed?</h4>
+                        <p className="text-xs text-slate-400 font-medium max-w-xs mx-auto">Get in touch with our treasury team for payout discrepancies or bank updates.</p>
+                    </div>
+                    <button className="px-10 py-4 bg-slate-50 text-slate-600 font-bold text-xs uppercase tracking-widest rounded-full hover:bg-slate-100 transition-all border border-slate-100">
+                        Connect with Helpdesk
+                    </button>
+                    <div className="flex items-center gap-2 opacity-20">
+                        <span className="material-symbols-outlined text-sm">security</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest">Secured by AES-256 Vault Encryption</span>
+                    </div>
+                </section>
             </motion.main>
         </div>
     );

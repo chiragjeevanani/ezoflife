@@ -1,58 +1,78 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
-  { label: 'Dashboard', icon: 'home', path: '/vendor/dashboard' },
-  { label: 'Earnings', icon: 'payments', path: '/vendor/earnings' },
-  { label: 'Services', icon: 'tune', path: '/vendor/services' },
-  { label: 'Payouts', icon: 'account_balance', path: '/vendor/payouts' },
+  { label: 'Home', icon: 'home', path: '/vendor/dashboard' },
+  { label: 'Sales', icon: 'payments', path: '/vendor/earnings' },
+  { label: 'Menu', icon: 'tune', path: '/vendor/services' },
+  { label: 'Bank', icon: 'account_balance', path: '/vendor/payouts' },
   { label: 'Profile', icon: 'person', path: '/vendor/profile' },
 ];
 
 const VendorBottomNav = () => {
+  const navigate = useNavigate();
   const location = useLocation();
 
+  const hideRoutes = [
+    '/vendor/splash', 
+    '/vendor/auth', 
+    '/vendor/otp', 
+    '/vendor/register', 
+    '/vendor/upload-documents', 
+    '/vendor/approval-pending'
+  ];
+
+  if (hideRoutes.some(route => location.pathname === route)) return null;
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4 pb-4 pointer-events-none">
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] flex justify-center pb-8 pt-4 px-6 md:hidden">
+      {/* Background overlay removed from nav to prevent click blocking */}
       <motion.div 
-        initial={{ y: 100, opacity: 0 }}
+        layout
+        initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
-        className="pointer-events-auto flex items-center bg-surface/80 backdrop-blur-2xl px-3 py-3 rounded-[2rem] shadow-2xl shadow-black/20 border border-white/60 gap-1"
+        transition={{ type: "spring", stiffness: 400, damping: 40 }}
+        className="flex items-center bg-white border border-slate-100 p-1 rounded-full shadow-2xl shadow-blue-900/15 gap-0.5"
       >
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
-            <NavLink key={item.path} to={item.path} className="relative flex flex-col items-center group">
-              {isActive && (
-                <motion.div 
-                  layoutId="vendor-nav-pill"
-                  className="absolute inset-0 vendor-gradient rounded-2xl"
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                />
-              )}
-              <div className={`relative z-10 flex flex-col items-center gap-1 px-4 py-2.5 rounded-2xl transition-all duration-300 min-w-[60px]`}>
-                <span 
-                  className={`material-symbols-outlined text-[22px] transition-all duration-300 ${isActive ? 'text-white scale-110' : 'text-on-surface-variant group-hover:text-primary'}`}
-                  style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
-                >
-                  {item.icon}
-                </span>
-                <AnimatePresence>
-                  {isActive && (
-                    <motion.span 
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 4 }}
-                      className="text-white font-black text-[9px] uppercase tracking-widest leading-none"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
-            </NavLink>
+            <button 
+              key={item.path} 
+              onClick={() => navigate(item.path)}
+              className="relative focus:outline-none touch-none no-underline"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              <motion.div 
+                layout
+                transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                className={`relative flex items-center h-12 rounded-full overflow-hidden transition-all duration-300 ${isActive ? 'vendor-gradient text-white px-5 shadow-lg shadow-blue-900/20' : 'bg-transparent text-slate-400 opacity-60 px-4'}`}
+              >
+                <div className="flex items-center gap-2">
+                  <span 
+                    className="material-symbols-outlined text-[20px]"
+                    style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                  >
+                    {item.icon}
+                  </span>
+                  
+                  <AnimatePresence initial={false}>
+                    {isActive && (
+                      <motion.span 
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ width: 'auto', opacity: 1 }}
+                        exit={{ width: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-[10px] font-black uppercase tracking-[0.1em] whitespace-nowrap overflow-hidden"
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            </button>
           );
         })}
       </motion.div>

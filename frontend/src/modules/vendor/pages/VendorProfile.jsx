@@ -7,105 +7,107 @@ const VendorProfile = () => {
     const navigate = useNavigate();
 
     const menuItems = [
-        { icon: 'edit', label: 'Edit Profile', sub: 'Update shop name and contact', path: null },
-        { icon: 'location_on', label: 'Shop Address', sub: 'Manage pickup location', path: '/vendor/register' },
-        { icon: 'account_balance', label: 'Bank & Payouts', sub: 'Manage settlements', path: '/vendor/payouts' },
-        { icon: 'receipt_long', label: 'Order History', sub: 'View completed orders', path: '/vendor/order-history' },
-        { icon: 'tune', label: 'Services & Pricing', sub: 'Configure your offerings', path: '/vendor/services' },
-        { icon: 'notifications', label: 'Notifications', sub: 'Manage alerts', path: '/vendor/notifications' },
-        { icon: 'help_outline', label: 'Help & Support', sub: 'FAQ and contact us', path: null },
+        { icon: 'edit', label: 'Edit Profile', path: '/vendor/edit-profile' },
+        { icon: 'location_on', label: 'Shop Address', path: '/vendor/register' },
+        { icon: 'account_balance', label: 'Bank & Payouts', path: '/vendor/payouts' },
+        { icon: 'receipt_long', label: 'Order History', path: '/vendor/order-history' },
+        { icon: 'tune', label: 'Services & Pricing', path: '/vendor/services' },
+        { icon: 'notifications', label: 'Notifications', path: '/vendor/notifications' },
+        { icon: 'help_outline', label: 'Help & Support', path: '/vendor/support' },
     ];
 
     return (
-        <div className="bg-surface text-on-surface min-h-screen pb-32">
+        <div className="bg-[#F8FAFC] text-[#1E293B] min-h-screen pb-32 font-sans">
             <VendorHeader />
 
             <motion.main 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="max-w-2xl mx-auto px-6 py-8"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-xl mx-auto px-6 py-6 space-y-6"
             >
-                {/* Profile Hero */}
-                <motion.div 
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    className="bg-surface-container-low rounded-[2rem] p-10 mb-8 border border-outline-variant/10 shadow-sm relative overflow-hidden"
-                >
-                    <div className="absolute top-0 right-0 w-64 h-64 vendor-gradient opacity-10 blur-3xl -mr-20 -mt-20"></div>
-                    
-                    <div className="relative z-10 flex items-center gap-8">
-                        <div className="relative">
-                            <div className="w-24 h-24 rounded-[1.5rem] bg-primary-container overflow-hidden shadow-xl border-4 border-white">
-                                <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAT1G7gcHTDKYAyUsrelXEMf2w6RQyBCMwtQmyqi-a7ZPOQcRRYhe1gqMBSPUsXY8Ru16zqZWc8aMj-kve41JSGpk8PBMQSmPvwiBPyQnE-KlBH_j2zy2u_kqX_CmMYKy2-bOYW3G-i3PiCbE759VmmQXpJyL_cmmWYbnIEV-rZR8sjSexO93iameBgS7Rd19y8CQTrD4Ke46jtuCZrbKo6LTv7KtyX4330_FAPFGYdMldUrndR32fDYqOWnPk42gI1Zxydi6FSoas" alt="Vendor" />
-                            </div>
-                            <div className="absolute -bottom-2 -right-2 vendor-gradient w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
-                                <span className="material-symbols-outlined text-white text-[16px]">verified</span>
-                            </div>
+                {/* Compact Profile Header */}
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-50 flex items-center gap-5">
+                    <div className="relative shrink-0">
+                        <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden border-2 border-white shadow-md">
+                            <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAT1G7gcHTDKYAyUsrelXEMf2w6RQyBCMwtQmyqi-a7ZPOQcRRYhe1gqMBSPUsXY8Ru16zqZWc8aMj-kve41JSGpk8PBMQSmPvwiBPyQnE-KlBH_j2zy2u_kqX_CmMYKy2-bOYW3G-i3PiCbE759VmmQXpJyL_cmmWYbnIEV-rZR8sjSexO93iameBgS7Rd19y8CQTrD4Ke46jtuCZrbKo6LTv7KtyX4330_FAPFGYdMldUrndR32fDYqOWnPk42gI1Zxydi6FSoas" alt="Vendor" />
                         </div>
-                        <div className="flex-1">
-                            <h2 className="font-headline font-black text-2xl tracking-tighter text-on-surface mb-1">Pristine Cleaners</h2>
-                            <p className="text-on-surface-variant font-medium text-sm mb-3">+91 98765 43210</p>
-                            <div className="flex items-center gap-3">
-                                <div className="flex text-amber-500">
-                                    {[...Array(5)].map((_, i) => <span key={i} className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>)}
-                                </div>
-                                <span className="text-xs font-black text-on-surface-variant">4.9 · 214 orders</span>
-                            </div>
+                        <div className="absolute -bottom-1 -right-1 bg-[#3D5AFE] w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                            <span className="material-symbols-outlined text-white text-[12px]">verified</span>
                         </div>
                     </div>
-
-                    {/* Stats Row */}
-                    <div className="relative z-10 grid grid-cols-3 gap-4 mt-8 pt-8 border-t border-outline-variant/10">
-                        {[
-                            { label: 'Orders', value: '214' },
-                            { label: 'Earnings', value: '₹1.2L' },
-                            { label: 'Rating', value: '4.9★' },
-                        ].map((stat) => (
-                            <div key={stat.label} className="text-center">
-                                <p className="font-headline font-black text-2xl tracking-tighter text-primary">{stat.value}</p>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{stat.label}</p>
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-xl font-bold tracking-tight text-slate-800 leading-none mb-1.5 truncate">Pristine Cleaners</h2>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-3">+91 98765 43210</p>
+                        <div className="flex items-center gap-3">
+                            <div className="flex text-amber-500 font-bold items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                <span className="text-[11px] text-slate-800">4.9</span>
                             </div>
-                        ))}
+                            <div className="w-[1px] h-3 bg-slate-200"></div>
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">214 Orders</span>
+                        </div>
                     </div>
-                </motion.div>
+                    <button onClick={() => navigate('/vendor/edit-profile')} className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 hover:text-[#3D5AFE] transition-colors border border-slate-100/50">
+                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+                </div>
 
-                {/* Menu Items */}
-                <div className="space-y-3">
+                {/* Compact Highlights */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white p-4 rounded-2xl border border-slate-50 shadow-sm flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Revenue</p>
+                            <p className="text-base font-black text-slate-800 tracking-tight">₹1.2L</p>
+                        </div>
+                        <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center text-green-500">
+                            <span className="material-symbols-outlined text-[18px]">payments</span>
+                        </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl border border-slate-50 shadow-sm flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Uptime</p>
+                            <p className="text-base font-black text-slate-800 tracking-tight">98%</p>
+                        </div>
+                        <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-[#3D5AFE]">
+                            <span className="material-symbols-outlined text-[18px]">bolt</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Compact Menu List */}
+                <div className="bg-white rounded-3xl overflow-hidden border border-slate-50 shadow-sm">
                     {menuItems.map((item, i) => (
-                        <motion.button 
+                        <button 
                             key={item.label}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.1 + i * 0.05 }}
-                            whileHover={{ x: 6 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => item.path && navigate(item.path)}
-                            className="w-full bg-surface-container-low hover:bg-white p-6 rounded-2xl flex items-center gap-5 border border-outline-variant/5 shadow-sm transition-all group text-left"
+                            onClick={() => navigate(item.path)}
+                            className="w-full flex items-center justify-between p-4 px-5 hover:bg-slate-50 transition-all border-b border-slate-50 last:border-0 group"
                         >
-                            <div className="w-12 h-12 bg-primary-container/20 rounded-xl flex items-center justify-center text-primary group-hover:vendor-gradient group-hover:text-white transition-all">
-                                <span className="material-symbols-outlined">{item.icon}</span>
+                            <div className="flex items-center gap-4">
+                                <div className="text-slate-300 group-hover:text-[#3D5AFE] transition-colors flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                                </div>
+                                <span className="text-sm font-bold text-slate-700 tracking-tight">{item.label}</span>
                             </div>
-                            <div className="flex-1">
-                                <p className="font-headline font-bold text-on-surface">{item.label}</p>
-                                <p className="text-xs text-on-surface-variant font-medium">{item.sub}</p>
-                            </div>
-                            <span className="material-symbols-outlined text-on-surface-variant/40 group-hover:text-primary transition-colors">chevron_right</span>
-                        </motion.button>
+                            <span className="material-symbols-outlined text-slate-200 text-[18px] group-hover:text-[#3D5AFE] group-hover:translate-x-1 transition-all">chevron_right</span>
+                        </button>
                     ))}
                 </div>
 
-                {/* Logout */}
-                <motion.button 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/vendor/auth')}
-                    className="w-full mt-6 p-6 rounded-2xl flex items-center justify-center gap-3 border border-red-200/50 text-red-500 hover:bg-red-50 transition-all font-headline font-bold"
-                >
-                    <span className="material-symbols-outlined">logout</span>
-                    Sign Out
-                </motion.button>
+                {/* Action Row */}
+                <div className="flex gap-4">
+                    <button className="flex-1 bg-white border border-slate-100 p-4 rounded-2xl flex items-center justify-center gap-2 group hover:bg-red-50 hover:border-red-100 transition-all">
+                        <span className="material-symbols-outlined text-slate-300 group-hover:text-red-500 text-[18px]">logout</span>
+                        <span className="text-xs font-bold text-slate-400 group-hover:text-red-600 uppercase tracking-widest">Sign Out</span>
+                    </button>
+                    <button className="flex-1 bg-white border border-slate-100 p-4 rounded-2xl flex items-center justify-center gap-2 group hover:bg-slate-50 transition-all">
+                        <span className="material-symbols-outlined text-slate-300 group-hover:text-slate-600 text-[18px]">dark_mode</span>
+                        <span className="text-xs font-bold text-slate-400 group-hover:text-slate-600 uppercase tracking-widest">App Mode</span>
+                    </button>
+                </div>
+
+                <div className="text-center pt-4">
+                    <p className="text-[10px] font-bold text-slate-200 uppercase tracking-[0.3em]">Version 2.0.4-gold</p>
+                </div>
             </motion.main>
         </div>
     );

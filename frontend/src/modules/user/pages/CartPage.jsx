@@ -8,6 +8,16 @@ const CartPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const selectedService = location.state?.selectedService;
+  const [promoCode, setPromoCode] = useState('');
+  const [isPromoApplied, setIsPromoApplied] = useState(false);
+  const [promoError, setPromoError] = useState('');
+
+  const [addresses] = useState([
+    { id: 1, type: 'Home', address: '249 Editorial Ave, Suite 4B, Pristine Heights, NY 10012', isDefault: true },
+    { id: 2, type: 'Office', address: '88 Creative Plaza, 12th Floor, Metro Central, NY 10001', isDefault: false }
+  ]);
+  const [selectedAddress, setSelectedAddress] = useState(addresses[0]);
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
 
   // Initialize cart with the selected service or a default if none
   const defaultItems = [
@@ -155,16 +165,27 @@ const CartPage = () => {
 
   const getItemPrice = (item) => {
     const unit = billingUnits[item.id] || 'pc';
-    const originalPrice = parseFloat(item.price?.toString().replace(/[^\d.]/g, '') || '0');
+    const rawPrice = item.price;
+    // Helper to parse price string or number
+    const parsePrice = (p) => {
+      if (typeof p === 'number') return p;
+      if (typeof p === 'string') {
+        const cleaned = p.replace(/[^\d.]/g, '');
+        return parseFloat(cleaned) || 0;
+      }
+      return 0;
+    };
+
+    const price = parsePrice(rawPrice);
     
     // Services typically billed by weight (Wash, Carpet, Curtains)
     if (item.id.includes('wash') || item.id.includes('carpet') || item.id.includes('curtain')) {
-      if (unit === 'kg') return originalPrice > 0 ? originalPrice : 99;
+      if (unit === 'kg') return price > 0 ? price : 99;
       return 18; // Rate per piece for weight-based services
     }
     
     // Services typically billed by piece (Dry Clean, Ironing, Shoe, Bag)
-    if (unit === 'pc') return originalPrice > 0 ? originalPrice : 49;
+    if (unit === 'pc') return price > 0 ? price : 49;
     return 199; // Standard weight rate for piece-based services
   };
 
@@ -174,7 +195,18 @@ const CartPage = () => {
   }, 0);
   const logisticsFee = 50.00;
   const expressFee = isExpress ? 150.00 : 0;
-  const grandTotal = subtotal + logisticsFee + expressFee;
+  const discount = isPromoApplied ? (subtotal * 0.3) : 0;
+  const grandTotal = subtotal + logisticsFee + expressFee - discount;
+
+  const handleApplyPromo = () => {
+    if (promoCode.toUpperCase() === 'FRESH30') {
+      setIsPromoApplied(true);
+      setPromoError('');
+    } else {
+      setPromoError('Invalid code');
+      setIsPromoApplied(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -452,6 +484,56 @@ const CartPage = () => {
               )}
             </AnimatePresence>
 
+            {/* Address Selection Section */}
+            <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="font-headline font-black text-2xl flex items-center gap-3 tracking-tighter">
+                  <span className="material-symbols-outlined text-primary text-3xl">location_on</span>
+                  Pickup Address
+                </h3>
+                <button 
+                  onClick={() => setShowAddressPicker(true)}
+                  className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-4 py-2 rounded-xl"
+                >
+                  Change
+                </button>
+              </div>
+              <div className="bg-surface-container-low p-6 rounded-3xl flex items-center gap-5 border border-outline-variant/5">
+                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm">
+                  <span className="material-symbols-outlined">{selectedAddress.type === 'Home' ? 'home' : 'work'}</span>
+                </div>
+                <div>
+                  <p className="font-black text-on-surface text-sm uppercase">{selectedAddress.type}</p>
+                  <p className="text-[11px] font-bold text-on-surface-variant opacity-60 leading-relaxed max-w-[200px]">{selectedAddress.address}</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Promo Code Section */}
+            <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
+              <h3 className="font-headline font-black text-2xl flex items-center gap-3 tracking-tighter">
+                <span className="material-symbols-outlined text-primary text-3xl">sell</span>
+                Promo Code
+              </h3>
+              <div className="relative flex items-center bg-surface-container-low rounded-[1.5rem] px-6 py-2 border border-outline-variant/10 focus-within:border-primary/30 transition-all">
+                <input 
+                  type="text" 
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  placeholder="Enter code (e.g. FRESH30)"
+                  className="bg-transparent border-none focus:ring-0 p-3 text-sm font-black w-full uppercase placeholder:text-outline-variant/40"
+                />
+                <button 
+                  onClick={handleApplyPromo}
+                  className="bg-primary text-on-primary px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                >
+                  {isPromoApplied ? 'Applied' : 'Apply'}
+                </button>
+              </div>
+              {promoError && <p className="text-[10px] font-black text-error uppercase tracking-widest ml-4">{promoError}</p>}
+              {isPromoApplied && <p className="text-[10px] font-black text-primary uppercase tracking-widest ml-4">Success! 30% discount unlocked.</p>}
+            </motion.div>
+
             {/* Total Summary */}
             <motion.div 
               variants={itemVariants} 
@@ -470,6 +552,12 @@ const CartPage = () => {
                   <span className="text-on-surface-variant font-bold opacity-70">Logistics</span>
                   <span className="font-black text-on-surface leading-none">₹{logisticsFee.toFixed(2)}</span>
                 </div>
+                {isPromoApplied && (
+                  <div className="flex justify-between items-center text-sm md:text-md text-primary">
+                    <span className="font-bold">Promo Discount (30%)</span>
+                    <span className="font-black leading-none">- ₹{discount.toFixed(2)}</span>
+                  </div>
+                )}
                 {isExpress && (
                   <div className="flex justify-between items-center text-sm md:text-md">
                     <span className="text-primary font-bold">Express Handling</span>
@@ -587,6 +675,58 @@ const CartPage = () => {
                   Close
                 </button>
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Address Picker Modal */}
+      <AnimatePresence>
+        {showAddressPicker && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAddressPicker(false)}
+              className="fixed inset-0 bg-on-surface/40 backdrop-blur-sm z-[150]"
+            />
+            <motion.div 
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-white rounded-t-[3rem] p-10 z-[151] shadow-2xl"
+            >
+              <div className="w-16 h-1.5 bg-outline-variant/20 rounded-full mx-auto mb-8" />
+              <h3 className="text-3xl font-black tracking-tighter mb-8 shrink-0">Select Locale</h3>
+              <div className="space-y-4 mb-8">
+                {addresses.map((addr) => (
+                  <button 
+                    key={addr.id}
+                    onClick={() => { setSelectedAddress(addr); setShowAddressPicker(false); }}
+                    className={`w-full p-6 rounded-[2rem] flex items-center justify-between border-2 transition-all ${
+                      selectedAddress.id === addr.id ? 'bg-primary/5 border-primary shadow-sm' : 'bg-surface-container-low border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-5">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedAddress.id === addr.id ? 'bg-primary text-white' : 'bg-white text-on-surface-variant'}`}>
+                        <span className="material-symbols-outlined text-lg">{addr.type === 'Home' ? 'home' : 'work'}</span>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-black text-sm text-on-surface leading-none mb-1">{addr.type}</p>
+                        <p className="text-[10px] font-bold text-on-surface-variant opacity-60 truncate max-w-[180px]">{addr.address}</p>
+                      </div>
+                    </div>
+                    {selectedAddress.id === addr.id && <span className="material-symbols-outlined text-primary">check_circle</span>}
+                  </button>
+                ))}
+              </div>
+              <button 
+                onClick={() => navigate('/user/profile/addresses')}
+                className="w-full py-5 bg-surface-container-highest rounded-2xl font-black text-[10px] uppercase tracking-widest"
+              >
+                Manage Addresses
+              </button>
             </motion.div>
           </>
         )}

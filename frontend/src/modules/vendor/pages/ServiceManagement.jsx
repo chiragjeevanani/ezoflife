@@ -1,143 +1,122 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import VendorHeader from '../components/VendorHeader';
+import { MASTER_SERVICES } from '../../../shared/data/sharedData';
 
 const ServiceManagement = () => {
     const navigate = useNavigate();
+    const [services, setServices] = useState(
+        MASTER_SERVICES.map(s => ({
+            ...s,
+            active: true // Default all to active for now
+        }))
+    );
 
-    const services = [
-        { icon: "local_laundry_service", title: "Wash & Fold", unit: "Per Kg", price: "99", active: true },
-        { icon: "dry_cleaning", title: "Dry Cleaning", unit: "Per Piece", price: "149", active: true },
-        { icon: "bed", title: "Bedding & Linens", unit: "Per Set", price: "249", active: true },
-        { icon: "iron", title: "Ironing Only", unit: "Per Piece", price: "49", active: false },
-    ];
+    const toggleService = (idx) => {
+        const newServices = [...services];
+        newServices[idx].active = !newServices[idx].active;
+        setServices(newServices);
+    };
 
-    const containerVariants = {
-        animate: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
+    const updatePrice = (idx, price) => {
+        const newServices = [...services];
+        newServices[idx].basePrice = price;
+        setServices(newServices);
+    };
+
+    const handleUpdate = () => {
+        // In a real app, save to backend
+        localStorage.setItem('vendor_services_V001', JSON.stringify(services));
+        alert('Services updated successfully!');
     };
 
     return (
-        <div className="bg-surface text-on-surface min-h-screen pb-32">
-            <VendorHeader />
-
-            <motion.main 
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
-                className="max-w-5xl mx-auto px-6 pt-8 pb-32"
-            >
-                {/* Editorial Header Section */}
-                <motion.section variants={{ initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } }} className="mb-12">
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                        <div className="space-y-2">
-                            <span className="text-label-md font-bold uppercase tracking-widest text-primary-dim block">Inventory Control</span>
-                            <h2 className="font-headline text-display-sm font-extrabold tracking-tight text-on-surface max-w-lg leading-tight">Manage your services & active pricing.</h2>
-                        </div>
-                        <motion.button whileHover={{ x: 5 }} className="group flex items-center gap-2 text-primary font-bold transition-all duration-300">
-                            <span className="text-label-md uppercase tracking-widest">Manage Promotions</span>
-                            <span className="material-symbols-outlined">arrow_forward</span>
-                        </motion.button>
-                    </div>
-                </motion.section>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    {/* Information Panel */}
-                    <motion.div 
-                        variants={{ initial: { scale: 0.95 }, animate: { scale: 1 } }}
-                        className="lg:col-span-4 space-y-6"
-                    >
-                        <div className="bg-surface-container-low p-8 rounded-2xl border border-white shadow-sm hover:shadow-md transition-shadow">
-                            <div className="w-14 h-14 bg-primary text-on-primary rounded-xl flex items-center justify-center mb-8 shadow-lg shadow-primary/20 rotate-3">
-                                <span className="material-symbols-outlined text-3xl font-bold">lightbulb</span>
-                            </div>
-                            <h3 className="font-headline text-headline-sm font-bold mb-3 tracking-tight">Pricing Strategy</h3>
-                            <p className="text-body-lg text-on-surface-variant leading-relaxed font-body">
-                                Top vendors in your district set <span className="text-primary font-bold">Wash & Fold</span> starting at ₹99/kg for high retention.
-                            </p>
-                            <motion.button whileHover={{ scale: 1.05 }} className="mt-8 text-primary font-bold uppercase tracking-widest text-xs flex items-center gap-1 group">
-                                Read Strategy Guide 
-                                <span className="material-symbols-outlined transition-transform">auto_awesome</span>
-                            </motion.button>
-                        </div>
-                        
-                        <div className="bg-primary/5 p-8 rounded-2xl border border-primary/10 overflow-hidden relative">
-                            <div className="absolute -right-4 -bottom-4 opacity-5 rotate-12">
-                                <span className="material-symbols-outlined text-9xl">analytics</span>
-                            </div>
-                            <h3 className="font-label text-label-md font-bold uppercase tracking-widest text-primary mb-6">Service Health</h3>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-on-surface-variant font-medium">Platform Visibility</span>
-                                    <span className="font-bold text-headline-xs tracking-tighter text-primary">84%</span>
-                                </div>
-                                <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                                    <motion.div initial={{ width: 0 }} animate={{ width: '84%' }} transition={{ duration: 1.5, ease: "circOut" }} className="vendor-gradient h-full rounded-full" />
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Service List (Main Content) */}
-                    <div className="lg:col-span-8 space-y-4">
-                        {services.map((service, idx) => (
-                            <ServiceItemWithMotion key={service.title} {...service} idx={idx} />
-                        ))}
-
-                        {/* Save Changes Area */}
-                        <motion.div 
-                            variants={{ initial: { opacity: 0 }, animate: { opacity: 1 } }}
-                            className="pt-12 pb-12 flex flex-col items-center"
-                        >
-                            <motion.button 
-                                whileHover={{ scale: 1.02, y: -2 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="w-full py-6 vendor-gradient text-on-primary font-extrabold text-headline-sm rounded-2xl shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3 active:shadow-inner"
-                            >
-                                <span className="material-symbols-outlined font-bold">save</span>
-                                Save Changes
-                            </motion.button>
-                            <p className="mt-6 text-label-md text-on-surface-variant font-bold uppercase tracking-widest opacity-60">Synchronizing with customer app</p>
-                        </motion.div>
-                    </div>
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-[#F8FAFC] text-slate-800 min-h-screen pb-32 font-sans"
+        >
+            <header className="bg-white/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                    <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-[#3D5AFE] transition-colors">
+                        <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+                    </button>
+                    <h1 className="text-lg font-bold tracking-tight">Services</h1>
                 </div>
-            </motion.main>
-        </div>
+                <button 
+                    onClick={() => navigate('/vendor/services/add')}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#3D5AFE] text-white shadow-lg shadow-blue-400/20 hover:bg-[#304FFE] transition-all"
+                >
+                    <span className="material-symbols-outlined text-[20px]">add</span>
+                </button>
+            </header>
+
+            <main className="max-w-xl mx-auto px-6 pt-8 space-y-8">
+                {/* Header Section */}
+                <section className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-4">
+                    <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-[#3D5AFE]">
+                        <span className="material-symbols-outlined text-[24px]">trending_up</span>
+                    </div>
+                    <div className="space-y-1">
+                        <h2 className="text-lg font-bold text-slate-800 tracking-tight">Manage Inventory</h2>
+                        <p className="text-xs text-slate-400 font-medium leading-relaxed font-body">Set service active/inactive status and update current pricing.</p>
+                    </div>
+                </section>
+
+                {/* Service List */}
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between px-2">
+                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Active Offerings</h3>
+                    </div>
+                    
+                    <div className="space-y-3">
+                        {services.map((service, idx) => (
+                            <div key={service.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between gap-6 transition-all group">
+                                <div className="flex items-center gap-4 min-w-0">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${service.active ? 'bg-blue-50 text-[#3D5AFE]' : 'bg-slate-50 text-slate-300'}`}>
+                                        <span className="material-symbols-outlined text-[20px]">{service.icon}</span>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h4 className="text-sm font-bold text-slate-800 tracking-tight truncate">{service.name}</h4>
+                                        <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">{service.unit}</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <div className="relative group/price">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300 group-hover/price:text-[#3D5AFE] transition-colors">₹</span>
+                                        <input 
+                                            type="text"
+                                            value={service.basePrice}
+                                            onChange={(e) => updatePrice(idx, e.target.value)}
+                                            className="w-20 pl-6 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-700 focus:bg-white focus:border-[#3D5AFE]/20 transition-all outline-none"
+                                        />
+                                    </div>
+                                    <div 
+                                        onClick={() => toggleService(idx)}
+                                        className={`w-8 h-4 rounded-full relative cursor-pointer transition-colors ${service.active ? 'bg-green-100' : 'bg-slate-100'}`}
+                                    >
+                                        <div className={`absolute top-0.5 w-3 h-3 rounded-full shadow-sm transition-all ${service.active ? 'right-0.5 bg-green-500' : 'left-0.5 bg-slate-300'}`}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                <div className="pt-8">
+                    <button 
+                        onClick={handleUpdate}
+                        className="w-full py-5 rounded-[2rem] bg-[#3D5AFE] text-white font-bold text-lg shadow-xl shadow-blue-400/20 hover:bg-[#304FFE] transition-all flex items-center justify-center gap-3"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">check</span>
+                        Update Services
+                    </button>
+                    <p className="mt-6 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest opacity-60">Last updated: Today, 10:45 AM</p>
+                </div>
+            </main>
+        </motion.div>
     );
 };
-
-const ServiceItemWithMotion = ({ icon, title, unit, price, active, idx }) => (
-    <motion.div 
-        variants={{ initial: { opacity: 0, x: 20 }, animate: { opacity: 1, x: 0 } }}
-        whileHover={{ x: 10, scale: 1.01, backgroundColor: "rgba(255,255,255,0.7)" }}
-        className="group bg-surface-container-low p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-300 border border-outline-variant/10 shadow-sm hover:shadow-lg cursor-pointer"
-    >
-        <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-surface outline outline-1 outline-primary-container text-primary rounded-xl flex items-center justify-center shadow-inner group-hover:vendor-gradient group-hover:text-white transition-all duration-500">
-                <span className="material-symbols-outlined text-[36px] group-hover:scale-110 transition-transform">{icon}</span>
-            </div>
-            <div>
-                <h4 className="font-headline text-xl font-extrabold tracking-tight text-on-surface">{title}</h4>
-                <p className="text-label-md text-on-surface-variant font-bold uppercase tracking-tighter opacity-70">{unit}</p>
-            </div>
-        </div>
-        <div className="flex items-center gap-8">
-            <div className="relative group/input">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-extrabold group-hover/input:scale-110 transition-transform">₹</span>
-                <input 
-                    className="bg-surface border-2 border-transparent group-hover/input:border-primary/20 rounded-xl pl-9 pr-4 py-4 w-32 font-black text-headline-sm text-on-surface focus:ring-4 focus:ring-primary/10 transition-all outline-none shadow-inner" 
-                    defaultValue={price} 
-                    type="text" 
-                />
-            </div>
-            
-            {/* Custom UI Toggle */}
-            <label className="relative inline-flex items-center cursor-pointer scale-110">
-                <input className="sr-only peer" defaultChecked={active} type="checkbox" />
-                <div className="w-14 h-8 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:vendor-gradient shadow-inner"></div>
-            </label>
-        </div>
-    </motion.div>
-);
 
 export default ServiceManagement;

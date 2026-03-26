@@ -7,9 +7,12 @@ const OrderDetails = () => {
     const { id } = useParams();
     const orderId = id || 'EZ-8821';
 
+    const [showReport, setShowReport] = useState(false);
+    const [reportReason, setReportReason] = useState('');
+
     const orderStages = [
         { id: 1, label: 'Picked Up', icon: 'local_shipping', status: 'completed' },
-        { id: 2, label: 'Processing', icon: 'local_laundry_service', status: 'active' },
+        { id: 2, label: 'Processing', icon: 'local_laundry_service', status: 'active', color: 'primary' },
         { id: 3, label: 'Ready', icon: 'check_circle', status: 'pending' },
         { id: 4, label: 'Delivered', icon: 'house', status: 'pending' },
     ];
@@ -36,10 +39,66 @@ const OrderDetails = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button className="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low rounded-full scale-90">help_outline</button>
-                    <button className="material-symbols-outlined text-red-500 p-2 hover:bg-red-50 rounded-full scale-90">report</button>
+                    <button onClick={() => navigate('/vendor/support')} className="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low rounded-full scale-90">help_outline</button>
+                    <button 
+                        onClick={() => setShowReport(true)}
+                        className="material-symbols-outlined text-red-500 p-2 hover:bg-red-50 rounded-full scale-90"
+                    >
+                        report
+                    </button>
                 </div>
             </header>
+
+            {/* Report Issue Modal */}
+            <AnimatePresence>
+                {showReport && (
+                    <>
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowReport(false)}
+                            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200]"
+                        />
+                        <motion.div 
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            exit={{ y: "100%" }}
+                            className="fixed bottom-0 left-0 right-0 max-w-xl mx-auto bg-white rounded-t-[3rem] p-10 z-[201] shadow-2xl"
+                        >
+                            <div className="w-16 h-1.5 bg-slate-100 rounded-full mx-auto mb-8" />
+                            <h3 className="text-2xl font-black tracking-tighter mb-2">Report Issue</h3>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8">What happened with order #{orderId}?</p>
+                            
+                            <div className="space-y-3 mb-8">
+                                {[
+                                    'Customer unreachable',
+                                    'Fabric damage risk',
+                                    'Incorrect weight/count',
+                                    'Rider pickup issue',
+                                    'Other'
+                                ].map((reason) => (
+                                    <button 
+                                        key={reason}
+                                        onClick={() => setReportReason(reason)}
+                                        className={`w-full p-5 rounded-2xl flex justify-between items-center border-2 transition-all ${reportReason === reason ? 'bg-red-50 border-red-200 text-red-600 font-bold' : 'bg-slate-50 border-transparent text-slate-500 font-medium'}`}
+                                    >
+                                        <span className="text-sm">{reason}</span>
+                                        {reportReason === reason && <span className="material-symbols-outlined text-sm">check_circle</span>}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button 
+                                onClick={() => { setShowReport(false); /* Logic to send report */ }}
+                                className="w-full py-5 bg-red-500 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-lg shadow-red-500/20"
+                            >
+                                Submit Report
+                            </button>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             <main className="flex-1 flex flex-col px-5 py-6 gap-6 overflow-y-auto pb-40">
                 {/* Horizontal Status Stepper - More Compact */}

@@ -1,0 +1,77 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import VendorHeader from '../components/VendorHeader';
+
+const Support = () => {
+    const navigate = useNavigate();
+
+    const faqs = [
+        { q: 'How do payouts work?', a: 'Payouts are processed every Friday for all orders completed in the previous week.' },
+        { q: 'Changing service prices', a: 'You can update your service prices anytime from the Services & Pricing menu.' },
+        { q: 'What is rider verification?', a: 'It\'s a security step to ensure the correct rider picks up and delivers orders.' },
+    ];
+
+    return (
+        <div className="bg-[#F8FAFC] text-[#1E293B] min-h-screen pb-32 font-sans">
+            <VendorHeader title="Help & Support" showBack={true} />
+
+            <motion.main 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-xl mx-auto px-6 py-8 space-y-8"
+            >
+                {/* Support Card */}
+                <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 space-y-8 text-center">
+                    <div className="w-20 h-20 bg-[#3D5AFE]/10 rounded-full flex items-center justify-center text-[#3D5AFE] mx-auto">
+                        <span className="material-symbols-outlined text-[32px]">support_agent</span>
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-xl font-bold tracking-tight">Need help?</h2>
+                        <p className="text-sm text-slate-500 font-medium">Our team is available 24/7 to assist you with any issues.</p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        <button className="w-full py-4 rounded-2xl bg-[#3D5AFE] text-white font-bold text-sm shadow-lg shadow-[#3D5AFE]/20 flex items-center justify-center gap-2 hover:bg-[#304FFE] transition-all">
+                            <span className="material-symbols-outlined text-[20px]">chat</span>
+                            Chat with Support
+                        </button>
+                        <button className="w-full py-4 rounded-2xl bg-white text-slate-800 font-bold text-sm border border-slate-200 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+                            <span className="material-symbols-outlined text-[20px]">mail</span>
+                            Email Us
+                        </button>
+                    </div>
+                </div>
+
+                {/* FAQ Section */}
+                <section className="space-y-4">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Common Questions</label>
+                    <div className="space-y-3">
+                        {faqs.map((faq, i) => (
+                            <div key={i} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm transition-all hover:bg-slate-50 cursor-pointer">
+                                <h4 className="text-sm font-bold text-slate-800 mb-2">{faq.q}</h4>
+                                <p className="text-xs text-slate-500 font-medium leading-relaxed">{faq.a}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* Legal Links */}
+                <section className="space-y-4">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Legal</label>
+                    <div className="flex flex-col gap-3">
+                        <button onClick={() => navigate('/vendor/privacy-policy')} className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-100 hover:bg-slate-50 transition-all font-bold text-xs text-slate-600">
+                            Privacy Policy
+                            <span className="material-symbols-outlined text-slate-300">chevron_right</span>
+                        </button>
+                        <button onClick={() => navigate('/vendor/terms-conditions')} className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-100 hover:bg-slate-50 transition-all font-bold text-xs text-slate-600">
+                            Terms & Conditions
+                            <span className="material-symbols-outlined text-slate-300">chevron_right</span>
+                        </button>
+                    </div>
+                </section>
+            </motion.main>
+        </div>
+    );
+};
+
+export default Support;

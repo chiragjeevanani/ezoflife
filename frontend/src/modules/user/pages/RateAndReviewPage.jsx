@@ -1,0 +1,119 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+
+const RateAndReviewPage = () => {
+  const navigate = useNavigate();
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const stats = [
+    { label: 'Quality', val: 'Excellent' },
+    { label: 'Speed', val: 'Fast' },
+    { label: 'Service', val: 'Polite' }
+  ];
+
+  const handleReview = () => {
+    setIsSubmitted(true);
+    setTimeout(() => {
+        navigate('/user/home');
+    }, 2500);
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-background text-on-background min-h-[100dvh] flex flex-col"
+    >
+      <header className="fixed top-0 z-50 bg-white/70 backdrop-blur-xl w-full flex items-center px-6 py-4 border-b border-outline-variant/10">
+        <button onClick={() => navigate(-1)} className="material-symbols-outlined text-on-surface-variant mr-4">arrow_back</button>
+        <h1 className="font-headline font-black text-xl text-primary tracking-tighter">Rate & Review</h1>
+      </header>
+
+      <main className="max-w-2xl mx-auto px-6 pt-24 pb-36 w-full flex-1 flex flex-col items-center">
+        {!isSubmitted ? (
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-full flex flex-col items-center"
+            >
+                <div className="mb-12 text-center">
+                    <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-1 block opacity-60">Experience Feedback</span>
+                    <h2 className="text-3xl font-black tracking-tighter leading-none mb-3">Rate Your Freshness</h2>
+                    <p className="text-xs font-bold text-on-surface-variant opacity-60">How was your cleaning with Ez of Life?</p>
+                </div>
+
+                {/* Rating Interaction */}
+                <div className="flex gap-4 mb-12">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <motion.button 
+                            key={star}
+                            whileHover={{ scale: 1.2, rotate: 10 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setRating(star)}
+                            className={`material-symbols-outlined text-5xl transition-colors ${rating >= star ? 'text-amber-500' : 'text-slate-200'}`}
+                            style={{ fontVariationSettings: rating >= star ? "'FILL' 1" : "'FILL' 0" }}
+                        >
+                            star
+                        </motion.button>
+                    ))}
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-3 gap-4 w-full mb-10">
+                    {stats.map((s, i) => (
+                        <div key={i} className="bg-surface-container-low p-4 rounded-3xl border border-outline-variant/10 text-center">
+                            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-50 mb-1">{s.label}</p>
+                            <p className="text-[11px] font-black text-on-surface uppercase tracking-widest">{s.val}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Comment Section */}
+                <div className="w-full mb-12">
+                    <textarea 
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder="Share your thoughts... (optional)"
+                        className="w-full bg-white rounded-[2rem] p-8 border border-outline-variant/10 focus:ring-2 focus:ring-primary/10 transition-all text-sm font-bold min-h-[160px] placeholder:text-outline-variant/40"
+                    />
+                </div>
+
+                <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleReview}
+                    className="w-full bg-primary-gradient py-6 rounded-2xl text-on-primary font-headline font-black text-xl shadow-2xl shadow-primary/20 tracking-[0.2em] uppercase"
+                >
+                    Submit Review
+                </motion.button>
+            </motion.div>
+        ) : (
+            <motion.div 
+               initial={{ scale: 0.8, opacity: 0 }}
+               animate={{ scale: 1, opacity: 1 }}
+               className="flex-1 flex flex-col items-center justify-center text-center"
+            >
+                <div className="w-24 h-24 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-2xl shadow-primary/30 mb-8 overflow-hidden relative">
+                    <motion.span 
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                        className="material-symbols-outlined text-5xl font-black"
+                    >
+                        check
+                    </motion.span>
+                </div>
+                <h2 className="text-4xl font-black tracking-tighter mb-3 leading-none italic">Thank You!</h2>
+                <p className="text-xs font-bold text-on-surface-variant opacity-60 leading-relaxed tracking-widest uppercase px-12">
+                    Your feedback flows into our perfection cycle. Heading back home...
+                </p>
+            </motion.div>
+        )}
+      </main>
+    </motion.div>
+  );
+};
+
+export default RateAndReviewPage;

@@ -1,209 +1,153 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Dashboard = () => {
     const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState('Available');
+    const [isOnline, setIsOnline] = useState(true);
 
-    const containerVariants = {
-        animate: { transition: { staggerChildren: 0.1 } }
-    };
-    const itemVariants = {
-        initial: { opacity: 0, y: 20 },
-        animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+    const ordersData = {
+        'Available': [
+            { id: "EZ-8821", title: "Premium Wash & Fold", desc: "Estimated: 12.5 kg · Mixed Fabrics", dist: "0.8 km away", icon: "dry_cleaning" },
+            { id: "EZ-8824", title: "Eco-Friendly Dry Clean", desc: "5 Items · 2 Suits, 3 Silk Shirts", dist: "2.4 km away", icon: "checkroom" },
+            { id: "EZ-8825", title: "Ironing Only", desc: "15 Cotton Shirts · Starch Preferred", dist: "1.5 km away", icon: "iron" },
+        ],
+        'In Progress': [
+            { id: "EZ-8815", title: "Heavy Duty Wash", desc: "8 kg · Bed Linens & Towels", dist: "Processing (45%)", icon: "local_laundry_service" },
+            { id: "EZ-8816", title: "Delicate Silk Care", desc: "2 Items · Evening Gowns", dist: "Ironing Stage", icon: "opacity" },
+        ],
+        'Ready': [
+            { id: "EZ-8810", title: "Quick Wash", desc: "3 kg · Gym Wear", dist: "Ready for Pickup", icon: "shopping_basket" },
+            { id: "EZ-8808", title: "Blanket Sterilization", desc: "2 Large Blankets", dist: "Out for Delivery", icon: "sanitizer" },
+        ]
     };
 
     return (
-        <div className="bg-surface text-on-surface min-h-screen pb-32">
-            {/* TopAppBar */}
-            <motion.header 
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="bg-surface/70 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-outline-variant/5"
-            >
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-[#F8FAFC] text-slate-800 min-h-screen pb-32 font-sans"
+        >
+            {/* Header */}
+            <header className="bg-white/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-slate-100">
                 <div className="flex items-center gap-3">
-                    <motion.div 
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                    <div 
                         onClick={() => navigate('/vendor/profile')}
-                        className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden cursor-pointer shadow-sm"
+                        className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden cursor-pointer border border-slate-200"
                     >
                         <img 
                             className="w-full h-full object-cover" 
                             src="https://lh3.googleusercontent.com/aida-public/AB6AXuAT1G7gcHTDKYAyUsrelXEMf2w6RQyBCMwtQmyqi-a7ZPOQcRRYhe1gqMBSPUsXY8Ru16zqZWc8aMj-kve41JSGpk8PBMQSmPvwiBPyQnE-KlBH_j2zy2u_kqX_CmMYKy2-bOYW3G-i3PiCbE759VmmQXpJyL_cmmWYbnIEV-rZR8sjSexO93iameBgS7Rd19y8CQTrD4Ke46jtuCZrbKo6LTv7KtyX4330_FAPFGYdMldUrndR32fDYqOWnPk42gI1Zxydi6FSoas" 
                             alt="Vendor Profile"
                         />
-                    </motion.div>
+                    </div>
                     <div>
-                        <h1 className="font-headline font-bold text-headline-sm tracking-tight text-primary leading-none">Ez of Life</h1>
-                        <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-50">Vendor Partner</span>
+                        <h1 className="text-lg font-bold tracking-tight text-[#3D5AFE]">Ez of Life</h1>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Vendor Portal</p>
                     </div>
                 </div>
+
                 <div className="flex items-center gap-4">
-                    <motion.button 
-                        whileHover={{ backgroundColor: "rgba(0,0,0,0.05)" }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => navigate('/vendor/notifications')}
-                        className="w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-300"
+                    {/* Live Status Toggle */}
+                    <div 
+                        onClick={() => setIsOnline(!isOnline)}
+                        className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all ${isOnline ? 'bg-green-50 border-green-100 text-green-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}
                     >
-                        <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
-                    </motion.button>
+                        <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{isOnline ? 'Online' : 'Offline'}</span>
+                    </div>
+
+                    <button 
+                        onClick={() => navigate('/vendor/notifications')}
+                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-[#3D5AFE] transition-colors"
+                    >
+                        <span className="material-symbols-outlined">notifications</span>
+                    </button>
                 </div>
-            </motion.header>
+            </header>
 
-            <motion.main 
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
-                className="max-w-7xl mx-auto px-6 pt-8 space-y-12"
-            >
-                {/* Stats Section */}
-                <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <motion.div variants={itemVariants} className="bg-surface-container-lowest p-8 rounded-xl shadow-sm flex flex-col justify-between group cursor-default hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start">
-                            <span className="text-label-md uppercase tracking-widest text-on-surface-variant font-semibold">Today's Earnings</span>
-                            <span className="material-symbols-outlined text-primary group-hover:rotate-12 transition-transform">payments</span>
-                        </div>
-                        <div className="mt-4">
-                            <h2 className="text-4xl font-extrabold font-headline text-on-surface">₹1,420</h2>
-                            <p className="text-sm text-primary font-medium mt-1">+12.5% from yesterday</p>
-                        </div>
-                    </motion.div>
-                    
-                    <motion.div variants={itemVariants} className="bg-primary text-on-primary p-8 rounded-xl shadow-lg flex flex-col justify-between relative overflow-hidden group cursor-default">
-                        <div className="relative z-10 flex justify-between items-start">
-                            <span className="text-label-md uppercase tracking-widest opacity-80 font-semibold text-on-primary">Active Orders</span>
-                            <span className="material-symbols-outlined group-hover:animate-bounce-subtle">local_laundry_service</span>
-                        </div>
-                        <div className="relative z-10 mt-4">
-                            <h2 className="text-4xl font-extrabold font-headline">8</h2>
-                            <p className="text-sm opacity-90 mt-1">4 estimated completion today</p>
-                        </div>
-                        <div className="absolute inset-0 vendor-gradient opacity-20"></div>
-                    </motion.div>
+            {/* Mobile Availability Bar */}
+            <div className="md:hidden bg-white border-b border-slate-100 px-6 py-2 flex justify-between items-center sticky top-[73px] z-40">
+                <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mt-0.5">Shop Status: {isOnline ? 'Active' : 'Resting'}</span>
+                </div>
+                <button 
+                    onClick={() => setIsOnline(!isOnline)}
+                    className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${isOnline ? 'bg-green-500 text-white border-green-500' : 'bg-slate-100 text-slate-400 border-slate-200'}`}
+                >
+                    {isOnline ? 'Go Offline' : 'Go Online'}
+                </button>
+            </div>
 
-                    <motion.div variants={itemVariants} className="bg-surface-container-low p-8 rounded-xl flex flex-col justify-between border border-outline-variant/10 cursor-default hover:bg-surface-container-high transition-colors">
-                        <div className="flex justify-between items-start">
-                            <span className="text-label-md uppercase tracking-widest text-on-surface-variant font-semibold">Pending Pickups</span>
-                            <span className="material-symbols-outlined text-secondary">distance</span>
-                        </div>
-                        <div className="mt-4">
-                            <h2 className="text-4xl font-extrabold font-headline text-on-surface">3</h2>
-                            <p className="text-sm text-on-surface-variant mt-1">Next: 1.2 km away</p>
-                        </div>
-                    </motion.div>
-                </section>
+            <main className="max-w-xl mx-auto px-6 pt-8 space-y-10">
+                {/* Compact Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">Earnings Today</p>
+                        <h2 className="text-2xl font-bold text-slate-800">₹1,420</h2>
+                        <span className="text-[10px] text-green-500 font-bold uppercase mt-2 block">↗ 12%</span>
+                    </div>
+                    <div className="bg-[#3D5AFE] p-5 rounded-3xl text-white shadow-lg shadow-blue-400/20">
+                        <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">Active Orders</p>
+                        <h2 className="text-2xl font-bold">8</h2>
+                        <span className="text-[10px] opacity-60 font-bold uppercase mt-2 block">4 Ready</span>
+                    </div>
+                </div>
 
-                {/* Order Workflow Section */}
-                <motion.section variants={itemVariants}>
-                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                        <div>
-                            <h3 className="text-headline-sm font-bold font-headline text-on-surface">Order Workflow</h3>
-                            <p className="text-on-surface-variant text-body-lg">Manage your service pipeline in real-time</p>
-                        </div>
-                        <div className="flex p-1 bg-surface-container-low rounded-full w-fit border border-outline-variant/10">
-                            {['Available', 'In Progress', 'Ready'].map((tab, idx) => (
-                                <motion.button 
+                {/* Workflow */}
+                <section className="space-y-6">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Order Workflow</h3>
+                        <div className="flex bg-slate-100 p-1 rounded-full border border-slate-200">
+                            {['Available', 'In Progress', 'Ready'].map((tab) => (
+                                <button 
                                     key={tab}
-                                    whileTap={{ scale: 0.95 }}
-                                    className={`px-6 py-2 rounded-full text-label-md font-bold transition-all duration-300 ${idx === 0 ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-[#3D5AFE] shadow-sm' : 'text-slate-400'}`}
                                 >
-                                    {tab}
-                                </motion.button>
+                                    {tab === 'In Progress' ? 'Active' : tab === 'Ready' ? 'Done' : 'New'}
+                                </button>
                             ))}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <OrderCard id="EZ-8821" title="Premium Wash & Fold" desc="Estimated: 12.5 kg · Mixed Fabrics" dist="0.8 km away" icon="dry_cleaning" navigate={navigate} />
-                        <OrderCard id="EZ-8824" title="Eco-Friendly Dry Clean" desc="5 Items · 2 Suits, 3 Silk Shirts" dist="2.4 km away" icon="checkroom" navigate={navigate} delay={0.1} />
-                        <OrderCard id="EZ-8825" title="Ironing Only" desc="15 Cotton Shirts · Starch Preferred" dist="1.5 km away" icon="iron" navigate={navigate} delay={0.2} />
-                    </div>
-                </motion.section>
-
-                {/* Performance Section */}
-                <motion.section variants={itemVariants} className="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-headline-sm font-bold font-headline text-on-surface">Performance Pulse</h3>
-                        <motion.button 
-                            whileHover={{ x: 5 }}
-                            onClick={() => navigate('/vendor/earnings')} 
-                            className="text-primary font-bold text-sm uppercase tracking-widest flex items-center gap-2"
-                        >
-                            Full Analytics
-                            <span className="material-symbols-outlined text-sm">trending_up</span>
-                        </motion.button>
-                    </div>
-                    <div className="flex flex-col lg:flex-row gap-8">
-                        <div className="flex-1 bg-surface-container-lowest p-6 rounded-lg h-48 flex items-end gap-3 justify-around overflow-hidden border border-outline-variant/5">
-                            {[0.5, 0.66, 0.9, 0.33, 0.5, 0.75, 0.5].map((h, i) => (
+                    <div className="space-y-4">
+                        <AnimatePresence mode="popLayout">
+                            {ordersData[activeTab].map((order) => (
                                 <motion.div 
-                                    key={i}
-                                    initial={{ height: 0 }}
-                                    animate={{ height: `${h * 100}%` }}
-                                    transition={{ duration: 1, delay: 0.5 + i * 0.1, ease: "circOut" }}
-                                    className={`w-12 rounded-t-full ${i === 2 ? 'vendor-gradient' : 'bg-primary-container/40'}`}
-                                />
+                                    key={order.id}
+                                    layout
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    onClick={() => navigate(`/vendor/order/${order.id}`)}
+                                    className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-5 cursor-pointer hover:border-[#3D5AFE]/20 transition-all"
+                                >
+                                    <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
+                                        <span className="material-symbols-outlined text-[24px]">{order.icon}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-0.5">
+                                            <h4 className="text-sm font-bold text-slate-800 truncate">{order.title}</h4>
+                                            <span className="text-[10px] font-bold text-[#3D5AFE] uppercase tracking-widest">#{order.id}</span>
+                                        </div>
+                                        <p className="text-xs text-slate-400 font-medium mb-3 truncate">{order.desc}</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-[14px] text-slate-300">location_on</span>
+                                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{order.dist}</span>
+                                        </div>
+                                    </div>
+                                    <span className="material-symbols-outlined text-slate-200 text-[18px]">chevron_right</span>
+                                </motion.div>
                             ))}
-                        </div>
-                        <div className="lg:w-1/3 space-y-4">
-                            <div className="flex justify-between items-center p-4 bg-surface-container-low rounded-lg border border-outline-variant/5">
-                                <span className="text-on-surface-variant font-medium">Service Quality</span>
-                                <span className="font-bold text-primary">4.9 / 5.0</span>
-                            </div>
-                            <div className="flex justify-between items-center p-4 bg-surface-container-low rounded-lg border border-outline-variant/5">
-                                <span className="text-on-surface-variant font-medium">On-Time Completion</span>
-                                <span className="font-bold text-primary">98%</span>
-                            </div>
-                            <div className="flex justify-between items-center p-4 bg-surface-container-low rounded-lg border border-outline-variant/5">
-                                <span className="text-on-surface-variant font-medium">Customer Retention</span>
-                                <span className="font-bold text-primary">82%</span>
-                            </div>
-                        </div>
+                        </AnimatePresence>
                     </div>
-                </motion.section>
-            </motion.main>
-        </div>
+                </section>
+            </main>
+        </motion.div>
     );
 };
-
-const OrderCard = ({ id, title, desc, dist, icon, navigate, delay = 0 }) => (
-    <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay }}
-        whileHover={{ y: -5 }}
-        className="bg-surface-container-lowest rounded-xl p-6 transition-all duration-300 border border-outline-variant/10 shadow-sm flex flex-col"
-    >
-        <div className="flex justify-between items-start mb-6">
-            <div className="p-3 bg-primary-container/30 rounded-lg text-primary">
-                <span className="material-symbols-outlined">{icon}</span>
-            </div>
-            <div className="text-right">
-                <p className="text-label-md font-bold text-primary">#{id}</p>
-                <p className="text-xs text-on-surface-variant font-medium">Recently added</p>
-            </div>
-        </div>
-        <div className="space-y-4 mb-8">
-            <div>
-                <h4 className="text-body-lg font-bold text-on-surface">{title}</h4>
-                <p className="text-sm text-on-surface-variant leading-relaxed">{desc}</p>
-            </div>
-            <div className="flex items-center gap-2 text-primary bg-primary-container/20 w-fit px-3 py-1 rounded-full">
-                <span className="material-symbols-outlined text-[16px]">location_on</span>
-                <span className="text-xs font-bold tracking-tight uppercase">{dist}</span>
-            </div>
-        </div>
-        <motion.button 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate(`/vendor/order/${id}`)} 
-            className="mt-auto w-full py-4 rounded-lg vendor-gradient text-white font-bold text-center flex items-center justify-center gap-2 group shadow-md"
-        >
-            <span>Accept Order</span>
-            <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-        </motion.button>
-    </motion.div>
-);
 
 export default Dashboard;

@@ -52,7 +52,7 @@ const OtpVerificationPage = () => {
         <div className="absolute bottom-20 left-[-10%] w-80 h-80 bg-tertiary/5 rounded-full blur-[80px]" />
       </div>
 
-      <main className="max-w-md w-full bg-white rounded-[3rem] p-10 shadow-[0_40px_80px_rgba(47,50,58,0.1)] border border-outline-variant/10">
+      <main className="max-w-md w-full bg-white rounded-[3rem] p-8 md:p-10 shadow-[0_40px_80px_rgba(47,50,58,0.1)] border border-outline-variant/10">
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -67,7 +67,7 @@ const OtpVerificationPage = () => {
         </motion.div>
 
         {/* OTP Inputs */}
-        <div className="flex justify-between gap-4 mb-10">
+        <div className="flex justify-center gap-3 md:gap-4 mb-10">
           {otp.map((digit, index) => (
             <input
               key={index}
@@ -78,7 +78,7 @@ const OtpVerificationPage = () => {
               value={digit}
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className="w-16 h-20 bg-surface-container-low border-2 border-transparent rounded-2xl text-center text-3xl font-black text-on-surface focus:bg-white focus:border-primary/20 focus:ring-2 focus:ring-primary/10 transition-all outline-none shadow-inner"
+              className="w-14 h-16 md:w-16 md:h-20 bg-surface-container-low border-2 border-transparent rounded-2xl text-center text-3xl font-black text-on-surface focus:bg-white focus:border-primary/20 focus:ring-2 focus:ring-primary/10 transition-all outline-none shadow-inner"
             />
           ))}
         </div>
