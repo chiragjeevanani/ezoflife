@@ -1,9 +1,7 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api/|assets/|favicon.ico|favicon.svg|manifest.json|_vercel/).*)",
       "destination": "/index.html"
     }
   ]
