@@ -42,7 +42,7 @@ const HomePage = () => {
           <motion.div 
             variants={cardVariants}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/user/order-history')}
+            onClick={() => navigate('/user/tracking')}
             className="mb-8 bg-primary/5 border border-primary/20 p-4 rounded-3xl flex items-center justify-between cursor-pointer group"
           >
             <div className="flex items-center gap-4">
