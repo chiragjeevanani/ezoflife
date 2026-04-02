@@ -36,7 +36,7 @@ const OtpVerificationPage = () => {
 
   const handleVerify = () => {
     if (otp.every(digit => digit !== '')) {
-      navigate('/user/home');
+      navigate('/user/profile/create');
     }
   };
 
@@ -78,7 +78,7 @@ const OtpVerificationPage = () => {
               value={digit}
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className="w-14 h-16 md:w-16 md:h-20 bg-surface-container-low border-2 border-transparent rounded-2xl text-center text-3xl font-black text-on-surface focus:bg-white focus:border-primary/20 focus:ring-2 focus:ring-primary/10 transition-all outline-none shadow-inner"
+              className="w-14 h-16 md:w-16 md:h-20 bg-surface-container-low border-2 border-slate-300 rounded-2xl text-center text-3xl font-black text-on-surface focus:bg-white focus:border-primary/20 focus:ring-2 focus:ring-primary/10 transition-all outline-none shadow-inner"
             />
           ))}
         </div>

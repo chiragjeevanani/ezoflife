@@ -105,6 +105,13 @@ const MoreMenuPage = () => {
               color="primary"
               onClick={() => navigate('/vendor/auth')}
             />
+            <MenuItem 
+              icon="work" 
+              title="Careers" 
+              desc="Join the team" 
+              color="tertiary"
+              onClick={() => navigate('/user/careers')}
+            />
           </MenuSection>
 
           <MenuSection title="Legal & Safety" icon="shield">

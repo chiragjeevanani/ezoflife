@@ -7,11 +7,12 @@ const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
 
   const [loginPhone, setLoginPhone] = useState('');
-  const [signupName, setSignupName] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
+  const [otpChannel, setOtpChannel] = useState('WhatsApp'); // 'WhatsApp' or 'SMS'
+  const [agreedToTnC, setAgreedToTnC] = useState(false);
 
   const isLoginValid = loginPhone.length === 10 && /^\d+$/.test(loginPhone);
-  const isSignupValid = signupName.length >= 3 && signupPhone.length === 10 && /^\d+$/.test(signupPhone);
+  const isSignupValid = signupPhone.length === 10 && /^\d+$/.test(signupPhone) && agreedToTnC;
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -112,12 +113,29 @@ const AuthPage = () => {
                     </motion.div>
 
                     <div className="space-y-6">
+                      {/* OTP Channel Selector */}
+                      <motion.div variants={itemVariants} className="flex bg-surface-container-low p-1 rounded-2xl border border-slate-300">
+                        <button 
+                          onClick={() => setOtpChannel('WhatsApp')}
+                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${otpChannel === 'WhatsApp' ? 'bg-white shadow-sm text-green-600' : 'text-on-surface-variant opacity-40'}`}
+                        >
+                          <span className="material-symbols-outlined text-sm">chat</span>
+                          WhatsApp
+                        </button>
+                        <button 
+                          onClick={() => setOtpChannel('SMS')}
+                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${otpChannel === 'SMS' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant opacity-40'}`}
+                        >
+                          <span className="material-symbols-outlined text-sm">sms</span>
+                          SMS
+                        </button>
+                      </motion.div>
                       <motion.div variants={itemVariants} className="relative group">
                         <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Phone Number</label>
-                        <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 transition-all focus-within:bg-white focus-within:ring-2 ${loginPhone.length > 0 && !isLoginValid ? 'focus-within:ring-error/20 ring-error/10 ring-1' : 'focus-within:ring-primary/20'}`}>
+                        <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 border border-slate-300 transition-all focus-within:bg-white focus-within:ring-2 ${loginPhone.length > 0 && !isLoginValid ? 'focus-within:ring-error/20 ring-error/10' : 'focus-within:ring-primary/20'}`}>
                           <div className="px-4 font-black text-on-surface text-sm">+91</div>
                           <input 
-                            className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-outline-variant" 
+                            className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-on-surface/30 placeholder:font-medium" 
                             placeholder="000 000 0000" 
                             type="tel"
                             maxLength={10}
@@ -151,26 +169,30 @@ const AuthPage = () => {
                     </motion.div>
 
                     <div className="space-y-4">
-                      <motion.div variants={itemVariants}>
-                        <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Full Name</label>
-                        <input 
-                            className="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary/20 rounded-2xl py-4 px-5 text-on-surface font-black placeholder:text-outline-variant" 
-                            placeholder="John Doe" 
-                            type="text" 
-                            value={signupName}
-                            onChange={(e) => setSignupName(e.target.value)}
-                        />
-                        {signupName.length > 0 && signupName.length < 3 && (
-                            <p className="text-[9px] text-error font-bold mt-2 ml-1">Name must be at least 3 characters</p>
-                        )}
+                      {/* OTP Channel Selector */}
+                      <motion.div variants={itemVariants} className="flex bg-surface-container-low p-1 rounded-2xl border border-slate-300 mb-2">
+                        <button 
+                          onClick={() => setOtpChannel('WhatsApp')}
+                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${otpChannel === 'WhatsApp' ? 'bg-white shadow-sm text-green-600' : 'text-on-surface-variant opacity-40'}`}
+                        >
+                          <span className="material-symbols-outlined text-sm">chat</span>
+                          WhatsApp
+                        </button>
+                        <button 
+                          onClick={() => setOtpChannel('SMS')}
+                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${otpChannel === 'SMS' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant opacity-40'}`}
+                        >
+                          <span className="material-symbols-outlined text-sm">sms</span>
+                          SMS
+                        </button>
                       </motion.div>
-                      
+ 
                       <motion.div variants={itemVariants}>
                         <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Phone Number</label>
-                        <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 border border-transparent focus-within:bg-white focus-within:ring-2 ${signupPhone.length > 0 && signupPhone.length !== 10 ? 'focus-within:ring-error/20 ring-error/10 ring-1' : 'focus-within:ring-primary/20'}`}>
+                        <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 border border-slate-300 focus-within:bg-white focus-within:ring-2 ${signupPhone.length > 0 && signupPhone.length !== 10 ? 'focus-within:ring-error/20 ring-error/10' : 'focus-within:ring-primary/20'}`}>
                           <div className="px-4 font-black text-on-surface text-sm">+91</div>
                           <input 
-                            className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black" 
+                            className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-on-surface/30 placeholder:font-medium" 
                             placeholder="000 000 0000" 
                             type="tel" 
                             maxLength={10}
@@ -181,6 +203,19 @@ const AuthPage = () => {
                         {signupPhone.length > 0 && signupPhone.length !== 10 && (
                             <p className="text-[9px] text-error font-bold mt-2 ml-1">Enter a valid 10-digit number</p>
                         )}
+                      </motion.div>
+
+                      {/* T&C Checkbox */}
+                      <motion.div variants={itemVariants} className="flex items-start gap-3 px-1 py-1">
+                        <button 
+                          onClick={() => setAgreedToTnC(!agreedToTnC)}
+                          className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center transition-all border ${agreedToTnC ? 'bg-primary border-primary text-white' : 'bg-surface-container-low border-outline-variant/20'}`}
+                        >
+                          {agreedToTnC && <span className="material-symbols-outlined text-[14px]">check</span>}
+                        </button>
+                        <p className="text-[10px] font-bold text-on-surface-variant leading-relaxed">
+                          I agree to the <span className="text-primary underline cursor-pointer">Terms & Conditions</span> and provide consent to receive updates.
+                        </p>
                       </motion.div>
 
                       <motion.button 

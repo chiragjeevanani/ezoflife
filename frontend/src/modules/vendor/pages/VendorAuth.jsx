@@ -88,10 +88,10 @@ const VendorAuth = () => {
                                         <div className="space-y-6">
                                             <motion.div variants={itemVariants} className="relative group">
                                                 <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Phone Number</label>
-                                                <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 transition-all focus-within:bg-white focus-within:ring-2 ${loginPhone.length > 0 && !isLoginValid ? 'focus-within:ring-error/20 ring-error/10 ring-1' : 'focus-within:ring-primary/20'}`}>
+                                                <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 border border-slate-300 transition-all focus-within:bg-white focus-within:ring-2 ${loginPhone.length > 0 && !isLoginValid ? 'focus-within:ring-error/20 ring-error/10' : 'focus-within:ring-primary/20'}`}>
                                                     <div className="px-4 font-black text-on-surface text-sm">+91</div>
                                                     <input
-                                                        className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-outline-variant outline-none"
+                                                        className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-on-surface/30 placeholder:font-medium outline-none"
                                                         placeholder="98765 43210"
                                                         type="tel"
                                                         maxLength={10}
@@ -130,7 +130,7 @@ const VendorAuth = () => {
                                             <motion.div variants={itemVariants}>
                                                 <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Shop Name</label>
                                                 <input
-                                                    className="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary/20 rounded-2xl py-4 px-5 text-on-surface font-black placeholder:text-outline-variant outline-none"
+                                                    className="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary/20 rounded-2xl py-4 px-5 text-on-surface font-black placeholder:text-on-surface/30 placeholder:font-medium outline-none"
                                                     placeholder="e.g. Pristine Cleaners"
                                                     type="text"
                                                     value={registerShop}
@@ -143,10 +143,10 @@ const VendorAuth = () => {
 
                                             <motion.div variants={itemVariants}>
                                                 <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Phone Number</label>
-                                                <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 focus-within:bg-white focus-within:ring-2 ${registerPhone.length > 0 && registerPhone.length !== 10 ? 'focus-within:ring-error/20 ring-error/10 ring-1' : 'focus-within:ring-primary/20'}`}>
+                                                <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 border border-slate-300 focus-within:bg-white focus-within:ring-2 ${registerPhone.length > 0 && registerPhone.length !== 10 ? 'focus-within:ring-error/20 ring-error/10' : 'focus-within:ring-primary/20'}`}>
                                                     <div className="px-4 font-black text-on-surface text-sm">+91</div>
                                                     <input
-                                                        className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-outline-variant outline-none"
+                                                        className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-on-surface/30 placeholder:font-medium outline-none"
                                                         placeholder="98765 43210"
                                                         type="tel"
                                                         maxLength={10}

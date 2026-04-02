@@ -1,10 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import VendorHeader from '../components/VendorHeader';
 
 const PayoutSettings = () => {
     const navigate = useNavigate();
+    const [isEditing, setIsEditing] = useState(false);
+    const [bankData, setBankData] = useState({
+        beneficiary: 'Pristine Cleaners Pvt. Ltd.',
+        accountNumber: '000000000000',
+        ifsc: 'SBIN0001235',
+        bankName: 'State Bank of India'
+    });
+
+    const handleSave = () => {
+        setIsEditing(false);
+        // Here you would typically make an API call
+    };
 
     return (
         <div className="bg-background text-on-background min-h-screen pb-32 font-body overflow-x-hidden">
@@ -47,25 +59,59 @@ const PayoutSettings = () => {
                 <section className="space-y-8">
                     <div className="flex items-center justify-between border-b border-outline-variant/10 pb-4">
                         <h3 className="text-sm font-black uppercase tracking-widest text-primary">Linked Bank Account</h3>
-                        <button className="text-[11px] font-black text-on-surface-variant hover:text-primary transition-colors uppercase tracking-widest">Update Details</button>
+                        <button 
+                            onClick={() => setIsEditing(!isEditing)}
+                            className="text-[11px] font-black text-on-surface-variant hover:text-primary transition-colors uppercase tracking-widest"
+                        >
+                            {isEditing ? 'Cancel Edit' : 'Update Details'}
+                        </button>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                         {[
-                            { label: 'Beneficiary', value: 'Pristine Cleaners Pvt. Ltd.', icon: 'account_circle' },
-                            { label: 'Account number', value: 'SBIN •••• •••• 7781', icon: 'credit_card' },
-                            { label: 'IFSC Code', value: 'SBIN0001235', icon: 'verified' },
-                            { label: 'Bank Name', value: 'State Bank of India', icon: 'account_balance' }
-                        ].map((field, i) => (
-                            <div key={i} className="space-y-2 group">
+                            { id: 'beneficiary', label: 'Beneficiary', value: bankData.beneficiary, icon: 'account_circle' },
+                            { id: 'accountNumber', label: 'Account number', value: bankData.accountNumber, icon: 'credit_card' },
+                            { id: 'ifsc', label: 'IFSC Code', value: bankData.ifsc, icon: 'verified' },
+                            { id: 'bankName', label: 'Bank Name', value: bankData.bankName, icon: 'account_balance' }
+                        ].map((field) => (
+                            <div key={field.id} className="space-y-2 group">
                                 <div className="flex items-center gap-2 text-primary/40 mb-1 group-hover:text-primary transition-colors">
                                     <span className="material-symbols-outlined text-[16px]">{field.icon}</span>
                                     <p className="text-[10px] font-bold uppercase tracking-widest">{field.label}</p>
                                 </div>
-                                <p className="text-base font-bold text-on-surface tracking-tight pl-6">{field.value}</p>
+                                {isEditing ? (
+                                    <input 
+                                        type="text"
+                                        value={field.value}
+                                        onChange={(e) => setBankData({...bankData, [field.id]: e.target.value})}
+                                        className="w-full bg-surface-container-low border-b-2 border-primary/10 py-2 px-1 text-base font-bold text-on-surface focus:outline-none focus:border-primary transition-all"
+                                    />
+                                ) : (
+                                    <p className="text-base font-bold text-on-surface tracking-tight pl-6">
+                                        {field.id === 'accountNumber' ? `${field.value.slice(0, 4)} •••• •••• ${field.value.slice(-4)}` : field.value}
+                                    </p>
+                                )}
                             </div>
                         ))}
                     </div>
+
+                    <AnimatePresence>
+                        {isEditing && (
+                            <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="pt-6"
+                            >
+                                <button 
+                                    onClick={handleSave}
+                                    className="w-full py-4 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all"
+                                >
+                                    Save Bank Details
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </section>
 
                 {/* Policies Section */}

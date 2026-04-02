@@ -15,6 +15,7 @@ import OrdersHistoryPage from '../pages/OrdersHistoryPage';
 import UserProfilePage from '../pages/UserProfilePage';
 import MoreMenuPage from '../pages/MoreMenuPage';
 import EditProfilePage from '../pages/EditProfilePage';
+import ProfileCreationPage from '../pages/ProfileCreationPage';
 import AddressesPage from '../pages/AddressesPage';
 import PaymentMethodsPage from '../pages/PaymentMethodsPage';
 import HelpCenterPage from '../pages/HelpCenterPage';
@@ -24,6 +25,8 @@ import NotificationsPage from '../pages/NotificationsPage';
 import AllServicesPage from '../pages/AllServicesPage';
 import SearchResultsPage from '../pages/SearchResultsPage';
 import ServiceInfoPage from '../pages/ServiceInfoPage';
+import CareersPage from '../pages/CareersPage';
+import FAQPage from '../pages/FAQPage';
 
 import UserLayout from '../layouts/UserLayout';
 
@@ -45,6 +48,7 @@ const UserRoutes = () => {
         <Route path="/orders" element={<OrdersHistoryPage />} />
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/profile/edit" element={<EditProfilePage />} />
+        <Route path="/profile/create" element={<ProfileCreationPage />} />
         <Route path="/profile/addresses" element={<AddressesPage />} />
         <Route path="/profile/payment" element={<PaymentMethodsPage />} />
         <Route path="/support" element={<HelpCenterPage />} />
@@ -54,6 +58,8 @@ const UserRoutes = () => {
         <Route path="/services" element={<AllServicesPage />} />
         <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/service-info" element={<ServiceInfoPage />} />
+        <Route path="/careers" element={<CareersPage />} />
+        <Route path="/faq" element={<FAQPage />} />
         <Route path="/more" element={<MoreMenuPage />} />
       </Route>
       {/* Fallback to splash */}

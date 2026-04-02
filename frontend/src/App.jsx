@@ -2,6 +2,7 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import UserRoutes from './modules/user/routes/userRoutes'
 import VendorRoutes from './modules/vendor/routes/VendorRoutes'
+import SupplierRoutes from './modules/supplier/routes/SupplierRoutes'
 import AdminRoutes from './modules/admin/routes/AdminRoutes'
 import './index.css'
 
@@ -14,6 +15,9 @@ function App() {
         
         {/* Vendor Module Routes */}
         <Route path="/vendor/*" element={<VendorRoutes />} />
+
+        {/* Supplier Module Routes */}
+        <Route path="/supplier/*" element={<SupplierRoutes />} />
 
         {/* Admin Module Routes */}
         <Route path="/admin/*" element={<AdminRoutes />} />

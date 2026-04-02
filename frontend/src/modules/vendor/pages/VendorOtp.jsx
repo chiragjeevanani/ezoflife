@@ -64,7 +64,7 @@ const VendorOtp = () => {
                                 className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black font-headline border-4 transition-all duration-300 ${
                                     digit
                                         ? 'bg-primary/5 text-primary border-primary shadow-md shadow-primary/10'
-                                        : 'bg-surface-container-high/40 text-on-surface-variant border-transparent'
+                                        : 'bg-surface-container-high/40 text-on-surface-variant border-slate-300'
                                 }`}
                             >
                                 <AnimatePresence mode="wait">
