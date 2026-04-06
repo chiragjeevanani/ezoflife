@@ -24,7 +24,8 @@ import {
     Clock,
     HelpCircle,
     Home,
-    Bike
+    Bike,
+    ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
