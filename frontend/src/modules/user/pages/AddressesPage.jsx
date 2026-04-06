@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AddressesPage = () => {
   const navigate = useNavigate();
-  const [addresses, setAddresses] = useState([
+  
+  const initialAddresses = useMemo(() => [
     { id: 1, type: 'Home', address: '249 Editorial Ave, Suite 4B, Pristine Heights, NY 10012', isDefault: true },
     { id: 2, type: 'Office', address: '88 Creative Plaza, 12th Floor, Metro Central, NY 10001', isDefault: false }
-  ]);
+  ], []);
 
+  const addressTypes = useMemo(() => ['Home', 'Office', 'Other'], []);
+
+  const [addresses, setAddresses] = useState(initialAddresses);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [newType, setNewType] = useState('Home');
@@ -21,6 +25,19 @@ const AddressesPage = () => {
     city: '',
     state: ''
   });
+
+  const containerVariants = useMemo(() => ({
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  }), []);
+
+  const itemVariants = useMemo(() => ({
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.6, ease: "easeOut" } }
+  }), []);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -107,14 +124,20 @@ const AddressesPage = () => {
           </div>
         </motion.header>
 
-        <div className="space-y-4">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-4"
+        >
           <AnimatePresence mode="popLayout">
             {addresses.map((addr) => (
               <motion.div 
                 key={addr.id}
                 layout
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
                 exit={{ opacity: 0, scale: 0.95 }}
                 className={`bg-white p-6 rounded-[2.5rem] border transition-all group relative overflow-hidden flex flex-col justify-between min-h-[160px] shadow-sm ${
                   addr.isDefault ? 'border-primary/20 shadow-xl shadow-primary/5' : 'border-black/5'
@@ -162,7 +185,7 @@ const AddressesPage = () => {
               </motion.div>
             ))}
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {addresses.length === 0 && (
           <motion.div 
@@ -204,7 +227,7 @@ const AddressesPage = () => {
               
               <div className="space-y-6">
                 <div className="flex gap-3">
-                  {['Home', 'Office', 'Other'].map(type => (
+                  {addressTypes.map(type => (
                     <button
                       key={type}
                       onClick={() => setNewType(type)}
@@ -263,3 +286,4 @@ const AddressInput = ({ label, placeholder, value, onChange, type = "text" }) =>
 );
 
 export default AddressesPage;
+

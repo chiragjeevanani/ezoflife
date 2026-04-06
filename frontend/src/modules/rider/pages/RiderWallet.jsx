@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const RiderWallet = () => {
     const navigate = useNavigate();
 
-    const transactions = [
+    const transactions = useMemo(() => [
         { id: 'TX-9921', order: 'EZ-8821', type: 'Delivery Incentive', amount: 45, time: '2h ago', status: 'Success' },
         { id: 'TX-9918', order: 'EZ-7712', type: 'Pickup Incentive', amount: 25, time: '4h ago', status: 'Success' },
         { id: 'TX-9890', order: 'Payout', type: 'Weekly Settlement', amount: -6200, time: 'Yesterday', status: 'In-Transit' }
-    ];
+    ], []);
 
     return (
         <div className="bg-slate-50 min-h-screen pb-40 font-sans">

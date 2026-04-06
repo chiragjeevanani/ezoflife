@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -6,6 +6,8 @@ const RiderVerification = () => {
     const navigate = useNavigate();
     const { orderId } = useParams();
     const [otp, setOtp] = useState(['', '', '', '']);
+
+    const dialpadNumbers = useMemo(() => [1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0], []);
 
     const handleNumberClick = (num) => {
         const emptyIdx = otp.findIndex(val => val === '');
@@ -109,7 +111,7 @@ const RiderVerification = () => {
 
                 {/* Compact Dialpad */}
                 <section className="grid grid-cols-3 gap-y-1 gap-x-4 max-w-xs w-full mt-4">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0].map((num) => (
+                    {dialpadNumbers.map((num) => (
                         <motion.button 
                             key={num}
                             whileHover={{ scale: 1.05 }}

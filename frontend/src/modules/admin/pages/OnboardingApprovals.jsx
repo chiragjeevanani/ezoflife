@@ -1,10 +1,12 @@
-import React from 'react';
-import { FileCheck, ShieldCheck, XCircle, MapPin, Calendar, FileText, CheckCircle2, ChevronRight, UserPlus, ShieldAlert, ArrowRight } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FileCheck, ShieldCheck, XCircle, MapPin, Calendar, FileText, CheckCircle2, ChevronRight, UserPlus, ShieldAlert, ArrowRight, RotateCw } from 'lucide-react';
 import { mockAdminData } from '../data/mockData';
 import PageHeader from '../components/common/PageHeader';
 
 export default function OnboardingApprovals() {
-  const [data, setData] = React.useState(mockAdminData.onboardingRequests);
+  const initialRequests = useMemo(() => mockAdminData.onboardingRequests, []);
+  const [data, setData] = React.useState(initialRequests);
   const [selectedDoc, setSelectedDoc] = React.useState(null);
   const [isProcessing, setIsProcessing] = React.useState(null);
 

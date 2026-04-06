@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, ShoppingBag, Star, IndianRupee, MapPin, MoreHorizontal, UserCheck, ShieldClose, PieChart, Activity, ExternalLink, ArrowUpRight } from 'lucide-react';
 import { mockAdminData } from '../data/mockData';
@@ -9,7 +9,17 @@ import MetricRow from '../components/cards/MetricRow';
 
 export default function Vendors() {
   const navigate = useNavigate();
-  const vendorColumns = [
+
+  const vendors = useMemo(() => mockAdminData.vendors, []);
+
+  const vendorStats = useMemo(() => [
+    { label: 'Network Avg Rating', value: '4.82', trend: 'up', change: '+0.04', icon: Star },
+    { label: 'Total Partner Settlements', value: '₹1.42M', trend: 'up', change: '+122K', icon: IndianRupee, currency: 'INR' },
+    { label: 'Active Hubs', value: '28', trend: 'up', change: '+3', icon: Store },
+    { label: 'Fulfillment Velocity', value: '94.2%', trend: 'up', change: '+2.4%', icon: Activity }
+  ], []);
+
+  const vendorColumns = useMemo(() => [
     { 
       header: 'Vendor Name', 
       key: 'name',
@@ -58,7 +68,7 @@ export default function Vendors() {
       key: 'status', 
       render: (val) => <StatusBadge status={val} /> 
     }
-  ];
+  ], []);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
@@ -73,10 +83,9 @@ export default function Vendors() {
       {/* High-Resolution Performance Metrics */}
       <div className="bg-white border-b border-slate-200">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 divide-x divide-slate-100 max-w-[1600px] mx-auto w-full">
-            <MetricRow label="Network Avg Rating" value="4.82" trend="up" change="+0.04" icon={Star} />
-            <MetricRow label="Total Partner Comms" value="₹1.42M" trend="up" change="+122K" icon={IndianRupee} currency="INR" />
-            <MetricRow label="Active Hubs" value="28" trend="up" change="+3" icon={Store} />
-            <MetricRow label="Fulfillment Velocity" value="94.2%" trend="up" change="+2.4%" icon={Activity} />
+            {vendorStats.map((stat, i) => (
+                <MetricRow key={i} {...stat} />
+            ))}
         </div>
       </div>
 
@@ -85,7 +94,7 @@ export default function Vendors() {
         <DataGrid 
           title="Master Vendor Registry"
           columns={vendorColumns}
-          data={mockAdminData.vendors}
+          data={vendors}
           onAction={(row) => navigate(`/admin/vendors/${row.id}`)}
         />
       </div>

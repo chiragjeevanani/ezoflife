@@ -10,9 +10,11 @@ const VendorNotifications = () => {
     const { notifications, markAllAsRead } = useNotificationStore();
     
     // Filter notifications for the 'vendor' persona
-    const vendorNotifications = notifications.filter(n => n.persona === 'vendor');
+    const vendorNotifications = useMemo(() => 
+        notifications.filter(n => n.persona === 'vendor'), 
+    [notifications]);
 
-    const iconColors = {
+    const iconColors = useMemo(() => ({
         order: 'bg-[#3D5AFE]/10 text-[#3D5AFE]',
         payout: 'bg-green-50 text-green-600',
         rating: 'bg-amber-50 text-amber-500',
@@ -21,7 +23,7 @@ const VendorNotifications = () => {
         pickup_complete: 'bg-blue-50 text-blue-600',
         ready: 'bg-primary/10 text-primary',
         at_shop: 'bg-cyan-50 text-cyan-600',
-    };
+    }), []);
 
     return (
         <div className="bg-[#F8FAFC] text-[#1E293B] min-h-screen pb-32 font-sans">

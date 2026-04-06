@@ -1,28 +1,25 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import UserHeader from '../components/UserHeader';
-import BottomNav from '../components/BottomNav';
 
 const OrdersHistoryPage = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('active');
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1, delayChildren: 0.2 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
-  };
+  }), []);
 
-  const [activeTab, setActiveTab] = React.useState('active');
-
-  const activeOrders = [
+  const activeOrders = useMemo(() => [
     { 
       id: '#EZ-8291', 
       status: 'Processing', 
@@ -32,12 +29,12 @@ const OrdersHistoryPage = () => {
       progress: 66,
       rider: 'Marcus Chen'
     }
-  ];
+  ], []);
 
-  const pastOrders = [
+  const pastOrders = useMemo(() => [
     { id: '#EZ-7104', status: 'Delivered', date: 'Oct 18, 2026', price: 749.00, desc: '2x Heavy Duty Wash, 1x Delicate Care Silk' },
     { id: '#EZ-6552', status: 'Delivered', date: 'Oct 05, 2026', price: 499.00, desc: 'Mixed Casual Load, Scented Finish' }
-  ];
+  ], []);
 
   return (
     <motion.div 

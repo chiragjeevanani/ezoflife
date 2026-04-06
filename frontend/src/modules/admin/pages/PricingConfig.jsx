@@ -5,17 +5,27 @@ import MetricRow from '../components/cards/MetricRow';
 import { mockAdminData } from '../data/mockData';
 
 export default function PricingConfig() {
-  const [globalFees, setGlobalFees] = React.useState({
+  const initialGlobalFees = useMemo(() => ({
     essentialFee: 15,
     heritageFee: 25,
     expressSurcharge: 20,
     freeDeliveryLimit: 1499
-  });
+  }), []);
 
-  const [vendorOverrides, setVendorOverrides] = React.useState([
+  const initialVendorOverrides = useMemo(() => [
     { id: 'V-8821', name: 'CleanTech Solutions', category: 'Heritage', override: 22 },
     { id: 'V-8824', name: 'EcoWash Hub', category: 'Essential', override: 12 }
-  ]);
+  ], []);
+
+  const pricingStats = useMemo(() => [
+    { label: 'Avg Commission', value: '18.2%', change: '+0.4%', trend: 'up', icon: TrendingUp },
+    { label: 'Express Yield', value: '₹24.5K', change: '+2.1K', trend: 'up', icon: Zap, currency: 'INR' },
+    { label: 'Logistics Subsidy', value: '₹8.2K', change: '-500', trend: 'down', icon: Truck, currency: 'INR' },
+    { label: 'Pricing Integrity', value: '100%', trend: 'up', icon: ShieldCheck }
+  ], []);
+
+  const [globalFees, setGlobalFees] = React.useState(initialGlobalFees);
+  const [vendorOverrides, setVendorOverrides] = React.useState(initialVendorOverrides);
 
   const handleSave = () => {
     alert('Global Pricing Policy Updated & Synced with Registry.');
@@ -34,10 +44,9 @@ export default function PricingConfig() {
       {/* Pricing Pulse */}
       <div className="bg-white border-b border-slate-200 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 divide-x divide-slate-100 max-w-[1600px] mx-auto w-full">
-            <MetricRow label="Avg Commission" value="18.2%" change="+0.4%" trend="up" icon={TrendingUp} />
-            <MetricRow label="Express Yield" value="₹24.5K" change="+2.1K" trend="up" icon={Zap} currency="INR" />
-            <MetricRow label="Logistics Subsidy" value="₹8.2K" change="-500" trend="down" icon={Truck} currency="INR" />
-            <MetricRow label="Pricing Integrity" value="100%" trend="up" icon={ShieldCheck} />
+            {pricingStats.map((stat, i) => (
+                <MetricRow key={i} {...stat} />
+            ))}
         </div>
       </div>
 

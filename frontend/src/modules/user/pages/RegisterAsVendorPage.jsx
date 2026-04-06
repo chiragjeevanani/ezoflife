@@ -1,29 +1,29 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const RegisterAsVendorPage = () => {
   const navigate = useNavigate();
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1, delayChildren: 0.2 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
-  };
+  }), []);
 
-  const benefits = [
+  const benefits = useMemo(() => [
     { title: 'Wider Reach', desc: 'Access 5000+ local customers in your zone.', icon: 'group' },
     { title: 'Logistics Handled', desc: 'Our riders handle all pickups and deliveries.', icon: 'local_shipping' },
     { title: 'Secure Payouts', desc: 'Direct bank settlements every 48 hours.', icon: 'payments' },
     { title: 'Easy Management', desc: 'Proprietary dashboard to track every order.', icon: 'dashboard_customize' }
-  ];
+  ], []);
 
   return (
     <motion.div 
@@ -104,3 +104,4 @@ const RegisterAsVendorPage = () => {
 };
 
 export default RegisterAsVendorPage;
+

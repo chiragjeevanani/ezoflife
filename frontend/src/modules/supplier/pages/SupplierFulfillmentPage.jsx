@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -8,14 +8,14 @@ const SupplierFulfillmentPage = () => {
     const [status, setStatus] = useState('Processing');
     const [isDownloading, setIsDownloading] = useState(false);
 
-    const stages = ['Processing', 'Dispatched', 'Delivered'];
+    const stages = useMemo(() => ['Processing', 'Dispatched', 'Delivered'], []);
     
-    const manifestItems = [
+    const manifestItems = useMemo(() => [
         { id: 'VEN-01', vendor: 'Elite Laundry Hub', qty: '45 kg', location: 'Brooklyn Zone' },
         { id: 'VEN-22', vendor: 'Heritage Pristine', qty: '82 kg', location: 'Manhattan Zone' },
         { id: 'VEN-45', vendor: 'Metro Cleaners', qty: '32 kg', location: 'Queens Zone' },
         { id: 'VEN-88', vendor: 'Swift Wash', qty: '55 kg', location: 'Bronx Zone' },
-    ];
+    ], []);
 
     const handleDownload = () => {
         setIsDownloading(true);
@@ -24,15 +24,15 @@ const SupplierFulfillmentPage = () => {
         }, 2000);
     };
 
-    const containerVariants = {
+    const containerVariants = useMemo(() => ({
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-    };
+    }), []);
 
-    const itemVariants = {
+    const itemVariants = useMemo(() => ({
         hidden: { y: 10, opacity: 0 },
         visible: { y: 0, opacity: 1 }
-    };
+    }), []);
 
     return (
         <div className="bg-background text-on-surface min-h-screen pb-32">

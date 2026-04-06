@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Users as UsersIcon, UserPlus, Mail, ShoppingBag, IndianRupee, MoreHorizontal, ShieldAlert, UserCheck, Activity, Star, Zap, Target } from 'lucide-react';
 import { mockAdminData } from '../data/mockData';
 import PageHeader from '../components/common/PageHeader';
@@ -7,7 +7,16 @@ import StatusBadge from '../components/common/StatusBadge';
 import MetricRow from '../components/cards/MetricRow';
 
 export default function Users() {
-  const userColumns = [
+  const users = useMemo(() => mockAdminData.users, []);
+
+  const userStats = useMemo(() => [
+    { label: 'Total Registered Users', value: '1,240', change: '+142', trend: 'up', icon: UsersIcon },
+    { label: 'Retention Rate', value: '84.2%', change: '+2.4%', trend: 'up', icon: Target },
+    { label: 'Daily Active Users', value: '124', change: '+18', trend: 'up', icon: Activity },
+    { label: 'Conversion Rate', value: '4.8%', change: '+0.2%', trend: 'up', icon: Zap }
+  ], []);
+
+  const userColumns = useMemo(() => [
     { 
       header: 'Customer', 
       key: 'name',
@@ -63,7 +72,7 @@ export default function Users() {
         </div>
       )
     }
-  ];
+  ], []);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
@@ -77,10 +86,9 @@ export default function Users() {
       {/* Engagement Intelligence Layer */}
       <div className="bg-white border-b border-slate-200 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 divide-x divide-slate-100 max-w-[1600px] mx-auto w-full">
-            <MetricRow label="Total Registered Users" value="1,240" change="+142" trend="up" icon={UsersIcon} />
-            <MetricRow label="Retention Rate" value="84.2%" change="+2.4%" trend="up" icon={Target} />
-            <MetricRow label="Daily Active Users" value="124" change="+18" trend="up" icon={Activity} />
-            <MetricRow label="Conversion Rate" value="4.8%" change="+0.2%" trend="up" icon={Zap} />
+            {userStats.map((stat, i) => (
+                <MetricRow key={i} {...stat} />
+            ))}
         </div>
       </div>
 
@@ -89,7 +97,7 @@ export default function Users() {
         <DataGrid 
           title="Master User Index"
           columns={userColumns}
-          data={mockAdminData.users}
+          data={users}
           onAction={(row) => console.log('Viewing user detail', row.id)}
         />
       </div>

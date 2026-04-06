@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { CreditCard, IndianRupee, FileText, CheckCircle2, Clock, MoreHorizontal, Download, History, Calculator, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import { mockAdminData } from '../data/mockData';
 import PageHeader from '../components/common/PageHeader';
@@ -7,7 +7,16 @@ import StatusBadge from '../components/common/StatusBadge';
 import MetricRow from '../components/cards/MetricRow';
 
 export default function Payouts() {
-  const payoutColumns = [
+  const payoutRequests = useMemo(() => mockAdminData.payoutRequests, []);
+
+  const payoutStats = useMemo(() => [
+    { label: 'Total Outstanding', value: '₹42,850', change: '+142K', trend: 'up', icon: IndianRupee, currency: 'INR' },
+    { label: 'Settled Volume', value: '₹12.4M', change: '+1.2M', trend: 'up', icon: CreditCard, currency: 'INR' },
+    { label: 'Processing Nodes', value: '06', change: '+2', trend: 'up', icon: Clock },
+    { label: 'Commission Net', value: '₹1.18M', change: '+82K', trend: 'up', icon: Calculator, currency: 'INR' }
+  ], []);
+
+  const payoutColumns = useMemo(() => [
     { 
       header: 'Payout ID', 
       key: 'id',
@@ -67,7 +76,7 @@ export default function Payouts() {
         </div>
       )
     }
-  ];
+  ], []);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
@@ -82,10 +91,9 @@ export default function Payouts() {
       {/* Strategic Performance Layer */}
       <div className="bg-white border-b border-slate-200">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 divide-x divide-slate-100 max-w-[1600px] mx-auto w-full">
-            <MetricRow label="Total Outstanding" value="₹42,850" change="+142K" trend="up" icon={IndianRupee} currency="INR" />
-            <MetricRow label="Settled Volume" value="₹12.4M" change="+1.2M" trend="up" icon={CreditCard} currency="INR" />
-            <MetricRow label="Processing Nodes" value="06" change="+2" trend="up" icon={Clock} />
-            <MetricRow label="Commission Net" value="₹1.18M" change="+82K" trend="up" icon={Calculator} currency="INR" />
+            {payoutStats.map((stat, i) => (
+                <MetricRow key={i} {...stat} />
+            ))}
         </div>
       </div>
 
@@ -94,7 +102,7 @@ export default function Payouts() {
         <DataGrid 
           title="Recent Payout Requests"
           columns={payoutColumns}
-          data={mockAdminData.payoutRequests}
+          data={payoutRequests}
           onAction={(row) => console.log('Viewing payout detail', row.id)}
         />
       </div>

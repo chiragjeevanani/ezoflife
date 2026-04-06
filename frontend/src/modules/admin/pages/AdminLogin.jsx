@@ -27,6 +27,11 @@ const AdminLogin = () => {
         }, 800);
     };
 
+    const containerVariants = useMemo(() => ({
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+    }), []);
+
     return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative overflow-hidden font-sans">
             {/* Background elements */}
@@ -34,8 +39,9 @@ const AdminLogin = () => {
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] -ml-48 -mb-48"></div>
 
             <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
                 transition={{ duration: 0.6 }}
                 className="w-full max-w-md relative z-10"
             >

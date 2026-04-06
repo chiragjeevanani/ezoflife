@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -22,13 +22,20 @@ import DataGrid from '../components/tables/DataGrid';
 const Riders = () => {
   const navigate = useNavigate();
 
-  const riders = [
+  const riders = useMemo(() => [
     { id: 'RD-001', name: 'Marcus Chen', phone: '+91 98822 00112', zone: 'HSR Layout', status: 'Active', tasks: 3, rating: 4.8 },
     { id: 'RD-005', name: 'Rahul S.', phone: '+91 98221 55210', zone: 'Indiranagar', status: 'On-Duty', tasks: 1, rating: 4.9 },
     { id: 'RD-012', name: 'Vikram K.', phone: '+91 77102 99311', zone: 'Whitefield', status: 'Offline', tasks: 0, rating: 4.5 }
-  ];
+  ], []);
 
-  const columns = [
+  const fleetStats = useMemo(() => [
+    { label: 'Total Fleet', value: '48', change: '+4', trend: 'up', icon: Bike },
+    { label: 'Online Now', value: '32', change: '+12.5%', trend: 'up', icon: Activity },
+    { label: 'Avg. Pickup Time', value: '12.4m', change: '-2.1m', trend: 'up', icon: Clock },
+    { label: 'Verification Status', value: '98%', change: '+0.4%', trend: 'up', icon: ShieldCheck }
+  ], []);
+
+  const columns = useMemo(() => [
     { 
       header: 'Rider Profile', 
       key: 'name',
@@ -79,7 +86,7 @@ const Riders = () => {
         </div>
       )
     }
-  ];
+  ], []);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
@@ -93,10 +100,9 @@ const Riders = () => {
 
       <div className="bg-white border-b border-slate-200">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 divide-x divide-slate-100 max-w-[1600px] mx-auto w-full">
-            <MetricRow label="Total Fleet" value="48" change="+4" trend="up" icon={Bike} />
-            <MetricRow label="Online Now" value="32" change="+12.5%" trend="up" icon={Activity} />
-            <MetricRow label="Avg. Pickup Time" value="12.4m" change="-2.1m" trend="up" icon={Clock} />
-            <MetricRow label="Verification Status" value="98%" change="+0.4%" trend="up" icon={ShieldCheck} />
+            {fleetStats.map((stat, i) => (
+                <MetricRow key={i} {...stat} />
+            ))}
         </div>
       </div>
 

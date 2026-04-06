@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MASTER_SERVICES } from '../../../shared/data/sharedData';
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [selectedTier, setSelectedTier] = React.useState('Essential'); // 'Essential' or 'Heritage'
-  const [selectedQuantities, setSelectedQuantities] = React.useState(() => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTier, setSelectedTier] = useState('Essential'); // 'Essential' or 'Heritage'
+  const [selectedQuantities, setSelectedQuantities] = useState(() => {
     // Initialize from localStorage if available
     const saved = localStorage.getItem('cart_quantities');
     return saved ? JSON.parse(saved) : {};
@@ -41,11 +41,11 @@ const HomePage = () => {
     });
   };
 
-  const cartItemsCount = Object.values(selectedQuantities).reduce((acc, q) => acc + q, 0);
-  const cartTotal = Object.entries(selectedQuantities).reduce((acc, [id, q]) => {
+  const cartItemsCount = useMemo(() => Object.values(selectedQuantities).reduce((acc, q) => acc + q, 0), [selectedQuantities]);
+  const cartTotal = useMemo(() => Object.entries(selectedQuantities).reduce((acc, [id, q]) => {
     const service = MASTER_SERVICES.find(s => s.id === id);
     return acc + (service?.basePrice || 0) * q;
-  }, 0);
+  }, 0), [selectedQuantities]);
   
   // RBAC Direct Logic
   useEffect(() => {
@@ -56,16 +56,16 @@ const HomePage = () => {
   }, [navigate]);
 
   // Mock active order state
-  const activeOrder = { id: '#EZ-8821', status: 'In Progress', type: 'Wash & Fold' };
+  const activeOrder = useMemo(() => ({ id: '#EZ-8821', status: 'In Progress', type: 'Wash & Fold' }), []);
 
   const isHeritage = selectedTier === 'Heritage';
-  const themeColor = isHeritage ? '#D4AF37' : '#06b6d4';
-  const themeGradient = isHeritage ? 'bg-gradient-to-br from-[#D4AF37] to-[#996515]' : 'bg-primary-gradient';
-  const themeText = isHeritage ? 'text-[#996515]' : 'text-primary';
-  const themeBorder = isHeritage ? 'border-[#D4AF37]/20' : 'border-primary/20';
-  const themeBgSubtle = isHeritage ? 'bg-[#D4AF37]/5' : 'bg-primary/5';
+  const themeColor = useMemo(() => isHeritage ? '#D4AF37' : '#06b6d4', [isHeritage]);
+  const themeGradient = useMemo(() => isHeritage ? 'bg-gradient-to-br from-[#D4AF37] to-[#996515]' : 'bg-primary-gradient', [isHeritage]);
+  const themeText = useMemo(() => isHeritage ? 'text-[#996515]' : 'text-primary', [isHeritage]);
+  const themeBorder = useMemo(() => isHeritage ? 'border-[#D4AF37]/20' : 'border-primary/20', [isHeritage]);
+  const themeBgSubtle = useMemo(() => isHeritage ? 'bg-[#D4AF37]/5' : 'bg-primary/5', [isHeritage]);
 
-  const banners = [
+  const banners = useMemo(() => [
     { 
       id: 1, 
       title: isHeritage ? <>Exquisite<br/>Garment Care</> : <>30% Off Your<br/>First Order</>, 
@@ -96,11 +96,11 @@ const HomePage = () => {
       icon: 'speed',
       label: 'Express Book'
     }
-  ];
+  ], [isHeritage]);
 
-  const [currentBanner, setCurrentBanner] = React.useState(0);
+  const [currentBanner, setCurrentBanner] = useState(0);
   
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % banners.length);
     }, 5000);
@@ -113,18 +113,20 @@ const HomePage = () => {
     }
   };
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1, delayChildren: 0.2 }
     }
-  };
+  }), []);
 
-  const cardVariants = {
+  const cardVariants = useMemo(() => ({
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
-  };
+  }), []);
+
+  const categoryChips = useMemo(() => ['All', 'Daily Wear', 'Premium Care', 'Curtains & Linen'], []);
 
   return (
     <div className="bg-background text-on-surface min-h-[100dvh] flex flex-col">
@@ -246,7 +248,7 @@ const HomePage = () => {
           
           {/* Category Chips */}
           <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-6 -mx-6 px-6">
-            {['All', 'Daily Wear', 'Premium Care', 'Curtains & Linen'].map(cat => (
+            {categoryChips.map(cat => (
               <button key={cat} className={`px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
                 cat === 'All' ? `${isHeritage ? 'bg-[#996515] border-[#996515]' : 'bg-primary border-primary'} text-white shadow-lg` : 'bg-white text-on-surface/40 border-black/5 hover:border-black/20'
               }`}>
@@ -256,7 +258,7 @@ const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {MASTER_SERVICES.filter(s => isHeritage ? true : true).map((service, i) => {
+            {MASTER_SERVICES.map((service, i) => {
               const qty = selectedQuantities[service.id] || 0;
               const isSelected = qty > 0;
 
@@ -417,3 +419,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+

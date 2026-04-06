@@ -1,13 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const MOCK_JOBS = [
-    { id: 1, title: 'Expert Pressman Required', category: 'Skilled Labor (Vendor)', location: 'Brooklyn, NY', desc: 'Seeking experienced steam iron specialist for high-volume boutique care.', type: 'Full-time' },
-    { id: 2, title: 'Operations Manager', category: 'Spinzyt Internal', location: 'Manhattan, NY', desc: 'Oversee logistics and vendor management for the regional hub.', type: 'Corporate' },
-    { id: 3, title: 'Wet Cleaner & Spotter', category: 'Skilled Labor (Vendor)', location: 'Queens, NY', desc: 'Must handle silk and delicate fabrics. Knowledge of stain removal is a plus.', type: 'Shift-based' },
-    { id: 4, title: 'Rider Partner', category: 'Spinzyt Internal', location: 'Bronx, NY', desc: 'Hyperlocal delivery partner for our high-speed flow network.', type: 'Flexible' },
-];
 
 const CareersPage = () => {
     const navigate = useNavigate();
@@ -15,28 +8,38 @@ const CareersPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isApplied, setIsApplied] = useState(false);
 
-    const categories = ['All', 'Spinzyt Internal', 'Skilled Labor (Vendor)'];
+    const MOCK_JOBS = useMemo(() => [
+        { id: 1, title: 'Expert Pressman Required', category: 'Skilled Labor (Vendor)', location: 'Brooklyn, NY', desc: 'Seeking experienced steam iron specialist for high-volume boutique care.', type: 'Full-time' },
+        { id: 2, title: 'Operations Manager', category: 'loondry Internal', location: 'Manhattan, NY', desc: 'Oversee logistics and vendor management for the regional hub.', type: 'Corporate' },
+        { id: 3, title: 'Wet Cleaner & Spotter', category: 'Skilled Labor (Vendor)', location: 'Queens, NY', desc: 'Must handle silk and delicate fabrics. Knowledge of stain removal is a plus.', type: 'Shift-based' },
+        { id: 4, title: 'Rider Partner', category: 'loondry Internal', location: 'Bronx, NY', desc: 'Hyperlocal delivery partner for our high-speed flow network.', type: 'Flexible' },
+    ], []);
+
+    const categories = useMemo(() => ['All', 'loondry Internal', 'Skilled Labor (Vendor)'], []);
     
-    const filteredJobs = MOCK_JOBS.filter(job => 
-        (selectedCategory === 'All' || job.category === selectedCategory) &&
-        (job.title.toLowerCase().includes(searchQuery.toLowerCase()) || job.location.toLowerCase().includes(searchQuery.toLowerCase()))
+    const filteredJobs = useMemo(() => 
+        MOCK_JOBS.filter(job => 
+            (selectedCategory === 'All' || job.category === selectedCategory) &&
+            (job.title.toLowerCase().includes(searchQuery.toLowerCase()) || job.location.toLowerCase().includes(searchQuery.toLowerCase()))
+        ), 
+        [MOCK_JOBS, selectedCategory, searchQuery]
     );
 
-    const containerVariants = {
+    const containerVariants = useMemo(() => ({
         hidden: { opacity: 0 },
         visible: { 
             opacity: 1,
             transition: { staggerChildren: 0.1 }
         }
-    };
+    }), []);
 
-    const itemVariants = {
+    const itemVariants = useMemo(() => ({
         hidden: { y: 20, opacity: 0 },
-        visible: { y: 0, opacity: 1 }
-    };
+        visible: { y: 0, opacity: 1, transition: { duration: 0.4 } }
+    }), []);
 
     return (
-        <div className="bg-background text-on-surface min-h-screen pb-32">
+        <div className="bg-background text-on-surface min-h-screen pb-32 font-body">
             <header className="px-6 pt-4 flex items-center mb-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
                 
@@ -57,7 +60,7 @@ const CareersPage = () => {
 
             <main className="px-6 max-w-2xl mx-auto">
                 {/* Search and Filters */}
-                <motion.div variants={itemVariants} initial="hidden" animate="visible" className="space-y-6 mb-10">
+                <motion.div initial="hidden" animate="visible" variants={itemVariants} className="space-y-6 mb-10">
                     <div className="relative flex items-center bg-white rounded-3xl px-6 py-4 shadow-sm border border-outline-variant/10 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                         <span className="material-symbols-outlined text-outline-variant mr-3">search</span>
                         <input 
@@ -80,7 +83,7 @@ const CareersPage = () => {
                                     : 'bg-white text-on-surface-variant border-outline-variant/10'
                                 }`}
                             >
-                                {cat === 'Skilled Labor (Vendor)' ? 'Skilled Labor' : cat === 'Spinzyt Internal' ? 'Internal' : cat}
+                                {cat === 'Skilled Labor (Vendor)' ? 'Skilled Labor' : cat === 'loondry Internal' ? 'Internal' : cat}
                             </button>
                         ))}
                     </div>
@@ -164,3 +167,4 @@ const CareersPage = () => {
 };
 
 export default CareersPage;
+

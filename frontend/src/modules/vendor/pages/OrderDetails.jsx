@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useNotificationStore from '../../../shared/stores/notificationStore';
@@ -13,12 +13,18 @@ const OrderDetails = () => {
     const [showReport, setShowReport] = useState(false);
     const [reportReason, setReportReason] = useState('');
 
-    const orderStages = [
+    const orderStages = useMemo(() => [
         { id: 1, label: 'Pickup', icon: 'photo_camera', status: 'completed' },
         { id: 2, label: 'Intake', icon: 'inventory_2', status: 'active', color: 'primary' },
         { id: 3, label: 'Processing', icon: 'local_laundry_service', status: 'pending' },
         { id: 4, label: 'Handover', icon: 'verified_user', status: 'pending' },
-    ];
+    ], []);
+
+    const orderItems = useMemo(() => [
+        { item: "Wash & Fold (per kg)", qty: "12.5 kg", price: "₹243" },
+        { item: "Silk Blouse (Eco-Dry)", qty: "x 2", price: "₹130" },
+        { item: "Cotton Shirts (Starch)", qty: "x 5", price: "₹125" },
+    ], []);
 
 
     return (
@@ -171,11 +177,7 @@ const OrderDetails = () => {
                             <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-on-surface-variant opacity-60">Order Items</h3>
                         </div>
                         <div className="p-5 space-y-4">
-                            {[
-                                { item: "Wash & Fold (per kg)", qty: "12.5 kg", price: "₹243" },
-                                { item: "Silk Blouse (Eco-Dry)", qty: "x 2", price: "₹130" },
-                                { item: "Cotton Shirts (Starch)", qty: "x 5", price: "₹125" },
-                            ].map((item, i) => (
+                            {orderItems.map((item, i) => (
                                 <div key={item.item} className="flex justify-between items-center group">
                                     <div className="grow">
                                         <p className="font-bold text-on-surface leading-tight">{item.item}</p>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import VendorHeader from '../components/VendorHeader';
@@ -6,11 +6,11 @@ import VendorHeader from '../components/VendorHeader';
 const Support = () => {
     const navigate = useNavigate();
 
-    const faqs = [
+    const faqs = useMemo(() => [
         { q: 'How do payouts work?', a: 'Payouts are processed every Friday for all orders completed in the previous week.' },
         { q: 'Changing service prices', a: 'You can update your service prices anytime from the Services & Pricing menu.' },
         { q: 'What is rider verification?', a: 'It\'s a security step to ensure the correct rider picks up and delivers orders.' },
-    ];
+    ], []);
 
     return (
         <div className="bg-[#F8FAFC] text-[#1E293B] min-h-screen pb-32 font-sans">

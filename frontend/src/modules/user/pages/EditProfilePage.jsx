@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const EditProfilePage = () => {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState({
+  
+  const initialProfile = useMemo(() => ({
     name: 'Chirag Jeevanani',
     email: 'chira@example.com',
     phone: '9876543210'
-  });
+  }), []);
+
+  const [profile, setProfile] = useState(initialProfile);
+
+  const containerVariants = useMemo(() => ({
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  }), []);
+
+  const itemVariants = useMemo(() => ({
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
+  }), []);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -18,14 +34,14 @@ const EditProfilePage = () => {
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-background text-on-background min-h-[100dvh] pb-32"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="bg-background text-on-background min-h-[100dvh] pb-32 font-body"
     >
       <main className="max-w-2xl mx-auto px-6 pt-8">
         <motion.header 
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
+          variants={itemVariants}
           className="mb-8"
         >
           <button 
@@ -44,7 +60,7 @@ const EditProfilePage = () => {
         </motion.header>
 
         <form onSubmit={handleSave} className="space-y-8">
-          <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-outline-variant/10 space-y-8">
+          <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-outline-variant/10 space-y-8">
             {/* Avatar Section */}
             <div className="flex flex-col items-center gap-6 pb-4 border-b border-outline-variant/5">
               <div className="relative group cursor-pointer">
@@ -101,9 +117,10 @@ const EditProfilePage = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           <motion.button 
+            variants={itemVariants}
             type="submit"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -119,3 +136,4 @@ const EditProfilePage = () => {
 };
 
 export default EditProfilePage;
+

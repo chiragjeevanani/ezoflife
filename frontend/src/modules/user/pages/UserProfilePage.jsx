@@ -1,36 +1,35 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import UserHeader from '../components/UserHeader';
 
 const UserProfilePage = () => {
   const navigate = useNavigate();
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
-  };
+  }), []);
 
-  const mainActions = [
+  const mainActions = useMemo(() => [
     { title: 'Order History', desc: 'View past cleanings and receipts', icon: 'history', path: '/user/orders', color: 'primary' },
     { title: 'Payment Methods', desc: 'Manage cards and digital wallets', icon: 'payments', path: '/user/profile/payment', color: 'tertiary' },
     { title: 'Saved Addresses', desc: 'Manage pickup & delivery locales', icon: 'location_on', path: '/user/profile/addresses', color: 'secondary' },
     { title: 'Edit Profile', desc: 'Update name, email, and preferences', icon: 'person_edit', path: '/user/profile/edit', color: 'primary' }
-  ];
+  ], []);
 
-  const secondaryActions = [
+  const secondaryActions = useMemo(() => [
     { title: 'Help Center', icon: 'help_outline', path: '/user/support', color: 'primary' },
     { title: 'Privacy Policy', icon: 'security', path: '/user/privacy', color: 'tertiary' },
     { title: 'Terms & Conditions', icon: 'description', path: '/user/terms', color: 'secondary' }
-  ];
+  ], []);
 
   return (
     <motion.div 
@@ -156,3 +155,4 @@ const UserProfilePage = () => {
 };
 
 export default UserProfilePage;
+

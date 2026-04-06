@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -6,13 +6,28 @@ const PartnershipInquiryPage = () => {
     const navigate = useNavigate();
     const [isSubmitted, setIsSubmitted] = useState(false);
 
+    const partnershipTypes = useMemo(() => ['Logistics', 'Supplies', 'Marketing', 'Technology'], []);
+
+    const containerVariants = useMemo(() => ({
+        hidden: { opacity: 0 },
+        visible: { 
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    }), []);
+
+    const itemVariants = useMemo(() => ({
+        hidden: { y: 10, opacity: 0 },
+        visible: { y: 0, opacity: 1, transition: { duration: 0.4 } }
+    }), []);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         setIsSubmitted(true);
     };
 
     return (
-        <div className="bg-background text-on-surface min-h-[100dvh] pb-24 flex flex-col overflow-x-hidden">
+        <div className="bg-background text-on-surface min-h-[100dvh] pb-24 flex flex-col overflow-x-hidden font-body">
             <header className="px-6 pt-4 flex items-center mb-8">
                 <div className="flex items-center gap-4">
                     <motion.button 
@@ -29,13 +44,19 @@ const PartnershipInquiryPage = () => {
                 </div>
             </header>
 
-            <main className="px-6 max-w-md mx-auto w-full flex-grow">
+            <motion.main 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="px-6 max-w-md mx-auto w-full flex-grow"
+            >
                 <AnimatePresence mode="wait">
                     {!isSubmitted ? (
                         <motion.form 
                             key="form"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            variants={itemVariants}
+                            initial="hidden"
+                            animate="visible"
                             exit={{ opacity: 0, scale: 0.95 }}
                             onSubmit={handleSubmit}
                             className="space-y-8"
@@ -56,7 +77,7 @@ const PartnershipInquiryPage = () => {
                                 <div>
                                     <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1">Partnership Type</label>
                                     <div className="grid grid-cols-2 gap-3">
-                                        {['Logistics', 'Supplies', 'Marketing', 'Technology'].map(type => (
+                                        {partnershipTypes.map(type => (
                                             <button type="button" key={type} className="px-5 py-4 border border-slate-300 rounded-2xl text-[10px] uppercase font-black tracking-widest hover:bg-primary/5 hover:border-primary/20 transition-all">
                                                 {type}
                                             </button>
@@ -101,13 +122,14 @@ const PartnershipInquiryPage = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </main>
+            </motion.main>
 
             <footer className="mt-12 text-center py-10 opacity-20">
-                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Spinzyt Partnerships HQ 2026</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.3em]">loondry Partnerships HQ 2026</span>
             </footer>
         </div>
     );
 };
 
 export default PartnershipInquiryPage;
+

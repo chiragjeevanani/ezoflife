@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const DocumentUpload = () => {
     const navigate = useNavigate();
+
+    const uploadRequirements = useMemo(() => [
+        { id: 'id', title: "Government ID", desc: "Driver's License, Aadhaar, or Passport", icon: "id_card", delay: 0.2 },
+        { id: 'biz', title: "Business proof", desc: "GST Registration, Trade License, or Lease", icon: "description", delay: 0.3 }
+    ], []);
 
     return (
         <motion.div 
@@ -77,20 +82,15 @@ const DocumentUpload = () => {
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* ID Verification Card */}
-                        <UploadCard 
-                            title="Government ID" 
-                            desc="Driver's License, Aadhaar, or Passport" 
-                            icon="id_card" 
-                            delay={0.2}
-                        />
-                        {/* Business License Card */}
-                        <UploadCard 
-                            title="Business proof" 
-                            desc="GST Registration, Trade License, or Lease" 
-                            icon="description" 
-                            delay={0.3}
-                        />
+                        {uploadRequirements.map(req => (
+                            <UploadCard 
+                                key={req.id}
+                                title={req.title} 
+                                desc={req.desc} 
+                                icon={req.icon} 
+                                delay={req.delay}
+                            />
+                        ))}
                     </div>
 
                     <div className="bg-primary/5 p-8 rounded-2xl border border-primary/10 flex items-start gap-6 relative overflow-hidden group">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,7 +14,7 @@ const AuthPage = () => {
   const isLoginValid = loginPhone.length === 10 && /^\d+$/.test(loginPhone);
   const isSignupValid = signupPhone.length === 10 && /^\d+$/.test(signupPhone) && agreedToTnC;
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0, y: 20 },
     visible: { 
       opacity: 1, 
@@ -29,12 +29,22 @@ const AuthPage = () => {
       y: -20,
       transition: { duration: 0.3 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { opacity: 0, y: 15 },
     visible: { opacity: 1, y: 0 }
-  };
+  }), []);
+
+  const authTabs = useMemo(() => [
+    { key: true, label: 'Login' },
+    { key: false, label: 'Signup' }
+  ], []);
+
+  const otpChannels = useMemo(() => [
+    { id: 'WhatsApp', icon: 'chat', color: 'text-green-600' },
+    { id: 'SMS', icon: 'sms', color: 'text-primary' }
+  ], []);
 
   return (
     <div className="bg-background font-body text-on-background min-h-[100dvh] flex flex-col overflow-x-hidden">
@@ -59,36 +69,24 @@ const AuthPage = () => {
         <div className="max-w-md mx-auto">
           {/* Tabs */}
           <div className="flex items-center justify-center gap-10 mb-8">
-            <button 
-              onClick={() => setIsLogin(true)}
-              className="relative py-2 focus:outline-none"
-            >
-              <span className={`font-headline text-xl font-black transition-colors duration-300 ${isLogin ? 'text-on-background' : 'text-outline-variant hover:text-outline'}`}>
-                Login
-              </span>
-              {isLogin && (
-                <motion.div 
-                  layoutId="activeTabIndicator"
-                  className="absolute -bottom-1 left-0 right-0 h-1.5 bg-primary rounded-full"
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                />
-              )}
-            </button>
-            <button 
-              onClick={() => setIsLogin(false)}
-              className="relative py-2 focus:outline-none"
-            >
-              <span className={`font-headline text-xl font-black transition-colors duration-300 ${!isLogin ? 'text-on-background' : 'text-outline-variant hover:text-outline'}`}>
-                Signup
-              </span>
-              {!isLogin && (
-                <motion.div 
-                  layoutId="activeTabIndicator"
-                  className="absolute -bottom-1 left-0 right-0 h-1.5 bg-primary rounded-full"
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                />
-              )}
-            </button>
+            {authTabs.map(({ key, label }) => (
+              <button 
+                key={label}
+                onClick={() => setIsLogin(key)}
+                className="relative py-2 focus:outline-none"
+              >
+                <span className={`font-headline text-xl font-black transition-colors duration-300 ${isLogin === key ? 'text-on-background' : 'text-outline-variant hover:text-outline'}`}>
+                  {label}
+                </span>
+                {isLogin === key && (
+                  <motion.div 
+                    layoutId="activeTabIndicator"
+                    className="absolute -bottom-1 left-0 right-0 h-1.5 bg-primary rounded-full"
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  />
+                )}
+              </button>
+            ))}
           </div>
 
           {/* Auth Card with AnimatePresence for content switching */}
@@ -115,20 +113,16 @@ const AuthPage = () => {
                     <div className="space-y-6">
                       {/* OTP Channel Selector */}
                       <motion.div variants={itemVariants} className="flex bg-surface-container-low p-1 rounded-2xl border border-slate-300">
-                        <button 
-                          onClick={() => setOtpChannel('WhatsApp')}
-                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${otpChannel === 'WhatsApp' ? 'bg-white shadow-sm text-green-600' : 'text-on-surface-variant opacity-40'}`}
-                        >
-                          <span className="material-symbols-outlined text-sm">chat</span>
-                          WhatsApp
-                        </button>
-                        <button 
-                          onClick={() => setOtpChannel('SMS')}
-                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${otpChannel === 'SMS' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant opacity-40'}`}
-                        >
-                          <span className="material-symbols-outlined text-sm">sms</span>
-                          SMS
-                        </button>
+                        {otpChannels.map(channel => (
+                          <button 
+                            key={channel.id}
+                            onClick={() => setOtpChannel(channel.id)}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${otpChannel === channel.id ? `bg-white shadow-sm ${channel.color}` : 'text-on-surface-variant opacity-40'}`}
+                          >
+                            <span className="material-symbols-outlined text-sm">{channel.icon}</span>
+                            {channel.id}
+                          </button>
+                        ))}
                       </motion.div>
                       <motion.div variants={itemVariants} className="relative group">
                         <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Phone Number</label>
@@ -171,20 +165,16 @@ const AuthPage = () => {
                     <div className="space-y-4">
                       {/* OTP Channel Selector */}
                       <motion.div variants={itemVariants} className="flex bg-surface-container-low p-1 rounded-2xl border border-slate-300 mb-2">
-                        <button 
-                          onClick={() => setOtpChannel('WhatsApp')}
-                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${otpChannel === 'WhatsApp' ? 'bg-white shadow-sm text-green-600' : 'text-on-surface-variant opacity-40'}`}
-                        >
-                          <span className="material-symbols-outlined text-sm">chat</span>
-                          WhatsApp
-                        </button>
-                        <button 
-                          onClick={() => setOtpChannel('SMS')}
-                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${otpChannel === 'SMS' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant opacity-40'}`}
-                        >
-                          <span className="material-symbols-outlined text-sm">sms</span>
-                          SMS
-                        </button>
+                        {otpChannels.map(channel => (
+                          <button 
+                            key={channel.id}
+                            onClick={() => setOtpChannel(channel.id)}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${otpChannel === channel.id ? `bg-white shadow-sm ${channel.color}` : 'text-on-surface-variant opacity-40'}`}
+                          >
+                            <span className="material-symbols-outlined text-sm">{channel.icon}</span>
+                            {channel.id}
+                          </button>
+                        ))}
                       </motion.div>
  
                       <motion.div variants={itemVariants}>
@@ -230,8 +220,6 @@ const AuthPage = () => {
                     </div>
                   </div>
                 )}
-
-
               </motion.div>
             </AnimatePresence>
           </motion.div>
@@ -251,3 +239,4 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
+

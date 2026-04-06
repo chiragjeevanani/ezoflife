@@ -1,12 +1,26 @@
-import React from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const DeliveryVerificationPage = () => {
   const navigate = useNavigate();
 
-  const [otp, setOtp] = React.useState(['', '', '', '']);
-  const otpRefs = [React.useRef(null), React.useRef(null), React.useRef(null), React.useRef(null)];
+  const [otp, setOtp] = useState(['', '', '', '']);
+  const otpRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+
+  const packageStats = useMemo(() => [
+    { label: 'Total Weight', val: '6.4 kg' },
+    { label: 'Service Type', val: 'Premium' },
+    { label: 'Items Count', val: '18 pcs' }
+  ], []);
+
+  const pickupPhotos = useMemo(() => [
+    "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?q=80&w=2071&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=1",
+    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=2",
+    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=3",
+    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=4"
+  ], []);
 
   const handleOtpChange = (index, value) => {
     if (isNaN(value)) return;
@@ -33,30 +47,30 @@ const DeliveryVerificationPage = () => {
     }
   };
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
-  };
+  }), []);
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
       className="bg-background text-on-background min-h-[100dvh] flex flex-col font-body"
     >
       <main className="flex-1 pt-28 pb-32 px-6 max-w-5xl mx-auto w-full">
         {/* Editorial Header Section */}
         <motion.section 
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
+          variants={itemVariants}
           className="py-8 ml-2"
         >
           <p className="font-label text-xs uppercase tracking-[0.3em] text-primary font-black mb-2 opacity-60">Order #EZ-92834</p>
@@ -66,12 +80,7 @@ const DeliveryVerificationPage = () => {
         </motion.section>
 
         {/* Bento Grid Layout for Photo Comparison */}
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
           {/* Pickup Card (Phase 1 M2 Requirement) */}
           <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 flex flex-col gap-6 shadow-sm border border-outline-variant/5">
             <div className="flex justify-between items-center">
@@ -81,14 +90,14 @@ const DeliveryVerificationPage = () => {
             
             <div className="space-y-4">
               <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-inner bg-surface-container">
-                <img alt="Main Pickup" className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1545173168-9f1947eebb7f?q=80&w=2071&auto=format&fit=crop" />
+                <img alt="Main Pickup" className="w-full h-full object-cover" src={pickupPhotos[0]} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
               </div>
               
               <div className="grid grid-cols-4 gap-2">
-                {[1,2,3,4].map(i => (
+                {pickupPhotos.slice(1).map((url, i) => (
                   <div key={i} className="aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:border-primary transition-all">
-                    <img alt={`Pickup ${i}`} className="w-full h-full object-cover opacity-80" src={`https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=${i}`} />
+                    <img alt={`Pickup ${i+1}`} className="w-full h-full object-cover opacity-80" src={url} />
                   </div>
                 ))}
               </div>
@@ -113,13 +122,11 @@ const DeliveryVerificationPage = () => {
               Your garments have been sanitized and neatly packaged for your arrival.
             </p>
           </motion.div>
-        </motion.div>
+        </div>
 
         {/* Package Details Bento */}
         <motion.div 
           variants={itemVariants}
-          initial="hidden"
-          animate="visible"
           className="bg-white rounded-[2.5rem] p-10 mb-12 shadow-sm border border-outline-variant/10 group overflow-hidden relative"
         >
           <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -mr-12 -mt-12 pointer-events-none"></div>
@@ -130,11 +137,7 @@ const DeliveryVerificationPage = () => {
             Package Details
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-10">
-            {[
-              { label: 'Total Weight', val: '6.4 kg' },
-              { label: 'Service Type', val: 'Premium' },
-              { label: 'Items Count', val: '18 pcs' }
-            ].map((stat, i) => (
+            {packageStats.map((stat, i) => (
               <div key={i}>
                 <p className="text-[10px] font-black text-on-surface-variant mb-2 uppercase tracking-widest opacity-50">{stat.label}</p>
                 <p className="font-headline font-black text-3xl text-primary leading-none tracking-tighter">{stat.val}</p>
@@ -146,8 +149,6 @@ const DeliveryVerificationPage = () => {
         {/* Final Confirmation OTP Section */}
         <motion.section 
           variants={itemVariants}
-          initial="hidden"
-          animate="visible"
           className="max-w-md mx-auto text-center py-6"
         >
           <h4 className="font-headline font-black text-2xl tracking-tighter mb-3">Final Confirmation OTP</h4>
@@ -194,3 +195,4 @@ const DeliveryVerificationPage = () => {
 };
 
 export default DeliveryVerificationPage;
+

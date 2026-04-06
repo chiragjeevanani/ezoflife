@@ -7,13 +7,19 @@ const Earnings = () => {
     const navigate = useNavigate();
     const [performanceFilter, setPerformanceFilter] = useState('Weekly');
 
-    const performanceData = {
+    const performanceData = useMemo(() => ({
         'Daily': { labels: ['18', '19', '20', '21', '22', '23', '24'], values: [65, 40, 85, 30, 95, 60, 45], activeIdx: 6 },
         'Weekly': { labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], values: [45, 65, 55, 90, 45, 75, 30], activeIdx: 3 },
         'Monthly': { labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'], values: [60, 80, 55, 95, 70, 85], activeIdx: 5 }
-    };
+    }), []);
 
-    const currentData = performanceData[performanceFilter];
+    const payoutHistory = useMemo(() => [
+        { id: '#SETT-9821', date: 'Mar 23', amt: '₹2,450' },
+        { id: '#SETT-9740', date: 'Mar 16', amt: '₹1,820' },
+        { id: '#SETT-9655', date: 'Mar 09', amt: '₹3,105' },
+    ], []);
+
+    const currentData = useMemo(() => performanceData[performanceFilter], [performanceFilter, performanceData]);
 
     return (
         <motion.div 
@@ -111,11 +117,7 @@ const Earnings = () => {
                 <section className="space-y-6">
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest px-1">Payout History</h3>
                     <div className="space-y-3">
-                        {[
-                            { id: '#SETT-9821', date: 'Mar 23', amt: '₹2,450' },
-                            { id: '#SETT-9740', date: 'Mar 16', amt: '₹1,820' },
-                            { id: '#SETT-9655', date: 'Mar 09', amt: '₹3,105' },
-                        ].map((payout, i) => (
+                        {payoutHistory.map((payout, i) => (
                             <div key={payout.id} className="bg-white p-5 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm transition-all hover:bg-slate-50 cursor-pointer group">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 group-hover:text-green-500 transition-colors">

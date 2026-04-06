@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import VendorHeader from '../components/VendorHeader';
@@ -6,12 +6,22 @@ import VendorHeader from '../components/VendorHeader';
 const PayoutSettings = () => {
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
-    const [bankData, setBankData] = useState({
+    
+    const initialBankData = useMemo(() => ({
         beneficiary: 'Pristine Cleaners Pvt. Ltd.',
         accountNumber: '000000000000',
         ifsc: 'SBIN0001235',
         bankName: 'State Bank of India'
-    });
+    }), []);
+
+    const payoutFields = useMemo(() => [
+        { id: 'beneficiary', label: 'Beneficiary', icon: 'account_circle' },
+        { id: 'accountNumber', label: 'Account number', icon: 'credit_card' },
+        { id: 'ifsc', label: 'IFSC Code', icon: 'verified' },
+        { id: 'bankName', label: 'Bank Name', icon: 'account_balance' }
+    ], []);
+
+    const [bankData, setBankData] = useState(initialBankData);
 
     const handleSave = () => {
         setIsEditing(false);
@@ -68,12 +78,7 @@ const PayoutSettings = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                        {[
-                            { id: 'beneficiary', label: 'Beneficiary', value: bankData.beneficiary, icon: 'account_circle' },
-                            { id: 'accountNumber', label: 'Account number', value: bankData.accountNumber, icon: 'credit_card' },
-                            { id: 'ifsc', label: 'IFSC Code', value: bankData.ifsc, icon: 'verified' },
-                            { id: 'bankName', label: 'Bank Name', value: bankData.bankName, icon: 'account_balance' }
-                        ].map((field) => (
+                        {payoutFields.map((field) => (
                             <div key={field.id} className="space-y-2 group">
                                 <div className="flex items-center gap-2 text-primary/40 mb-1 group-hover:text-primary transition-colors">
                                     <span className="material-symbols-outlined text-[16px]">{field.icon}</span>
@@ -82,13 +87,13 @@ const PayoutSettings = () => {
                                 {isEditing ? (
                                     <input 
                                         type="text"
-                                        value={field.value}
+                                        value={bankData[field.id]}
                                         onChange={(e) => setBankData({...bankData, [field.id]: e.target.value})}
                                         className="w-full bg-surface-container-low border-b-2 border-primary/10 py-2 px-1 text-base font-bold text-on-surface focus:outline-none focus:border-primary transition-all"
                                     />
                                 ) : (
                                     <p className="text-base font-bold text-on-surface tracking-tight pl-6">
-                                        {field.id === 'accountNumber' ? `${field.value.slice(0, 4)} •••• •••• ${field.value.slice(-4)}` : field.value}
+                                        {field.id === 'accountNumber' ? `${bankData[field.id].slice(0, 4)} •••• •••• ${bankData[field.id].slice(-4)}` : bankData[field.id]}
                                     </p>
                                 )}
                             </div>

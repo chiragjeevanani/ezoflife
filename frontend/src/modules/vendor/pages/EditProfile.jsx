@@ -5,12 +5,14 @@ import VendorHeader from '../components/VendorHeader';
 
 const EditProfile = () => {
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({
+    const initialFormData = useMemo(() => ({
         shopName: 'Pristine Cleaners',
         ownerName: 'Chirag Jeevanani',
         email: 'chirag@example.com',
         phone: '+91 98765 43210',
-    });
+    }), []);
+
+    const [formData, setFormData] = useState(initialFormData);
 
     return (
         <div className="bg-[#F8FAFC] text-[#1E293B] min-h-screen pb-32 font-sans">

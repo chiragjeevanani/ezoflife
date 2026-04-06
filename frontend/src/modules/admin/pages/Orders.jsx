@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, Download, Filter, FileText, PlusCircle, ExternalLink, User, Store, Calendar, ArrowRight } from 'lucide-react';
 import { mockAdminData } from '../data/mockData';
@@ -9,14 +9,16 @@ import StatusBadge from '../components/common/StatusBadge';
 export default function Orders() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('All');
-  const tabs = ['All', 'In Progress', 'Ready', 'Delivered', 'Cancelled'];
+  const tabs = useMemo(() => ['All', 'In Progress', 'Ready', 'Delivered', 'Cancelled'], []);
 
-  const filterOrders = () => {
-    if (activeTab === 'All') return mockAdminData.recentOrders;
-    return mockAdminData.recentOrders.filter(order => order.status === activeTab);
-  };
+  const allOrders = useMemo(() => mockAdminData.recentOrders, []);
 
-  const orderColumns = [
+  const filteredOrders = useMemo(() => {
+    if (activeTab === 'All') return allOrders;
+    return allOrders.filter(order => order.status === activeTab);
+  }, [activeTab, allOrders]);
+
+  const orderColumns = useMemo(() => [
     { 
       header: 'Order ID', 
       key: 'id',
@@ -67,7 +69,7 @@ export default function Orders() {
       key: 'date', 
       render: (val) => <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest tabular-nums opacity-60 flex items-center gap-2"><ArrowRight size={10} className="text-slate-200" /> {val}</span> 
     }
-  ];
+  ], []);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
@@ -101,7 +103,7 @@ export default function Orders() {
         <DataGrid 
           title={`${activeTab} Orders`}
           columns={orderColumns}
-          data={filterOrders()}
+          data={filteredOrders}
           onAction={(row) => navigate(`/admin/orders/${row.id}`)}
         />
       </div>

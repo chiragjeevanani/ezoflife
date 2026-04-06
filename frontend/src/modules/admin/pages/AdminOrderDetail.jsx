@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Package, User, Store, Clock, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
@@ -8,8 +8,8 @@ export default function AdminOrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Mock data for the specific order
-  const order = {
+  // Memoized data for the specific order
+  const order = useMemo(() => ({
     id: id || '#EZ-8821',
     status: 'In Progress',
     date: '25 Mar, 2026',
@@ -36,7 +36,7 @@ export default function AdminOrderDetail() {
       { status: 'Ready for Delivery', time: '--', completed: false },
       { status: 'Delivered', time: '--', completed: false }
     ]
-  };
+  }), [id]);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">

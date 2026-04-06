@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
     Building2, 
     Mail, 
@@ -16,47 +16,54 @@ import PageHeader from '../components/common/PageHeader';
 import DataGrid from '../components/tables/DataGrid';
 import StatusBadge from '../components/common/StatusBadge';
 
-const MOCK_LEADS = [
-    { 
-        id: 'B2B-001', 
-        company: 'The Grand Regency Hotel', 
-        contact: 'Sarah Jenkins', 
-        email: 'sarah@regency.com', 
-        requirement: 'Daily Linen & Towel Laundry (500kg+)', 
-        status: 'New', 
-        date: '2026-04-04' 
-    },
-    { 
-        id: 'B2B-002', 
-        company: 'Fit & Flow Gym Network', 
-        contact: 'Mike Ross', 
-        email: 'mike@fitflow.com', 
-        requirement: 'Weekly Towel Wash (200 units)', 
-        status: 'Contacted', 
-        date: '2026-04-03' 
-    },
-    { 
-        id: 'B2B-003', 
-        company: 'Precision Med Labs', 
-        contact: 'Dr. Anita', 
-        email: 'admin@pmed.com', 
-        requirement: 'Sterilized Apron Cleaning', 
-        status: 'Quoted', 
-        date: '2026-04-02' 
-    },
-    { 
-        id: 'B2B-004', 
-        company: 'Corporate Suites HSR', 
-        contact: 'John Doe', 
-        email: 'procurement@corpsuites.com', 
-        requirement: 'Staff Uniforms (Dry Clean)', 
-        status: 'Qualified', 
-        date: '2026-04-01' 
-    }
-];
-
 export default function B2BLeads() {
-    const leadColumns = [
+    const leads = useMemo(() => [
+        { 
+            id: 'B2B-001', 
+            company: 'The Grand Regency Hotel', 
+            contact: 'Sarah Jenkins', 
+            email: 'sarah@regency.com', 
+            requirement: 'Daily Linen & Towel Laundry (500kg+)', 
+            status: 'New', 
+            date: '2026-04-04' 
+        },
+        { 
+            id: 'B2B-002', 
+            company: 'Fit & Flow Gym Network', 
+            contact: 'Mike Ross', 
+            email: 'mike@fitflow.com', 
+            requirement: 'Weekly Towel Wash (200 units)', 
+            status: 'Contacted', 
+            date: '2026-04-03' 
+        },
+        { 
+            id: 'B2B-003', 
+            company: 'Precision Med Labs', 
+            contact: 'Dr. Anita', 
+            email: 'admin@pmed.com', 
+            requirement: 'Sterilized Apron Cleaning', 
+            status: 'Quoted', 
+            date: '2026-04-02' 
+        },
+        { 
+            id: 'B2B-004', 
+            company: 'Corporate Suites HSR', 
+            contact: 'John Doe', 
+            email: 'procurement@corpsuites.com', 
+            requirement: 'Staff Uniforms (Dry Clean)', 
+            status: 'Qualified', 
+            date: '2026-04-01' 
+        }
+    ], []);
+
+    const leadStats = useMemo(() => [
+        { label: 'New Inquiries', value: '12', subValue: '+4 today', variant: 'slate' },
+        { label: 'Active Negotiations', value: '28', variant: 'slate' },
+        { label: 'Estimated Pipeline', value: '₹4.8M', variant: 'primary' },
+        { label: 'Conversion Rate', value: '32.4%', variant: 'dark' }
+    ], []);
+
+    const leadColumns = useMemo(() => [
         { 
             header: 'Entity / Lead', 
             key: 'company',
@@ -111,7 +118,7 @@ export default function B2BLeads() {
                 </div>
             )
         }
-    ];
+    ], []);
 
     return (
         <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
@@ -126,38 +133,22 @@ export default function B2BLeads() {
             <div className="p-6 space-y-6 max-w-[1600px] mx-auto w-full">
                 {/* Tactical Stats Matrix */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-white p-6 rounded-sm border border-slate-200 shadow-sm flex flex-col gap-2">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic leading-none">New Inquiries</span>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-slate-900 tabular-nums italic leading-none">12</span>
-                            <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">+4 today</span>
+                    {leadStats.map((stat, i) => (
+                        <div key={i} className={`${stat.variant === 'dark' ? 'bg-slate-900 border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} p-6 rounded-sm border flex flex-col gap-2 ${stat.variant === 'primary' ? 'text-primary' : ''}`}>
+                            <span className={`text-[9px] font-black ${stat.variant === 'dark' ? 'text-slate-500' : 'text-slate-400'} uppercase tracking-widest italic leading-none ${stat.variant === 'primary' ? 'opacity-60' : ''}`}>{stat.label}</span>
+                            <div className="flex items-baseline gap-2">
+                                <span className={`text-2xl font-black ${stat.variant === 'dark' ? 'text-white' : 'text-slate-900'} tabular-nums italic leading-none`}>{stat.value}</span>
+                                {stat.subValue && <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">{stat.subValue}</span>}
+                            </div>
                         </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-sm border border-slate-200 shadow-sm flex flex-col gap-2">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic leading-none">Active Negotiations</span>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-slate-900 tabular-nums italic leading-none">28</span>
-                        </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-sm border border-slate-200 shadow-sm flex flex-col gap-2 text-primary">
-                        <span className="text-[9px] font-black text-primary uppercase tracking-widest italic leading-none opacity-60">Estimated Pipeline</span>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-slate-900 tabular-nums italic leading-none">₹4.8M</span>
-                        </div>
-                    </div>
-                    <div className="bg-slate-900 p-6 rounded-sm border border-slate-800 shadow-xl flex flex-col gap-2">
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic leading-none">Conversion Rate</span>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-white tabular-nums italic leading-none">32.4%</span>
-                        </div>
-                    </div>
+                    ))}
                 </div>
 
                 {/* Lead Registry */}
                 <DataGrid 
                     title="Enterprise Inquiry Feed"
                     columns={leadColumns}
-                    data={MOCK_LEADS}
+                    data={leads}
                     onAction={(row) => console.log('Opening lead', row.id)}
                 />
             </div>

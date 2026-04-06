@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -8,11 +8,11 @@ const RateAndReviewPage = () => {
   const [comment, setComment] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const stats = [
+  const stats = useMemo(() => [
     { label: 'Quality', val: 'Excellent' },
     { label: 'Speed', val: 'Fast' },
     { label: 'Service', val: 'Polite' }
-  ];
+  ], []);
 
   const handleReview = () => {
     setIsSubmitted(true);
@@ -21,11 +21,16 @@ const RateAndReviewPage = () => {
     }, 2500);
   };
 
+  const containerVariants = useMemo(() => ({
+    hidden: { scale: 0.9, opacity: 0 },
+    visible: { scale: 1, opacity: 1, transition: { type: "spring", damping: 25, stiffness: 200 } }
+  }), []);
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="bg-background text-on-background min-h-[100dvh] flex flex-col"
+      className="bg-background text-on-background min-h-[100dvh] flex flex-col font-body"
     >
       <header className="fixed top-0 z-50 bg-white/70 backdrop-blur-xl w-full flex items-center px-6 py-4 border-b border-outline-variant/10">
         <button onClick={() => navigate(-1)} className="material-symbols-outlined text-on-surface-variant mr-4">arrow_back</button>
@@ -35,14 +40,15 @@ const RateAndReviewPage = () => {
       <main className="max-w-2xl mx-auto px-6 pt-24 pb-36 w-full flex-1 flex flex-col items-center">
         {!isSubmitted ? (
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
               className="w-full flex flex-col items-center"
             >
                 <div className="mb-12 text-center">
                     <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-1 block opacity-60">Experience Feedback</span>
                     <h2 className="text-3xl font-black tracking-tighter leading-none mb-3">Rate Your Freshness</h2>
-                    <p className="text-xs font-bold text-on-surface-variant opacity-60">How was your cleaning with Ez of Life?</p>
+                    <p className="text-xs font-bold text-on-surface-variant opacity-60">How was your cleaning with loondry?</p>
                 </div>
 
                 {/* Rating Interaction */}
@@ -117,3 +123,4 @@ const RateAndReviewPage = () => {
 };
 
 export default RateAndReviewPage;
+

@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const ShopDetails = () => {
     const navigate = useNavigate();
+
+    const availableServices = useMemo(() => [
+        { id: 1, title: 'Wash & Fold', icon: 'local_laundry_service' },
+        { id: 2, title: 'Dry Cleaning', icon: 'dry_cleaning' },
+        { id: 3, title: 'Steam Press', icon: 'iron' },
+        { id: 4, title: 'Shoe Care', icon: 'checkroom' }
+    ], []);
 
     return (
         <motion.div 
@@ -110,12 +117,7 @@ const ShopDetails = () => {
                     <section className="space-y-4 pt-4 border-t border-slate-50">
                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Services Offered</label>
                         <div className="grid grid-cols-2 gap-3">
-                            {[
-                                { id: 1, title: 'Wash & Fold', icon: 'local_laundry_service' },
-                                { id: 2, title: 'Dry Cleaning', icon: 'dry_cleaning' },
-                                { id: 3, title: 'Steam Press', icon: 'iron' },
-                                { id: 4, title: 'Shoe Care', icon: 'checkroom' }
-                            ].map((service) => (
+                            {availableServices.map((service) => (
                                 <button 
                                     key={service.id}
                                     className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${service.id === 1 ? 'bg-[#3D5AFE]/5 border-[#3D5AFE]/20 text-[#3D5AFE]' : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200'}`}

@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const SHIPMENTS = [
-    { id: 'LD-4421', vendor: 'Spinzyt - HSR Layout', items: '50L Detergent, 200 Tags', status: 'In Transit', driver: 'Rahul S.', eta: '14 mins' },
-    { id: 'LD-4428', vendor: 'LoonDry - Indiranagar', items: '100 Wooden Hangers', status: 'Picking Up', driver: 'Vikram K.', eta: '28 mins' },
-    { id: 'LD-4430', vendor: 'FabriCare - Whitefield', items: '3 Steam Specialists', status: 'Dispatched', driver: 'Manish P.', eta: 'Reached' }
-];
-
 const SupplierLogistics = () => {
     const navigate = useNavigate();
+
+    const shipments = useMemo(() => [
+        { id: 'LD-4421', vendor: 'Spinzyt - HSR Layout', items: '50L Detergent, 200 Tags', status: 'In Transit', driver: 'Rahul S.', eta: '14 mins' },
+        { id: 'LD-4428', vendor: 'LoonDry - Indiranagar', items: '100 Wooden Hangers', status: 'Picking Up', driver: 'Vikram K.', eta: '28 mins' },
+        { id: 'LD-4430', vendor: 'FabriCare - Whitefield', items: '3 Steam Specialists', status: 'Dispatched', driver: 'Manish P.', eta: 'Reached' }
+    ], []);
 
     return (
         <div className="min-h-screen bg-background pb-40">
@@ -39,7 +39,7 @@ const SupplierLogistics = () => {
                     </div>
                     
                     <div className="space-y-4">
-                        {SHIPMENTS.map(ship => (
+                        {shipments.map(ship => (
                             <motion.div 
                                 key={ship.id}
                                 initial={{ opacity: 0, scale: 0.95 }}

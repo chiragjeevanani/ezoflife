@@ -1,15 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
-import UserHeader from '../components/UserHeader';
 import useNotificationStore from '../../../shared/stores/notificationStore';
 
 const OrderConfirmationPage = () => {
   const navigate = useNavigate();
   const bgRef = useRef(null);
   const addNotification = useNotificationStore((state) => state.addNotification);
-
 
   useEffect(() => {
     const blobs = bgRef.current?.querySelectorAll('.blob');
@@ -27,18 +25,23 @@ const OrderConfirmationPage = () => {
     }
   }, []);
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
-  };
+  }), []);
+
+  const serviceSummary = useMemo(() => [
+    { icon: 'local_laundry_service', title: 'Premium Wash & Fold', desc: 'Hypoallergenic • Scent-free', price: 99.00, color: 'primary' },
+    { icon: 'dry_cleaning', title: 'Silk Blouse (Eco-Dry)', desc: 'Special handling • Hanging', price: 149.00, color: 'tertiary' }
+  ], []);
 
   return (
     <motion.div 
@@ -46,7 +49,6 @@ const OrderConfirmationPage = () => {
       animate={{ opacity: 1 }}
       className="bg-background text-on-background min-h-[100dvh] flex flex-col"
     >
-
       <main className="flex-grow pt-28 pb-32 px-6 max-w-5xl mx-auto w-full relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div ref={bgRef} className="absolute inset-0 pointer-events-none -z-10">
@@ -115,10 +117,7 @@ const OrderConfirmationPage = () => {
             <motion.div variants={itemVariants} className="bg-surface-container-low p-8 rounded-[2.5rem] shadow-sm">
               <h3 className="font-headline text-xl font-black mb-8 tracking-tight">Service Summary</h3>
               <div className="space-y-4">
-                {[
-                  { icon: 'local_laundry_service', title: 'Premium Wash & Fold', desc: 'Hypoallergenic • Scent-free', price: 99.00, color: 'primary' },
-                  { icon: 'dry_cleaning', title: 'Silk Blouse (Eco-Dry)', desc: 'Special handling • Hanging', price: 149.00, color: 'tertiary' }
-                ].map((service, idx) => (
+                {serviceSummary.map((service, idx) => (
                   <motion.div 
                     key={idx}
                     whileHover={{ scale: 1.01 }}
@@ -240,3 +239,4 @@ const OrderConfirmationPage = () => {
 };
 
 export default OrderConfirmationPage;
+

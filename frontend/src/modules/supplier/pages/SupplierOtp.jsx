@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -10,7 +10,7 @@ const SupplierOtp = () => {
 
     useEffect(() => {
         if (timer > 0) {
-            const t = setInterval(() => setTimer(timer - 1), 1000);
+            const t = setInterval(() => setTimer(prev => prev - 1), 1000);
             return () => clearInterval(t);
         }
     }, [timer]);
@@ -49,12 +49,12 @@ const SupplierOtp = () => {
         }, 1500);
     };
 
-    const isComplete = otp.every(v => v !== '');
+    const isComplete = useMemo(() => otp.every(v => v !== ''), [otp]);
 
-    const containerVariants = {
+    const containerVariants = useMemo(() => ({
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.5, staggerChildren: 0.1 } }
-    };
+    }), []);
 
     return (
         <div className="bg-background text-on-surface min-h-[100dvh] flex flex-col items-center justify-center px-6">
@@ -68,7 +68,7 @@ const SupplierOtp = () => {
                     <span className="material-symbols-outlined text-primary text-3xl">verified_user</span>
                 </div>
 
-                <h1 className="font-headline font-black text-3xl mb-3 tracking-tighter uppercase italic italic-primary">B2B Verify</h1>
+                <h1 className="font-headline font-black text-3xl mb-3 tracking-tighter uppercase italic text-primary">B2B Verify</h1>
                 <p className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest leading-loose mb-10 opacity-60">
                     The 6-digit code has been sent to your registered partner channel.
                 </p>

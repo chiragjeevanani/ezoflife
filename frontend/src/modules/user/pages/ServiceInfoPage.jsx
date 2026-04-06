@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import UserHeader from '../components/UserHeader';
@@ -13,31 +13,30 @@ const ServiceInfoPage = () => {
   const [unit, setUnit] = useState(service?.id?.includes('wash') || service?.id?.includes('carpet') ? 'kg' : 'pc');
 
   // If no service is passed, redirect back to home
-  if (!service) {
-    React.useEffect(() => {
+  useEffect(() => {
+    if (!service) {
       navigate('/user/home');
-    }, [navigate]);
-    return null;
-  }
+    }
+  }, [service, navigate]);
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
-  };
+  }), []);
 
-  const benefits = [
+  const benefits = useMemo(() => [
     { icon: 'verified', title: 'Quality Assurance', desc: 'Premium detergents & multi-step inspection' },
     { icon: 'schedule', title: '24h Turnaround', desc: 'Express pickup and delivery options' },
     { icon: 'eco', title: 'Eco Friendly', desc: 'Safe for your skin and the environment' },
-  ];
+  ], []);
 
   const handleAddToCart = () => {
     navigate('/user/cart', { 
@@ -46,6 +45,8 @@ const ServiceInfoPage = () => {
       } 
     });
   };
+
+  if (!service) return null;
 
   return (
     <motion.div 
@@ -164,3 +165,4 @@ const ServiceInfoPage = () => {
 };
 
 export default ServiceInfoPage;
+

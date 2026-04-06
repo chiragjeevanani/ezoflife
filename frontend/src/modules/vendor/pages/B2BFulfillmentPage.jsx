@@ -2,22 +2,22 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const SUPPLIES = [
-    { id: 'det', title: 'Premium Detergent (50L)', price: 4299, icon: 'fluid_med' },
-    { id: 'tag', title: 'Smart NFC Tags (500pk)', price: 1299, icon: 'sell' },
-    { id: 'han', title: 'Wooden Hangers (100pk)', price: 2499, icon: 'checkroom' }
-];
-
-const LABOR = [
-    { id: 'iron', title: 'Steam Specialist', rate: '₹600/shift', icon: 'iron' },
-    { id: 'del', title: 'Delivery Partner', rate: '₹45/drop', icon: 'local_shipping' }
-];
-
 const B2BFulfillmentPage = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('supplies');
     const [cart, setCart] = useState([]);
     const [isRequesting, setIsRequesting] = useState(false);
+
+    const supplies = useMemo(() => [
+        { id: 'det', title: 'Premium Detergent (50L)', price: 4299, icon: 'fluid_med' },
+        { id: 'tag', title: 'Smart NFC Tags (500pk)', price: 1299, icon: 'sell' },
+        { id: 'han', title: 'Wooden Hangers (100pk)', price: 2499, icon: 'checkroom' }
+    ], []);
+
+    const labor = useMemo(() => [
+        { id: 'iron', title: 'Steam Specialist', rate: '₹600/shift', icon: 'iron' },
+        { id: 'del', title: 'Delivery Partner', rate: '₹45/drop', icon: 'local_shipping' }
+    ], []);
 
     const total = cart.reduce((sum, item) => sum + (item.price || 0), 0);
 
@@ -85,7 +85,7 @@ const B2BFulfillmentPage = () => {
                 <div className="space-y-4">
                     <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Available Resources</h2>
                     <div className="grid grid-cols-1 gap-4">
-                        {(activeTab === 'supplies' ? SUPPLIES : LABOR).map(item => (
+                        {(activeTab === 'supplies' ? supplies : labor).map(item => (
                             <motion.div
                                 key={item.id}
                                 whileHover={{ scale: 1.01 }}

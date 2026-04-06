@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -8,10 +8,12 @@ const ChatPage = () => {
     const [message, setMessage] = useState('');
     const scrollRef = useRef(null);
 
-    const [messages, setMessages] = useState([
-        { id: 1, sender: 'support', text: 'Hello! I am Spinzy, your dedicated support assistant. How can I help you with order ' + orderId + ' today?', time: '10:30 AM' },
+    const initialMessages = useMemo(() => [
+        { id: 1, sender: 'support', text: 'Hello! I am loondry support assistant. How can I help you with order ' + orderId + ' today?', time: '10:30 AM' },
         { id: 2, sender: 'support', text: 'I can help with status updates, delivery preferences, or quality concerns.', time: '10:30 AM' },
-    ]);
+    ], [orderId]);
+
+    const [messages, setMessages] = useState(initialMessages);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -45,8 +47,13 @@ const ChatPage = () => {
         }, 1500);
     };
 
+    const itemVariants = useMemo(() => ({
+        hidden: { opacity: 0, y: 10, scale: 0.95 },
+        visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3 } }
+    }), []);
+
     return (
-        <div className="bg-background text-on-surface min-h-[100dvh] flex flex-col max-h-[100dvh] overflow-hidden">
+        <div className="bg-background text-on-surface min-h-[100dvh] flex flex-col max-h-[100dvh] overflow-hidden font-body">
             {/* Header */}
             <header className="px-6 py-4 bg-white border-b border-outline-variant/10 flex items-center justify-between sticky top-0 z-20 shadow-sm">
                 <div className="flex items-center gap-4">
@@ -88,8 +95,9 @@ const ChatPage = () => {
                     {messages.map((msg) => (
                         <motion.div 
                             key={msg.id}
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            variants={itemVariants}
+                            initial="hidden"
+                            animate="visible"
                             className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                             <div className={`max-w-[85%] flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
@@ -152,3 +160,4 @@ const ChatPage = () => {
 };
 
 export default ChatPage;
+

@@ -1,22 +1,36 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const HelpCenterPage = () => {
   const navigate = useNavigate();
 
-  const faqs = [
+  const faqs = useMemo(() => [
     { q: 'How do I track my order?', a: 'You can track your order in real-time from the "Orders" section in your profile or by clicking "Track Order" on the home page after placing one.' },
     { q: 'What is the turnaround time?', a: 'Standard orders typically take 24-48 hours. Express orders are handled with priority and usually returned within 24 hours.' },
     { q: 'How do I pay for my order?', a: 'We accept various payment methods including UPI (Google Pay, PhonePe), Credit/Debit cards, and Cash on Delivery.' },
     { q: 'Can I cancel my order?', a: 'Orders can be cancelled free of charge before the rider is assigned for pickup. Check your order tracking for the current status.' }
-  ];
+  ], []);
+
+  const containerVariants = useMemo(() => ({
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  }), []);
+
+  const itemVariants = useMemo(() => ({
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
+  }), []);
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-background text-on-background min-h-[100dvh] flex flex-col"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="bg-background text-on-background min-h-[100dvh] flex flex-col font-body"
     >
       <header className="fixed top-0 z-50 bg-white/70 backdrop-blur-xl w-full flex items-center px-6 py-4 border-b border-outline-variant/10">
         <button onClick={() => navigate(-1)} className="material-symbols-outlined text-on-surface mr-4">arrow_back</button>
@@ -26,8 +40,7 @@ const HelpCenterPage = () => {
       <main className="max-w-2xl mx-auto px-6 pt-24 pb-36 w-full">
         {/* Support Hero */}
         <motion.section 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          variants={itemVariants}
           className="mb-12 ml-2"
         >
           <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-1 block">Customer Care</span>
@@ -46,14 +59,12 @@ const HelpCenterPage = () => {
 
         {/* FAQ Section */}
         <section className="space-y-6">
-          <h3 className="font-headline font-black text-[10px] uppercase tracking-[0.3em] text-on-surface ml-2">Frequently Asked</h3>
+          <motion.h3 variants={itemVariants} className="font-headline font-black text-[10px] uppercase tracking-[0.3em] text-on-surface ml-2">Frequently Asked</motion.h3>
           <div className="space-y-4">
             {faqs.map((faq, i) => (
               <motion.div 
                 key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
+                variants={itemVariants}
                 className="bg-white rounded-[2rem] p-6 border border-outline-variant/10 shadow-sm"
               >
                 <h4 className="font-black text-sm text-on-surface tracking-tight mb-3 flex items-start gap-3">
@@ -69,17 +80,18 @@ const HelpCenterPage = () => {
         </section>
 
         {/* Social Support */}
-        <section className="mt-16 text-center">
+        <motion.section variants={itemVariants} className="mt-16 text-center">
           <p className="text-[10px] font-black uppercase tracking-widest text-on-surface mb-6">Connect across channels</p>
           <div className="flex justify-center gap-6 text-on-surface">
             <span className="material-symbols-outlined text-2xl hover:text-primary transition-colors cursor-pointer">public</span>
             <span className="material-symbols-outlined text-2xl hover:text-primary transition-colors cursor-pointer">alternate_email</span>
             <span className="material-symbols-outlined text-2xl hover:text-primary transition-colors cursor-pointer">share_location</span>
           </div>
-        </section>
+        </motion.section>
       </main>
     </motion.div>
   );
 };
 
 export default HelpCenterPage;
+

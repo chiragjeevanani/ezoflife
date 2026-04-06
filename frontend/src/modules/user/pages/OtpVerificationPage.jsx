@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -11,7 +11,7 @@ const OtpVerificationPage = () => {
   useEffect(() => {
     let interval;
     if (timer > 0) {
-      interval = setInterval(() => setTimer(timer - 1), 1000);
+      interval = setInterval(() => setTimer(prev => prev - 1), 1000);
     }
     return () => clearInterval(interval);
   }, [timer]);
@@ -40,10 +40,23 @@ const OtpVerificationPage = () => {
     }
   };
 
+  const isOtpComplete = useMemo(() => otp.every(digit => digit !== ''), [otp]);
+
+  const containerVariants = useMemo(() => ({
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.5 } }
+  }), []);
+
+  const cardVariants = useMemo(() => ({
+    hidden: { scale: 0.9, opacity: 0, y: 20 },
+    visible: { scale: 1, opacity: 1, y: 0, transition: { type: "spring", damping: 25, stiffness: 200 } }
+  }), []);
+
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
       className="bg-background text-on-background min-h-[100dvh] flex flex-col items-center justify-center px-6 relative overflow-hidden"
     >
       {/* Decorative Background */}
@@ -52,19 +65,18 @@ const OtpVerificationPage = () => {
         <div className="absolute bottom-20 left-[-10%] w-80 h-80 bg-tertiary/5 rounded-full blur-[80px]" />
       </div>
 
-      <main className="max-w-md w-full bg-white rounded-[3rem] p-8 md:p-10 shadow-[0_40px_80px_rgba(47,50,58,0.1)] border border-outline-variant/10">
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-center mb-10"
-        >
+      <motion.main 
+        variants={cardVariants}
+        className="max-w-md w-full bg-white rounded-[3rem] p-8 md:p-10 shadow-[0_40px_80px_rgba(47,50,58,0.1)] border border-outline-variant/10"
+      >
+        <div className="text-center mb-10">
           <div className="w-20 h-20 bg-primary-container/30 rounded-3xl flex items-center justify-center text-primary mx-auto mb-6 shadow-inner">
             <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>mark_email_read</span>
           </div>
           <h1 className="text-3xl font-black tracking-tighter text-on-surface mb-3 leading-tight">Verification Code</h1>
           <p className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest leading-none">We've sent a 4-digit code to</p>
           <p className="text-sm font-black text-primary mt-2 tracking-tight">+91 98765 43210</p>
-        </motion.div>
+        </div>
 
         {/* OTP Inputs */}
         <div className="flex justify-center gap-3 md:gap-4 mb-10">
@@ -104,9 +116,9 @@ const OtpVerificationPage = () => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleVerify}
-          disabled={otp.some(digit => digit === '')}
+          disabled={!isOtpComplete}
           className={`w-full py-5.5 rounded-2xl font-headline font-black text-xs uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 ${
-            otp.some(digit => digit === '') 
+            !isOtpComplete 
             ? 'bg-outline-variant/20 text-on-surface-variant/40 shadow-none cursor-not-allowed' 
             : 'bg-primary-gradient text-on-primary shadow-primary/30'
           }`}
@@ -121,7 +133,7 @@ const OtpVerificationPage = () => {
         >
           Change Phone Number
         </button>
-      </main>
+      </motion.main>
 
       {/* Floating Decorative Elements */}
       <motion.div 
@@ -139,3 +151,4 @@ const OtpVerificationPage = () => {
 };
 
 export default OtpVerificationPage;
+

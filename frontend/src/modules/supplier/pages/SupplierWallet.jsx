@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const TRANSACTIONS = [
-    { id: '#WAL-8822', type: 'Settlement', vendor: 'Spinzyt - HSR', amount: '₹14,290', date: 'Oct 23, 10:45 AM', status: 'Credited' },
-    { id: '#WAL-8821', type: 'Material Sale', vendor: 'LoonDry - Ind', amount: '₹4,800', date: 'Oct 23, 08:30 AM', status: 'Processing' },
-    { id: '#WAL-8818', type: 'Settlement', vendor: 'FabriCare - Wfd', amount: '₹22,150', date: 'Oct 22, 06:15 PM', status: 'Credited' }
-];
-
 const SupplierWallet = () => {
     const navigate = useNavigate();
+
+    const transactions = useMemo(() => [
+        { id: '#WAL-8822', type: 'Settlement', vendor: 'Spinzyt - HSR', amount: '₹14,290', date: 'Oct 23, 10:45 AM', status: 'Credited' },
+        { id: '#WAL-8821', type: 'Material Sale', vendor: 'LoonDry - Ind', amount: '₹4,800', date: 'Oct 23, 08:30 AM', status: 'Processing' },
+        { id: '#WAL-8818', type: 'Settlement', vendor: 'FabriCare - Wfd', amount: '₹22,150', date: 'Oct 22, 06:15 PM', status: 'Credited' }
+    ], []);
 
     return (
         <div className="min-h-screen bg-background pb-40">
@@ -53,7 +53,7 @@ const SupplierWallet = () => {
                     </div>
 
                     <div className="space-y-4">
-                        {TRANSACTIONS.map(tx => (
+                        {transactions.map(tx => (
                             <motion.div 
                                 key={tx.id}
                                 initial={{ opacity: 0, x: -10 }}
