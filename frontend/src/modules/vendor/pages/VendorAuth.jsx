@@ -44,7 +44,7 @@ const VendorAuth = () => {
                     <div className="w-14 h-14 vendor-gradient rounded-[1.2rem] flex items-center justify-center mx-auto mb-3 shadow-2xl shadow-primary/30">
                         <span className="material-symbols-outlined text-white text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_laundry_service</span>
                     </div>
-                    <h1 className="font-headline font-black text-[2rem] text-primary leading-none tracking-tight mb-1">Ez of Life</h1>
+                    <h1 className="font-headline font-black text-[2rem] text-primary leading-none tracking-tight mb-1">Spinzyt</h1>
                     <p className="font-label text-on-surface-variant uppercase tracking-[0.2em] text-[10px] font-bold">Vendor Partner Portal</p>
                 </motion.div>
                 <div className="absolute bottom-0 w-full h-20 bg-gradient-to-t from-background to-transparent"></div>
@@ -128,7 +128,7 @@ const VendorAuth = () => {
                                         <motion.div variants={itemVariants} className="mb-8">
                                             <h2 className="font-headline text-2xl font-black mb-1.5 text-on-surface tracking-tighter">Register Your Shop</h2>
                                             <p className="text-on-surface-variant text-sm font-semibold opacity-70">
-                                                Join Ez of Life as a vendor partner today.
+                                                Join Spinzyt as a vendor partner today.
                                             </p>
                                         </motion.div>
 
@@ -185,7 +185,7 @@ const VendorAuth = () => {
                     </motion.div>
 
                     <p className="mt-8 text-center text-[11px] text-on-surface-variant font-semibold tracking-wide px-4 opacity-50 underline underline-offset-4 cursor-pointer">
-                        Trouble registering? Contact Ez of Life Support
+                        Trouble registering? Contact Spinzyt Support
                     </p>
                 </div>
             </main>

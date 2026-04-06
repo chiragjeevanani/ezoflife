@@ -10,17 +10,17 @@ const Dashboard = () => {
 
     const initialOrders = useMemo(() => ({
         'Available': [
-            { id: "EZ-8821", title: "Premium Wash & Fold", desc: "Estimated: 12.5 kg · Mixed Fabrics", dist: "0.8 km away", icon: "dry_cleaning" },
-            { id: "EZ-8824", title: "Eco-Friendly Dry Clean", desc: "5 Items · 2 Suits, 3 Silk Shirts", dist: "2.4 km away", icon: "checkroom" },
-            { id: "EZ-8825", title: "Ironing Only", desc: "15 Cotton Shirts · Starch Preferred", dist: "1.5 km away", icon: "iron" },
+            { id: "SZ-8821", title: "Premium Wash & Fold", desc: "Estimated: 12.5 kg · Mixed Fabrics", dist: "0.8 km away", icon: "dry_cleaning" },
+            { id: "SZ-8824", title: "Eco-Friendly Dry Clean", desc: "5 Items · 2 Suits, 3 Silk Shirts", dist: "2.4 km away", icon: "checkroom" },
+            { id: "SZ-8825", title: "Ironing Only", desc: "15 Cotton Shirts · Starch Preferred", dist: "1.5 km away", icon: "iron" },
         ],
         'In Progress': [
-            { id: "EZ-8815", title: "Heavy Duty Wash", desc: "8 kg · Bed Linens & Towels", dist: "Processing (45%)", icon: "local_laundry_service" },
-            { id: "EZ-8816", title: "Delicate Silk Care", desc: "2 Items · Evening Gowns", dist: "Ironing Stage", icon: "opacity" },
+            { id: "SZ-8815", title: "Heavy Duty Wash", desc: "8 kg · Bed Linens & Towels", dist: "Processing (45%)", icon: "local_laundry_service" },
+            { id: "SZ-8816", title: "Delicate Silk Care", desc: "2 Items · Evening Gowns", dist: "Ironing Stage", icon: "opacity" },
         ],
         'Ready': [
-            { id: "EZ-8810", title: "Quick Wash", desc: "3 kg · Gym Wear", dist: "Ready for Pickup", icon: "shopping_basket" },
-            { id: "EZ-8808", title: "Blanket Sterilization", desc: "2 Large Blankets", dist: "Out for Delivery", icon: "sanitizer" },
+            { id: "SZ-8810", title: "Quick Wash", desc: "3 kg · Gym Wear", dist: "Ready for Pickup", icon: "shopping_basket" },
+            { id: "SZ-8808", title: "Blanket Sterilization", desc: "2 Large Blankets", dist: "Out for Delivery", icon: "sanitizer" },
         ]
     }), []);
 

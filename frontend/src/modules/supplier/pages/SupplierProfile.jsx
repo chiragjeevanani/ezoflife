@@ -9,7 +9,7 @@ const SupplierProfile = () => {
         { icon: 'business', label: 'Business Details', sub: 'Tax ID: GSTIN-88229', color: 'bg-primary' },
         { icon: 'shield_person', label: 'Identity Verification', sub: 'Completed: Nov 2025', color: 'bg-green-500' },
         { icon: 'star', label: 'Supplier Rating', sub: 'Platinum Partner (4.9/5)', color: 'bg-amber-400' },
-        { icon: 'logout', label: 'Logout Session', sub: 'Account: LD-SUPP-42', color: 'bg-on-surface/10' }
+        { icon: 'logout', label: 'Logout Session', sub: 'Account: SZ-SUPP-42', color: 'bg-on-surface/10' }
     ], []);
 
     return (

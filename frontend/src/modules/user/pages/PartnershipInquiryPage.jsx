@@ -125,7 +125,7 @@ const PartnershipInquiryPage = () => {
             </motion.main>
 
             <footer className="mt-12 text-center py-10 opacity-20">
-                <span className="text-[9px] font-black uppercase tracking-[0.3em]">loondry Partnerships HQ 2026</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Spinzyt Partnerships HQ 2026</span>
             </footer>
         </div>
     );

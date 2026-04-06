@@ -17,7 +17,7 @@ const AdminLogin = () => {
 
         // Mock auth logic
         setTimeout(() => {
-            if (email === 'admin@ezoflife.com' && password === 'admin123') {
+            if (email === 'admin@spinzyt.com' && password === 'admin123') {
                 localStorage.setItem('adminAuth', 'true');
                 navigate('/admin/dashboard');
             } else {
@@ -50,7 +50,7 @@ const AdminLogin = () => {
                         <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20">
                             <ShieldCheck size={32} className="text-white" />
                         </div>
-                        <h1 className="text-2xl font-black text-white uppercase tracking-widest">Ez of Life Admin</h1>
+                        <h1 className="text-2xl font-black text-white uppercase tracking-widest">Spinzyt Admin</h1>
                         <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mt-2">Command Hub Authorization</p>
                     </div>
 
@@ -65,7 +65,7 @@ const AdminLogin = () => {
                                     type="email" 
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="admin@ezoflife.com"
+                                    placeholder="admin@spinzyt.com"
                                     className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
                                     required
                                 />

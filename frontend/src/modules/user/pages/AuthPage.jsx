@@ -58,7 +58,7 @@ const AuthPage = () => {
           transition={{ duration: 0.8 }}
           className="z-10 text-center px-8"
         >
-          <h1 className="font-headline font-black text-[2.5rem] md:text-[3.5rem] text-primary leading-none tracking-tight mb-2">Ez of life</h1>
+          <h1 className="font-headline font-black text-[2.5rem] md:text-[3.5rem] text-primary leading-none tracking-tight mb-2">Spinzyt</h1>
           <p className="font-label text-on-surface-variant uppercase tracking-[0.2em] text-[10px] font-bold">The Pristine Flow</p>
         </motion.div>
         <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-background to-transparent"></div>
@@ -226,7 +226,7 @@ const AuthPage = () => {
 
           {/* Footer micro-copy */}
           <motion.p className="mt-10 text-center text-[11px] text-on-surface-variant font-semibold tracking-wide px-4 opacity-50 underline underline-offset-4 cursor-pointer">
-            Trouble logging in? Get support from Ez of life Team
+            Trouble logging in? Get support from Spinzyt Team
           </motion.p>
         </div>
       </main>

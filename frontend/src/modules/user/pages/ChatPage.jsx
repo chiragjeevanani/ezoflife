@@ -9,7 +9,7 @@ const ChatPage = () => {
     const scrollRef = useRef(null);
 
     const initialMessages = useMemo(() => [
-        { id: 1, sender: 'support', text: 'Hello! I am loondry support assistant. How can I help you with order ' + orderId + ' today?', time: '10:30 AM' },
+        { id: 1, sender: 'support', text: 'Hello! I am Spinzyt support assistant. How can I help you with order ' + orderId + ' today?', time: '10:30 AM' },
         { id: 2, sender: 'support', text: 'I can help with status updates, delivery preferences, or quality concerns.', time: '10:30 AM' },
     ], [orderId]);
 

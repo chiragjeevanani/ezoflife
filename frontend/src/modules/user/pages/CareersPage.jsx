@@ -10,12 +10,12 @@ const CareersPage = () => {
 
     const MOCK_JOBS = useMemo(() => [
         { id: 1, title: 'Expert Pressman Required', category: 'Skilled Labor (Vendor)', location: 'Brooklyn, NY', desc: 'Seeking experienced steam iron specialist for high-volume boutique care.', type: 'Full-time' },
-        { id: 2, title: 'Operations Manager', category: 'loondry Internal', location: 'Manhattan, NY', desc: 'Oversee logistics and vendor management for the regional hub.', type: 'Corporate' },
+        { id: 2, title: 'Operations Manager', category: 'Spinzyt Internal', location: 'Manhattan, NY', desc: 'Oversee logistics and vendor management for the regional hub.', type: 'Corporate' },
         { id: 3, title: 'Wet Cleaner & Spotter', category: 'Skilled Labor (Vendor)', location: 'Queens, NY', desc: 'Must handle silk and delicate fabrics. Knowledge of stain removal is a plus.', type: 'Shift-based' },
-        { id: 4, title: 'Rider Partner', category: 'loondry Internal', location: 'Bronx, NY', desc: 'Hyperlocal delivery partner for our high-speed flow network.', type: 'Flexible' },
+        { id: 4, title: 'Rider Partner', category: 'Spinzyt Internal', location: 'Bronx, NY', desc: 'Hyperlocal delivery partner for our high-speed flow network.', type: 'Flexible' },
     ], []);
 
-    const categories = useMemo(() => ['All', 'loondry Internal', 'Skilled Labor (Vendor)'], []);
+    const categories = useMemo(() => ['All', 'Spinzyt Internal', 'Skilled Labor (Vendor)'], []);
     
     const filteredJobs = useMemo(() => 
         MOCK_JOBS.filter(job => 
@@ -83,7 +83,7 @@ const CareersPage = () => {
                                     : 'bg-white text-on-surface-variant border-outline-variant/10'
                                 }`}
                             >
-                                {cat === 'Skilled Labor (Vendor)' ? 'Skilled Labor' : cat === 'loondry Internal' ? 'Internal' : cat}
+                                {cat === 'Skilled Labor (Vendor)' ? 'Skilled Labor' : cat === 'Spinzyt Internal' ? 'Internal' : cat}
                             </button>
                         ))}
                     </div>

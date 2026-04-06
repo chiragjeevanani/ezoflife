@@ -6,9 +6,9 @@ const SupplierLogistics = () => {
     const navigate = useNavigate();
 
     const shipments = useMemo(() => [
-        { id: 'LD-4421', vendor: 'Spinzyt - HSR Layout', items: '50L Detergent, 200 Tags', status: 'In Transit', driver: 'Rahul S.', eta: '14 mins' },
-        { id: 'LD-4428', vendor: 'LoonDry - Indiranagar', items: '100 Wooden Hangers', status: 'Picking Up', driver: 'Vikram K.', eta: '28 mins' },
-        { id: 'LD-4430', vendor: 'FabriCare - Whitefield', items: '3 Steam Specialists', status: 'Dispatched', driver: 'Manish P.', eta: 'Reached' }
+        { id: 'SZ-4421', vendor: 'Spinzyt - HSR Layout', items: '50L Detergent, 200 Tags', status: 'In Transit', driver: 'Rahul S.', eta: '14 mins' },
+        { id: 'SZ-4428', vendor: 'Spinzyt - Indiranagar', items: '100 Wooden Hangers', status: 'Picking Up', driver: 'Vikram K.', eta: '28 mins' },
+        { id: 'SZ-4430', vendor: 'FabriCare - Whitefield', items: '3 Steam Specialists', status: 'Dispatched', driver: 'Manish P.', eta: 'Reached' }
     ], []);
 
     return (

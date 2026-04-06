@@ -37,7 +37,7 @@ const SuccessFeedbackPage = () => {
   }), []);
 
   const orderSummary = useMemo(() => ({
-    id: "#EZ-8829",
+    id: "#SZ-8829",
     location: "Pristine Heights",
     amount: "₹899.00"
   }), []);
@@ -173,7 +173,7 @@ const SuccessFeedbackPage = () => {
 
       {/* Persistent Copyright Minimal */}
       <footer className="py-12 text-center text-on-surface-variant/20 font-black text-[9px] uppercase tracking-widest relative z-10 font-body">
-        © 2026 loondry Logistics • Editorial Handling Systems
+        © 2026 Spinzyt Logistics • Editorial Handling Systems
       </footer>
     </motion.div>
   );

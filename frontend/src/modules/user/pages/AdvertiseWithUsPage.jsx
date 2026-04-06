@@ -55,7 +55,7 @@ const AdvertiseWithUsPage = () => {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl animate-pulse"></div>
                         <div className="relative z-10">
                             <span className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 block opacity-60">Reach 50k+ Active Users</span>
-                            <h2 className="text-4xl font-black tracking-tighter italic leading-none mb-6">Drive Impact with loondry</h2>
+                            <h2 className="text-4xl font-black tracking-tighter italic leading-none mb-6">Drive Impact with Spinzyt</h2>
                             <button className="bg-white text-primary px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3">
                                 Download Media Kit
                                 <span className="material-symbols-outlined text-sm">download</span>

@@ -6,8 +6,8 @@ import StatusBadge from '../components/common/StatusBadge';
 
 export default function DisputeCenter() {
   const disputes = useMemo(() => [
-    { id: 'DSP-9921', orderId: 'EZ-8815', vendor: 'Heritage Cleaners', amount: 1420, issue: 'Damaged Silk Saree', status: 'Pending', severity: 'High' },
-    { id: 'DSP-9918', orderId: 'EZ-7712', vendor: 'EcoWash Hub', amount: 420, issue: 'Payment Missing', status: 'In Review', severity: 'Medium' }
+    { id: 'DSP-9921', orderId: 'SZ-8815', vendor: 'Heritage Cleaners', amount: 1420, issue: 'Damaged Silk Saree', status: 'Pending', severity: 'High' },
+    { id: 'DSP-9918', orderId: 'SZ-7712', vendor: 'EcoWash Hub', amount: 420, issue: 'Payment Missing', status: 'In Review', severity: 'Medium' }
   ], []);
 
   const disputeStats = useMemo(() => [

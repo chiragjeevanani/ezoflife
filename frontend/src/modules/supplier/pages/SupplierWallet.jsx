@@ -7,7 +7,7 @@ const SupplierWallet = () => {
 
     const transactions = useMemo(() => [
         { id: '#WAL-8822', type: 'Settlement', vendor: 'Spinzyt - HSR', amount: '₹14,290', date: 'Oct 23, 10:45 AM', status: 'Credited' },
-        { id: '#WAL-8821', type: 'Material Sale', vendor: 'LoonDry - Ind', amount: '₹4,800', date: 'Oct 23, 08:30 AM', status: 'Processing' },
+        { id: '#WAL-8821', type: 'Material Sale', vendor: 'Spinzyt - Ind', amount: '₹4,800', date: 'Oct 23, 08:30 AM', status: 'Processing' },
         { id: '#WAL-8818', type: 'Settlement', vendor: 'FabriCare - Wfd', amount: '₹22,150', date: 'Oct 22, 06:15 PM', status: 'Credited' }
     ], []);
 

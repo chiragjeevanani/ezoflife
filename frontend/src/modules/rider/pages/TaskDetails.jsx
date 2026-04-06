@@ -13,7 +13,7 @@ const TaskDetails = () => {
     const [photoUploaded, setPhotoUploaded] = useState(false);
 
     const task = useMemo(() => ({
-        id: id || 'EZ-8821',
+        id: id || 'SZ-8821',
         type: 'Pickup',
         source: 'Heritage Cleaners',
         address: 'HSR Layout, Sector 7, Plot 42',
@@ -109,7 +109,7 @@ const TaskDetails = () => {
                             <button 
                                 onClick={() => {
                                     addNotification('rider_assigned', 'Rider Arrived', 'Rider is at the pickup location. Preparing manifest verification.', 'user');
-                                    addNotification('rider_assigned', 'Rider at Shop', 'Rider has arrived for order #EZ-8821 pickup.', 'vendor');
+                                    addNotification('rider_assigned', 'Rider at Shop', 'Rider has arrived for order #SZ-8821 pickup.', 'vendor');
                                     setStep(2);
                                 }}
                                 className="w-full py-5 bg-slate-900 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all"
@@ -172,7 +172,7 @@ const TaskDetails = () => {
                                 disabled={checkedItems.length !== task.items.length || !photoUploaded}
                                 onClick={() => {
                                     addNotification('pickup_complete', 'Pickup Logged', 'Rider has successfully picked up your laundry bag.', 'user');
-                                    addNotification('pickup_complete', 'In-Transit to Shop', 'Order #EZ-8821 picked up and in-transit to your shop.', 'vendor');
+                                    addNotification('pickup_complete', 'In-Transit to Shop', 'Order #SZ-8821 picked up and in-transit to your shop.', 'vendor');
                                     setStep(3);
                                 }}
                                 className={`w-full py-5 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] transition-all ${
@@ -217,8 +217,8 @@ const TaskDetails = () => {
                             
                             <button 
                                 onClick={() => {
-                                    addNotification('at_shop', 'Landed at Shop', 'Order #EZ-8821 reached Heritage Cleaners. Processing starting soon.', 'user');
-                                    addNotification('at_shop', 'Order Handover Complete', 'Rider delivered order #EZ-8821 to your facility.', 'vendor');
+                                    addNotification('at_shop', 'Landed at Shop', 'Order #SZ-8821 reached Heritage Cleaners. Processing starting soon.', 'user');
+                                    addNotification('at_shop', 'Order Handover Complete', 'Rider delivered order #SZ-8821 to your facility.', 'vendor');
                                     navigate('/rider/dashboard');
                                 }}
                                 className="w-full py-5 bg-white border border-slate-200 text-slate-900 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] active:scale-95 transition-all"

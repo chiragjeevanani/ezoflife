@@ -100,7 +100,7 @@ const SuccessPage = () => {
           <div className="flex justify-between items-center border-b border-outline-variant/10 pb-5">
             <div className="text-left">
               <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-black opacity-60">Order ID</span>
-              <p className="font-headline font-black text-lg text-primary">#EZ-8829-01</p>
+              <p className="font-headline font-black text-lg text-primary">#SZ-8829-01</p>
             </div>
             <div className="text-right">
               <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-black opacity-60">Total Amount</span>

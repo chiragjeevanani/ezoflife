@@ -55,7 +55,7 @@ const SplashPage = () => {
   }, [navigate]);
 
   const splashConfig = useMemo(() => ({
-    title: 'Ez of life',
+    title: 'Spinzyt',
     subtitle: 'The Pristine Flow',
     description: 'Elevate your lifestyle with premium fabric care delivered to your doorstep.',
     launchText: 'Launching Experience',

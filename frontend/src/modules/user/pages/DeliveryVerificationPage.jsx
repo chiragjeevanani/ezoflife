@@ -73,7 +73,7 @@ const DeliveryVerificationPage = () => {
           variants={itemVariants}
           className="py-8 ml-2"
         >
-          <p className="font-label text-xs uppercase tracking-[0.3em] text-primary font-black mb-2 opacity-60">Order #EZ-92834</p>
+          <p className="font-label text-xs uppercase tracking-[0.3em] text-primary font-black mb-2 opacity-60">Order #SZ-92834</p>
           <h2 className="font-headline text-4xl md:text-5xl font-black tracking-tighter text-on-background leading-none">
             Delivery<br/><span className="text-primary">Verification</span>
           </h2>

@@ -39,7 +39,7 @@ const VendorSplash = () => {
                     transition={{ delay: 0.3 }}
                     className="text-5xl font-headline font-black text-white tracking-tighter leading-none mb-3"
                 >
-                    Ez of Life
+                    Spinzyt
                 </motion.h1>
                 <motion.p 
                     initial={{ y: 20, opacity: 0 }}

@@ -15,7 +15,7 @@ const RiderDashboard = () => {
 
     const initialTasks = useMemo(() => [
         { 
-            id: 'EZ-8821', 
+            id: 'SZ-8821', 
             type: 'Pickup', 
             vendor: 'Heritage Cleaners', 
             address: 'HSR Layout, Sector 7', 
@@ -23,6 +23,15 @@ const RiderDashboard = () => {
             priority: 'Express', 
             status: 'Assigned',
             time: '12m'
+        }, { 
+            id: 'SZ-8824', 
+            type: 'Delivery', 
+            vendor: 'EcoWash Hub', 
+            address: 'HSR Layout, Sector 2', 
+            items: 8, 
+            priority: 'Standard', 
+            status: 'Delivered',
+            time: '2h'
         }
     ], []);
 
@@ -109,7 +118,7 @@ const RiderDashboard = () => {
                                         </div>
                                     </div>
                                     <button 
-                                        onClick={() => navigate(`/rider/task/EZ-8821`)}
+                                        onClick={() => navigate(`/rider/task/SZ-8821`)}
                                         className="w-full mt-6 py-3.5 bg-white text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
                                     >
                                         Accept & Navigate

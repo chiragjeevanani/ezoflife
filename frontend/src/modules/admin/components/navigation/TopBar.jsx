@@ -13,7 +13,7 @@ export default function TopBar() {
                 <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 tracking-[0.2em] border-r border-slate-100 pr-5">
                     <Home size={12} className="text-slate-900" />
                     <ChevronRight size={10} />
-                    <span className="text-slate-900 uppercase">EZ OF LIFE ADMIN</span>
+                    <span className="text-slate-900 uppercase">SPINZYT ADMIN</span>
                     {pathParts.slice(1).map((part, i) => (
                         <React.Fragment key={part}>
                             <ChevronRight size={10} />

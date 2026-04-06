@@ -147,7 +147,7 @@ const UserProfilePage = () => {
 
         {/* Footer info */}
         <p className="mt-16 text-center text-[10px] font-black text-on-surface-variant/20 uppercase tracking-[0.4em]">
-           Ez of life • Editorial Handling Systems • v1.0.4
+           Spinzyt • Editorial Handling Systems • v1.0.4
         </p>
       </main>
     </motion.div>

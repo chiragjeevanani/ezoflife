@@ -56,7 +56,7 @@ const HomePage = () => {
   }, [navigate]);
 
   // Mock active order state
-  const activeOrder = useMemo(() => ({ id: '#EZ-8821', status: 'In Progress', type: 'Wash & Fold' }), []);
+  const activeOrder = useMemo(() => ({ id: '#SZ-8821', status: 'In Progress', type: 'Wash & Fold' }), []);
 
   const isHeritage = selectedTier === 'Heritage';
   const themeColor = useMemo(() => isHeritage ? '#D4AF37' : '#06b6d4', [isHeritage]);

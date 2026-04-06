@@ -27,7 +27,7 @@ const WalletPage = () => {
 
     return (
         <div className="bg-background text-on-surface min-h-screen pb-32 font-body">
-            <UserHeader title="Loondry Wallet" showBack={true} onBack={() => navigate(-1)} />
+            <UserHeader title="Spinzyt Wallet" showBack={true} onBack={() => navigate(-1)} />
             
             <motion.main 
                 variants={containerVariants}
@@ -96,7 +96,7 @@ const WalletPage = () => {
                     <span className="material-symbols-outlined text-3xl text-primary mb-4">celebration</span>
                     <h3 className="text-sm font-black uppercase tracking-widest mb-2">Refer a Friend</h3>
                     <p className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest leading-relaxed mb-6">
-                        Earn ₹100 Loondry Credits for <br/> every friend who completes a wash.
+                        Earn ₹100 Spinzyt Credits for <br/> every friend who completes a wash.
                     </p>
                     <button className="px-8 py-3 bg-white border border-primary/20 text-primary rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95 transition-all">
                         Invite Contacts

@@ -10,7 +10,7 @@ export default function AdminOrderDetail() {
 
   // Memoized data for the specific order
   const order = useMemo(() => ({
-    id: id || '#EZ-8821',
+    id: id || '#SZ-8821',
     status: 'In Progress',
     date: '25 Mar, 2026',
     time: '10:45 AM',

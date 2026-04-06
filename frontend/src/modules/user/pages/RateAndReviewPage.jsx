@@ -48,7 +48,7 @@ const RateAndReviewPage = () => {
                 <div className="mb-12 text-center">
                     <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-1 block opacity-60">Experience Feedback</span>
                     <h2 className="text-3xl font-black tracking-tighter leading-none mb-3">Rate Your Freshness</h2>
-                    <p className="text-xs font-bold text-on-surface-variant opacity-60">How was your cleaning with loondry?</p>
+                    <p className="text-xs font-bold text-on-surface-variant opacity-60">How was your cleaning with Spinzyt?</p>
                 </div>
 
                 {/* Rating Interaction */}

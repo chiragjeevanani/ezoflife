@@ -48,8 +48,8 @@ export default function Dashboard() {
   ], []);
 
   const alerts = useMemo(() => [
-    { id: 'EZ-9283', title: 'DELAYED PICKUP (>2HR)', type: 'CRITICAL', desc: 'Assigned to Marcus Chen · Delay: 142m', icon: Clock, variant: 'rose', action: '/admin/orders', actionLabel: 'Intercept' },
-    { id: 'EZ-7712', title: 'UNPAID DELIVERY DETECTED', type: 'DISPUTE', desc: 'COD Payment Missing · Handover Complete', icon: IndianRupee, variant: 'amber', action: '/admin/dispute-center', actionLabel: 'Resolve' }
+    { id: 'SZ-9283', title: 'DELAYED PICKUP (>2HR)', type: 'CRITICAL', desc: 'Assigned to Marcus Chen · Delay: 142m', icon: Clock, variant: 'rose', action: '/admin/orders', actionLabel: 'Intercept' },
+    { id: 'SZ-7712', title: 'UNPAID DELIVERY DETECTED', type: 'DISPUTE', desc: 'COD Payment Missing · Handover Complete', icon: IndianRupee, variant: 'amber', action: '/admin/dispute-center', actionLabel: 'Resolve' }
   ], []);
 
   const revenueFlow = useMemo(() => mockAdminData.revenueFlow, []);

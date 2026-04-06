@@ -50,7 +50,7 @@ const RiderVerification = () => {
                 </motion.button>
                 <div className="text-center">
                     <h1 className="font-headline font-black text-lg tracking-tight text-on-surface leading-none mb-1">Rider Handover</h1>
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">#{orderId || 'EZ-8821'}</p>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">#{orderId || 'SZ-8821'}</p>
                 </div>
                 <div className="w-10"></div>
             </header>

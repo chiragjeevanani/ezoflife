@@ -115,7 +115,7 @@ export default function HelpDesk() {
                     },
                     { 
                       type: 'outgoing',
-                      msg: 'Apologies for the inconvenience, Amit. I am checking the settlement logs for EZ-REF-9921. Please hold on for 2 minutes while I verify with the gateway.',
+                      msg: 'Apologies for the inconvenience, Amit. I am checking the settlement logs for SZ-REF-9921. Please hold on for 2 minutes while I verify with the gateway.',
                       time: '12:16 PM',
                       status: 'Seen'
                     }

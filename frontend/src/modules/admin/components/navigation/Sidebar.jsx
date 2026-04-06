@@ -80,7 +80,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
                             <span className="text-white font-bold text-sm">E</span>
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-bold text-[13px] tracking-tight text-slate-900 leading-none uppercase">EZ OF LIFE</span>
+                            <span className="font-bold text-[13px] tracking-tight text-slate-900 leading-none uppercase">SPINZYT</span>
                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Admin Panel</span>
                         </div>
                     </div>

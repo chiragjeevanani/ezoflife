@@ -51,7 +51,7 @@ const RegisterAsVendorPage = () => {
             <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>storefront</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter leading-none mb-4">Digitize Your<br/><span className="text-primary italic">Laundry Business.</span></h2>
-          <p className="text-xs font-bold text-on-surface-variant opacity-60 px-8 leading-relaxed">Join the most advanced ecosystem for fabric care and scale your operations with Ez of Life.</p>
+          <p className="text-xs font-bold text-on-surface-variant opacity-60 px-8 leading-relaxed">Join the most advanced ecosystem for fabric care and scale your operations with Spinzyt.</p>
         </motion.section>
 
         <motion.div 
@@ -97,7 +97,7 @@ const RegisterAsVendorPage = () => {
           </button>
         </motion.section>
 
-        <p className="mt-12 text-center text-[9px] font-black uppercase tracking-[0.3em] text-on-surface-variant opacity-30">Ez of Life Operations • Corporate Program</p>
+        <p className="mt-12 text-center text-[9px] font-black uppercase tracking-[0.3em] text-on-surface-variant opacity-30">Spinzyt Operations • Corporate Program</p>
       </main>
     </motion.div>
   );

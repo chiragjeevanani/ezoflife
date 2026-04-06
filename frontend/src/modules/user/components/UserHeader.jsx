@@ -28,7 +28,7 @@ const UserHeader = () => {
           />
         </motion.div>
         <div className="flex flex-col cursor-pointer" onClick={() => navigate('/user/home')}>
-          <span className="font-headline font-bold text-lg text-primary tracking-tight leading-none">Ez of life</span>
+          <span className="font-headline font-bold text-lg text-primary tracking-tight leading-none">Spinzyt</span>
           <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-extrabold">Premium</span>
         </div>
       </div>

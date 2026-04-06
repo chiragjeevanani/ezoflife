@@ -40,7 +40,7 @@ const TermsConditions = () => {
                     <section className="space-y-4">
                         <h2 className="text-xl font-bold tracking-tight">Payment Settlements</h2>
                         <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                            Payments for completed orders will be settled weekly. Ez of Life reserves the right to withhold payments in cases of disputes or non-compliance Tip.
+                            Payments for completed orders will be settled weekly. Spinzyt reserves the right to withhold payments in cases of disputes or non-compliance Tip.
                         </p>
                     </section>
 

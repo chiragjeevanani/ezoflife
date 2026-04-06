@@ -19,7 +19,7 @@ const PrivacyPolicy = () => {
                     <section className="space-y-4">
                         <h2 className="text-xl font-bold tracking-tight">Introduction</h2>
                         <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                            Welcome to Ez of Life. This Privacy Policy details our practices regarding the collection, use, and disclosure of your information when you use our vendor application.
+                            Welcome to Spinzyt. This Privacy Policy details our practices regarding the collection, use, and disclosure of your information when you use our vendor application.
                         </p>
                     </section>
 

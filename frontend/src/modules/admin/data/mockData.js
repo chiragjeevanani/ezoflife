@@ -30,10 +30,10 @@ export const mockAdminData = {
   ],
   
   recentOrders: [
-    { id: '#EZ-8821', user: 'Julian Mendoza', vendor: 'Pristine Cleaners', service: 'Wash & Fold', amount: 498.00, status: 'In Progress', date: '10:45 AM' },
-    { id: '#EZ-8824', user: 'Sarah Smith', vendor: 'EcoDry Express', service: 'Dry Cleaning', amount: 850.00, status: 'Ready', date: '09:30 AM' },
-    { id: '#EZ-8815', user: 'Mike Ross', vendor: 'IronMasters', service: 'Ironing Only', amount: 320.00, status: 'Delivered', date: 'Yesterday' },
-    { id: '#EZ-8812', user: 'Rachel Zane', vendor: 'Pristine Cleaners', service: 'Wash & Fold', amount: 1200.00, status: 'Cancelled', date: 'Yesterday' },
+    { id: '#SZ-8821', user: 'Julian Mendoza', vendor: 'Pristine Cleaners', service: 'Wash & Fold', amount: 498.00, status: 'In Progress', date: '10:45 AM' },
+    { id: '#SZ-8824', user: 'Sarah Smith', vendor: 'EcoDry Express', service: 'Dry Cleaning', amount: 850.00, status: 'Ready', date: '09:30 AM' },
+    { id: '#SZ-8815', user: 'Mike Ross', vendor: 'IronMasters', service: 'Ironing Only', amount: 320.00, status: 'Delivered', date: 'Yesterday' },
+    { id: '#SZ-8812', user: 'Rachel Zane', vendor: 'Pristine Cleaners', service: 'Wash & Fold', amount: 1200.00, status: 'Cancelled', date: 'Yesterday' },
   ],
   
   vendors: [

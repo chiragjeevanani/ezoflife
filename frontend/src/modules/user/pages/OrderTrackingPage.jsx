@@ -54,7 +54,7 @@ const OrderTrackingPage = () => {
           >
             arrow_back
           </motion.button>
-          <h1 className="font-headline font-black text-xl text-primary tracking-tighter">Order #EZ-8821</h1>
+          <h1 className="font-headline font-black text-xl text-primary tracking-tighter">Order #SZ-8821</h1>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -121,7 +121,7 @@ const OrderTrackingPage = () => {
               </motion.button>
               <motion.button 
                 whileTap={{ scale: 0.9 }} 
-                onClick={() => navigate('/user/chat/EZ-8821')}
+                onClick={() => navigate('/user/chat/SZ-8821')}
                 className="bg-surface-container-high text-primary w-11 h-11 rounded-2xl flex items-center justify-center border border-outline-variant/10 shadow-sm"
               >
                 <span className="material-symbols-outlined text-xl">chat_bubble</span>
@@ -138,7 +138,7 @@ const OrderTrackingPage = () => {
               <p className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest">Estimated delivery: 12:45 PM</p>
             </div>
             <button 
-              onClick={() => navigate('/user/chat/EZ-8821')}
+              onClick={() => navigate('/user/chat/SZ-8821')}
               className="text-primary font-black text-[10px] uppercase tracking-widest bg-primary/5 px-4 py-2 rounded-full flex items-center gap-2 hover:bg-primary/10 transition-colors"
             >
               Help

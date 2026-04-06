@@ -1,6 +1,6 @@
 import useNotificationStore from '../../../shared/stores/notificationStore';
 
-const VendorHeader = ({ title = "Ez of Life", showBack = false }) => {
+const VendorHeader = ({ title = "Spinzyt", showBack = false }) => {
     const navigate = useNavigate();
     const notifications = useNotificationStore((state) => state.notifications);
     const unreadCount = notifications.filter(n => n.persona === 'vendor' && !n.read).length;

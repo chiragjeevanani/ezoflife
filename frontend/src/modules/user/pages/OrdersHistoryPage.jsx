@@ -21,7 +21,7 @@ const OrdersHistoryPage = () => {
 
   const activeOrders = useMemo(() => [
     { 
-      id: '#EZ-8291', 
+      id: '#SZ-8291', 
       status: 'Processing', 
       detailStatus: 'Cleaning at Shop',
       date: 'Oct 24, 2026', 
@@ -32,8 +32,8 @@ const OrdersHistoryPage = () => {
   ], []);
 
   const pastOrders = useMemo(() => [
-    { id: '#EZ-7104', status: 'Delivered', date: 'Oct 18, 2026', price: 749.00, desc: '2x Heavy Duty Wash, 1x Delicate Care Silk' },
-    { id: '#EZ-6552', status: 'Delivered', date: 'Oct 05, 2026', price: 499.00, desc: 'Mixed Casual Load, Scented Finish' }
+    { id: '#SZ-7104', status: 'Delivered', date: 'Oct 18, 2026', price: 749.00, desc: '2x Heavy Duty Wash, 1x Delicate Care Silk' },
+    { id: '#SZ-6552', status: 'Delivered', date: 'Oct 05, 2026', price: 499.00, desc: 'Mixed Casual Load, Scented Finish' }
   ], []);
 
   return (

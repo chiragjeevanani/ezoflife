@@ -8,14 +8,14 @@ const VendorOrderHistory = () => {
     const [tab, setTab] = useState('active');
 
     const activeOrders = useMemo(() => [
-        { id: '#EZ-8821', status: 'Processing', date: 'Mar 23, 2026', price: 498, progress: 50 },
-        { id: '#EZ-8824', status: 'Ready', date: 'Mar 23, 2026', price: 650, progress: 80 },
+        { id: '#SZ-8821', status: 'Processing', date: 'Mar 23, 2026', price: 498, progress: 50 },
+        { id: '#SZ-8824', status: 'Ready', date: 'Mar 23, 2026', price: 650, progress: 80 },
     ], []);
 
     const completedOrders = useMemo(() => [
-        { id: '#EZ-8810', status: 'Delivered', date: 'Mar 21, 2026', price: 375, desc: '2x Wash & Fold, 1x Eco Dry Clean' },
-        { id: '#EZ-8799', status: 'Delivered', date: 'Mar 18, 2026', price: 850, desc: 'Heavy Duty Wash, 4 kg · Starch on Cotton' },
-        { id: '#EZ-8780', status: 'Delivered', date: 'Mar 14, 2026', price: 210, desc: 'Express Ironing — 8 shirts' },
+        { id: '#SZ-8810', status: 'Delivered', date: 'Mar 21, 2026', price: 375, desc: '2x Wash & Fold, 1x Eco Dry Clean' },
+        { id: '#SZ-8799', status: 'Delivered', date: 'Mar 18, 2026', price: 850, desc: 'Heavy Duty Wash, 4 kg · Starch on Cotton' },
+        { id: '#SZ-8780', status: 'Delivered', date: 'Mar 14, 2026', price: 210, desc: 'Express Ironing — 8 shirts' },
     ], []);
 
     return (
