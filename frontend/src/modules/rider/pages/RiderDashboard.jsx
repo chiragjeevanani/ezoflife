@@ -1,3 +1,6 @@
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import useNotificationStore from '../../../shared/stores/notificationStore';
 
 const RiderDashboard = () => {
@@ -6,9 +9,11 @@ const RiderDashboard = () => {
     const notifications = useNotificationStore((state) => state.notifications);
     
     // Filter notifications for the 'rider' persona
-    const riderBroadcasts = notifications.filter(n => n.persona === 'rider' && (n.type === 'ready' || n.type === 'assigned'));
+    const riderBroadcasts = useMemo(() => 
+        notifications.filter(n => n.persona === 'rider' && (n.type === 'ready' || n.type === 'assigned')),
+    [notifications]);
 
-    const [activeTasks, setActiveTasks] = useState([
+    const initialTasks = useMemo(() => [
         { 
             id: 'EZ-8821', 
             type: 'Pickup', 
@@ -19,14 +24,15 @@ const RiderDashboard = () => {
             status: 'Assigned',
             time: '12m'
         }
-    ]);
+    ], []);
 
-    const stats = [
+    const stats = useMemo(() => [
         { label: 'Earnings', value: '₹842', icon: 'payments' },
         { label: 'Completed', value: '14', icon: 'task' },
         { label: 'Rating', value: '4.9', icon: 'grade' }
-    ];
+    ], []);
 
+    const [activeTasks, setActiveTasks] = useState(initialTasks);
 
     return (
         <div className="bg-slate-50 min-h-screen pb-32 font-sans">

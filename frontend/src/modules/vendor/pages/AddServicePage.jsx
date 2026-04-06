@@ -8,9 +8,9 @@ const AddServicePage = () => {
     const [price, setPrice] = useState('');
     const [unit, setUnit] = useState('Per Kg');
 
-    const icons = [
+    const icons = useMemo(() => [
         'local_laundry_service', 'dry_cleaning', 'iron', 'bed', 'checkroom', 'opacity', 'sanitizer', 'soap'
-    ];
+    ], []);
     const [selectedIcon, setSelectedIcon] = useState(icons[0]);
 
     const handleAdd = () => {

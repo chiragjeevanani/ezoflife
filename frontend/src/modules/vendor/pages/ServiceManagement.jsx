@@ -6,12 +6,12 @@ import VendorHeader from '../components/VendorHeader';
 
 const ServiceManagement = () => {
     const navigate = useNavigate();
-    const [services, setServices] = useState(
-        MASTER_SERVICES.map(s => ({
-            ...s,
-            active: true // Default all to active for now
-        }))
-    );
+    const initialServices = useMemo(() => MASTER_SERVICES.map(s => ({
+        ...s,
+        active: true // Default all to active for now
+    })), []);
+
+    const [services, setServices] = useState(initialServices);
 
     const toggleService = (idx) => {
         const newServices = [...services];

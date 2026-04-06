@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,15 +13,21 @@ const SupplierAuth = () => {
     const isLoginValid = loginPhone.length === 10 && /^\d+$/.test(loginPhone);
     const isRegisterValid = registerCompany.length >= 3 && registerPhone.length === 10 && /^\d+$/.test(registerPhone);
 
-    const containerVariants = {
+    const containerVariants = useMemo(() => ({
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.5, staggerChildren: 0.05 } },
         exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
-    };
-    const itemVariants = {
+    }), []);
+
+    const itemVariants = useMemo(() => ({
         hidden: { opacity: 0, y: 15 },
         visible: { opacity: 1, y: 0 }
-    };
+    }), []);
+
+    const authTabs = useMemo(() => [
+        { key: true, label: 'Login' }, 
+        { key: false, label: 'Onboard' }
+    ], []);
 
     return (
         <div className="bg-background font-body text-on-background min-h-[100dvh] flex flex-col overflow-x-hidden">
@@ -49,7 +55,7 @@ const SupplierAuth = () => {
                 <div className="max-w-md mx-auto">
                     {/* Tabs */}
                     <div className="flex items-center justify-center gap-12 mb-10">
-                        {[{ key: true, label: 'Login' }, { key: false, label: 'Onboard' }].map(({ key, label }) => (
+                        {authTabs.map(({ key, label }) => (
                             <button key={label} onClick={() => setIsLogin(key)} className="relative py-2 focus:outline-none">
                                 <span className={`font-headline text-2xl font-black transition-all duration-300 ${isLogin === key ? 'text-on-surface' : 'text-on-surface/30 hover:text-on-surface uppercase italic'}`}>
                                     {label}

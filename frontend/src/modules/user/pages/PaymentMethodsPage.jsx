@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -23,24 +23,29 @@ const PaymentMethodsPage = () => {
     handle: ''
   });
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
-  };
+  }), []);
 
-  const modalVariants = {
+  const modalVariants = useMemo(() => ({
     hidden: { opacity: 0, scale: 0.9, y: 20 },
     visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", damping: 25, stiffness: 300 } },
     exit: { opacity: 0, scale: 0.9, y: 20, transition: { duration: 0.2 } }
-  };
+  }), []);
+
+  const paymentTypes = useMemo(() => [
+    { id: 'card', icon: 'credit_card', label: 'Card' },
+    { id: 'upi', icon: 'qr_code_2', label: 'UPI' }
+  ], []);
 
   const handleDelete = (id) => {
     setMethods(prev => prev.filter(m => m.id !== id));
@@ -72,7 +77,7 @@ const PaymentMethodsPage = () => {
           ? { 
               ...m, 
               ...formData, 
-              last4: formData.type === 'card' ? formData.cardNumber.slice(-4) : m.last4 
+              last4: formData.type === 'card' ? (formData.cardNumber.includes('••') ? m.last4 : formData.cardNumber.slice(-4)) : m.last4 
             } 
           : m
       ));
@@ -134,7 +139,7 @@ const PaymentMethodsPage = () => {
                     </div>
                     <div>
                       <h3 className="font-black text-sm text-on-surface tracking-tight leading-none mb-1">
-                        {method.type === 'card' ? `Visa •••• ${method.last4}` : method.handle}
+                        {method.type === 'card' ? `Visa •• ${method.last4}` : method.handle}
                       </h3>
                       <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60">
                         {method.type === 'card' ? `Expires ${method.expiry}` : 'UPI ID'}
@@ -207,15 +212,15 @@ const PaymentMethodsPage = () => {
                 <form onSubmit={handleSave} className="space-y-6">
                   {/* Type Selector */}
                   <div className="flex gap-4 mb-8">
-                    {['card', 'upi'].map((t) => (
+                    {paymentTypes.map(({ id, icon, label }) => (
                       <button
-                        key={t}
+                        key={id}
                         type="button"
-                        onClick={() => setFormData({ ...formData, type: t })}
-                        className={`flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 border-2 transition-all ${formData.type === t ? 'border-primary bg-primary text-white shadow-lg shadow-primary/20' : 'border-outline-variant/10 text-on-surface-variant'}`}
+                        onClick={() => setFormData({ ...formData, type: id })}
+                        className={`flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 border-2 transition-all ${formData.type === id ? 'border-primary bg-primary text-white shadow-lg shadow-primary/20' : 'border-outline-variant/10 text-on-surface-variant'}`}
                       >
-                        <span className="material-symbols-outlined text-xl">{t === 'card' ? 'credit_card' : 'qr_code_2'}</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest">{t}</span>
+                        <span className="material-symbols-outlined text-xl">{icon}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
                       </button>
                     ))}
                   </div>
@@ -298,3 +303,4 @@ const PaymentMethodsPage = () => {
 };
 
 export default PaymentMethodsPage;
+

@@ -1,22 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SearchResultsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const initialQuery = new URLSearchParams(location.search).get('q') || '';
+  const initialQuery = useMemo(() => new URLSearchParams(location.search).get('q') || '', [location.search]);
   const [query, setQuery] = useState(initialQuery);
 
-  const results = [
+  const MASTER_RESULTS = useMemo(() => [
     { id: 'wash_fold', title: 'Wash & Fold', desc: 'Everyday wear, scented & stacked', icon: 'local_laundry_service', color: 'primary', price: '₹99.00' },
     { id: 'dry_clean', title: 'Dry Cleaning', desc: 'Suits, Silks & Delicates', icon: 'dry_cleaning', color: 'tertiary', price: '₹149.00' },
     { id: 'ironing', title: 'Ironing', desc: 'Crisp Finish, Steam Ironed', icon: 'iron', color: 'secondary', price: '₹49.00' },
     { id: 'shoe_spa', title: 'Shoe Spa', desc: 'Deep cleaning & restoration', icon: 'steps', color: 'primary', price: '₹199.00' }
-  ].filter(item => 
-    item.title.toLowerCase().includes(query.toLowerCase()) || 
-    item.desc.toLowerCase().includes(query.toLowerCase())
+  ], []);
+
+  const results = useMemo(() => 
+    MASTER_RESULTS.filter(item => 
+      item.title.toLowerCase().includes(query.toLowerCase()) || 
+      item.desc.toLowerCase().includes(query.toLowerCase())
+    ),
+    [MASTER_RESULTS, query]
   );
+
+  const containerVariants = useMemo(() => ({
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  }), []);
+
+  const itemVariants = useMemo(() => ({
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.4, ease: "easeOut" } }
+  }), []);
 
   return (
     <motion.div 
@@ -41,23 +59,28 @@ const SearchResultsPage = () => {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 pt-24 pb-36 w-full">
-        <div className="mb-8">
+      <motion.main 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="max-w-2xl mx-auto px-6 pt-24 pb-36 w-full"
+      >
+        <motion.div variants={itemVariants} className="mb-8">
             <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-4 opacity-60">
                 {results.length} results for "{query}"
             </h2>
-        </div>
+        </motion.div>
 
         <div className="space-y-4">
             <AnimatePresence mode="popLayout">
-                {results.map((item, i) => (
+                {results.map((item) => (
                     <motion.div 
                         key={item.id}
                         layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        variants={itemVariants}
+                        initial="hidden"
+                        animate="visible"
                         exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ delay: i * 0.05 }}
                         onClick={() => navigate('/user/service-info', { state: { selectedService: item } })}
                         className="bg-white p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm flex items-center justify-between group cursor-pointer"
                     >
@@ -85,9 +108,10 @@ const SearchResultsPage = () => {
                 </div>
             )}
         </div>
-      </main>
+      </motion.main>
     </motion.div>
   );
 };
 
 export default SearchResultsPage;
+

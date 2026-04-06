@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
@@ -54,6 +54,18 @@ const SplashPage = () => {
     return () => clearTimeout(redirectTimer);
   }, [navigate]);
 
+  const splashConfig = useMemo(() => ({
+    title: 'Ez of life',
+    subtitle: 'The Pristine Flow',
+    description: 'Elevate your lifestyle with premium fabric care delivered to your doorstep.',
+    launchText: 'Launching Experience',
+    sponsorLabel: 'Sponsored',
+    sponsorName: 'LUMIERE FABRICS',
+    sponsorTitle: 'Redefinition of Pure Elegance.',
+    sponsorDesc: 'Experience the science of aromatherapy and micro-hydration for your finest garments.',
+    sponsorButton: 'Explore Luxury'
+  }), []);
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -89,8 +101,8 @@ const SplashPage = () => {
             </div>
             
             <div className="text-center relative">
-              <h1 className="text-4xl lg:text-6xl font-black text-black tracking-tighter leading-none mb-1 lg:mb-3">Ez of life</h1>
-              <p className="font-label text-black/60 tracking-[0.3em] text-[8px] lg:text-[10px] uppercase font-extrabold opacity-70">The Pristine Flow</p>
+              <h1 className="text-4xl lg:text-6xl font-black text-black tracking-tighter leading-none mb-1 lg:mb-3">{splashConfig.title}</h1>
+              <p className="font-label text-black/60 tracking-[0.3em] text-[8px] lg:text-[10px] uppercase font-extrabold opacity-70">{splashConfig.subtitle}</p>
             </div>
 
             {/* Mobile Loading Label */}
@@ -100,7 +112,7 @@ const SplashPage = () => {
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               className="lg:hidden mt-8 flex flex-col items-center gap-2"
             >
-              <p className="text-[11px] font-black uppercase tracking-[0.3em] text-black/70">Launching Experience</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.3em] text-black/70">{splashConfig.launchText}</p>
             </motion.div>
           </motion.div>
 
@@ -108,7 +120,7 @@ const SplashPage = () => {
           <div className="hidden lg:flex relative w-full max-w-[340px] flex-col items-center gap-10 z-30 mt-12">
             <div className="w-full flex flex-col items-center gap-6 text-center">
               <p className="text-black/70 font-body leading-relaxed text-md font-medium">
-                Elevate your lifestyle with premium fabric care delivered to your doorstep.
+                {splashConfig.description}
               </p>
               
               <div className="w-full flex flex-col gap-4">
@@ -142,19 +154,19 @@ const SplashPage = () => {
                className="relative z-10"
             >
               <div className="flex items-center gap-3 mb-3 lg:mb-4">
-                <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[8px] lg:text-[9px] font-black text-white uppercase tracking-[.3em] border border-white/20">Sponsored</span>
+                <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[8px] lg:text-[9px] font-black text-white uppercase tracking-[.3em] border border-white/20">{splashConfig.sponsorLabel}</span>
                 <div className="h-px w-8 lg:w-10 bg-white/20"></div>
-                <span className="text-white font-headline font-black text-[10px] lg:text-xs uppercase tracking-widest opacity-80">LUMIERE FABRICS</span>
+                <span className="text-white font-headline font-black text-[10px] lg:text-xs uppercase tracking-widest opacity-80">{splashConfig.sponsorName}</span>
               </div>
               <h2 className="text-2xl lg:text-5xl font-black text-white tracking-tighter leading-[1.1] mb-4 lg:mb-6">
                 Redefinition of <br/>Pure <span className="text-[#89ECDA]">Elegance.</span>
               </h2>
               <p className="text-white/60 text-xs lg:text-sm font-medium leading-relaxed max-w-sm mb-6 lg:mb-10 italic hidden sm:block">
-                Experience the science of aromatherapy and micro-hydration for your finest garments.
+                {splashConfig.sponsorDesc}
               </p>
               
               <button className="flex items-center gap-4 text-white">
-                <span className="font-black text-[10px] lg:text-xs uppercase tracking-widest">Explore Luxury</span>
+                <span className="font-black text-[10px] lg:text-xs uppercase tracking-widest">{splashConfig.sponsorButton}</span>
                 <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full border border-white/20 flex items-center justify-center">
                   <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </div>

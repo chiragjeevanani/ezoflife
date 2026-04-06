@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
-import UserHeader from '../components/UserHeader';
 
 const SuccessFeedbackPage = () => {
   const navigate = useNavigate();
@@ -24,30 +23,36 @@ const SuccessFeedbackPage = () => {
     }
   }, []);
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.6, ease: "easeOut" } }
-  };
+  }), []);
 
-  const [rating, setRating] = React.useState(4);
-  const [hoverRating, setHoverRating] = React.useState(0);
-  const [feedback, setFeedback] = React.useState("");
+  const orderSummary = useMemo(() => ({
+    id: "#EZ-8829",
+    location: "Pristine Heights",
+    amount: "₹899.00"
+  }), []);
+
+  const [rating, setRating] = useState(4);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [feedback, setFeedback] = useState("");
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-background text-on-background min-h-[100dvh] flex flex-col"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="bg-background text-on-background min-h-[100dvh] flex flex-col font-body"
     >
-
       <main className="flex-grow pt-28 pb-32 px-6 max-w-2xl mx-auto w-full relative">
         {/* Animated Background Blobs */}
         <div ref={bgRef} className="absolute inset-0 pointer-events-none -z-10">
@@ -57,9 +62,7 @@ const SuccessFeedbackPage = () => {
 
         {/* Success State Hero */}
         <motion.section 
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.8 }}
+          variants={itemVariants}
           className="text-center mb-16"
         >
           <div className="relative inline-block mb-10">
@@ -86,12 +89,7 @@ const SuccessFeedbackPage = () => {
         </motion.section>
 
         {/* Bento Feedback Grid */}
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {/* Order Summary Card */}
           <motion.div 
             variants={itemVariants}
@@ -99,12 +97,12 @@ const SuccessFeedbackPage = () => {
           >
             <div>
               <span className="text-[10px] uppercase font-black tracking-widest text-primary mb-4 block opacity-60">Session Summary</span>
-              <h3 className="font-headline text-3xl font-black text-on-surface mb-2 tracking-tighter">#EZ-8829</h3>
-              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60">Delivered to Pristine Heights</p>
+              <h3 className="font-headline text-3xl font-black text-on-surface mb-2 tracking-tighter">{orderSummary.id}</h3>
+              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60">Delivered to {orderSummary.location}</p>
             </div>
             <div className="mt-12 pt-8 border-t border-outline-variant/10 flex justify-between items-center group-hover:border-primary/20 transition-colors">
               <span className="text-xs font-black text-on-surface-variant uppercase tracking-widest opacity-60">Total Paid</span>
-              <span className="font-headline text-2xl font-black text-primary tracking-tighter leading-none">₹899.00</span>
+              <span className="font-headline text-2xl font-black text-primary tracking-tighter leading-none">{orderSummary.amount}</span>
             </div>
           </motion.div>
 
@@ -137,7 +135,7 @@ const SuccessFeedbackPage = () => {
               ))}
             </div>
           </motion.div>
-        </motion.div>
+        </div>
 
         {/* Feedback Input Area */}
         <motion.div variants={itemVariants} className="bg-white p-10 rounded-[2.5rem] mb-16 border border-outline-variant/10 shadow-sm relative overflow-hidden group">
@@ -158,14 +156,14 @@ const SuccessFeedbackPage = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/user/home')}
-            className="w-full py-6 bg-primary-gradient text-on-primary rounded-2xl font-headline font-black text-xl shadow-2xl shadow-primary/20 uppercase tracking-widest"
+            className="w-full bg-primary-gradient text-on-primary rounded-2xl font-headline font-black text-xl shadow-2xl shadow-primary/20 uppercase tracking-widest"
           >
             Return to Dashboard
           </motion.button>
           
           <motion.button 
-           whileTap={{ opacity: 0.5 }}
-           className="text-primary font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity"
+            whileTap={{ opacity: 0.5 }}
+            className="text-primary font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity"
           >
             Retrieve Digital Receipt
             <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 0" }}>receipt_long</span>
@@ -174,11 +172,12 @@ const SuccessFeedbackPage = () => {
       </main>
 
       {/* Persistent Copyright Minimal */}
-      <footer className="py-12 text-center text-on-surface-variant/20 font-black text-[9px] uppercase tracking-widest relative z-10">
-        © 2026 Ez of life Logistics • Editorial Handling Systems
+      <footer className="py-12 text-center text-on-surface-variant/20 font-black text-[9px] uppercase tracking-widest relative z-10 font-body">
+        © 2026 loondry Logistics • Editorial Handling Systems
       </footer>
     </motion.div>
   );
 };
 
 export default SuccessFeedbackPage;
+

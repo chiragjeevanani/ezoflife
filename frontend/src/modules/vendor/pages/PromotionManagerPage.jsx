@@ -2,16 +2,22 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const MOCK_PROMOS = [
-    { id: 1, title: 'Happy Hour - Flat ₹100 Off', code: 'HAPPY100', type: 'Flat', usage: 42, limit: 100, status: 'Active', color: 'primary', mov: 500, expiry: 'Oct 30' },
-    { id: 2, title: 'Bulk Dry Cleaning - 20% Off', code: 'BULK20', type: 'Perc', usage: 128, limit: 200, status: 'Active', color: 'tertiary', mov: 1200, expiry: 'Nov 15' },
-    { id: 3, title: 'First Visit Special', code: 'WELCOME', type: 'Flat', usage: 0, limit: 500, status: 'Scheduled', color: 'secondary', mov: 0, expiry: 'Dec 01' }
-];
-
 const PromotionManagerPage = () => {
     const navigate = useNavigate();
     const [isCreating, setIsCreating] = useState(false);
-    const [promos, setPromos] = useState(MOCK_PROMOS);
+    
+    const initialPromos = useMemo(() => [
+        { id: 1, title: 'Happy Hour - Flat ₹100 Off', code: 'HAPPY100', type: 'Flat', usage: 42, limit: 100, status: 'Active', color: 'primary', mov: 500, expiry: 'Oct 30' },
+        { id: 2, title: 'Bulk Dry Cleaning - 20% Off', code: 'BULK20', type: 'Perc', usage: 128, limit: 200, status: 'Active', color: 'tertiary', mov: 1200, expiry: 'Nov 15' },
+        { id: 3, title: 'First Visit Special', code: 'WELCOME', type: 'Flat', usage: 0, limit: 500, status: 'Scheduled', color: 'secondary', mov: 0, expiry: 'Dec 01' }
+    ], []);
+
+    const promoStats = useMemo(() => [
+        { label: 'Redemptions', value: '170+', icon: 'trending_up', color: 'emerald-400', variant: 'dark' },
+        { label: 'Total Value', value: '₹4.2k', icon: 'payments', color: 'primary', variant: 'light' }
+    ], []);
+
+    const [promos, setPromos] = useState(initialPromos);
     const [editingPromo, setEditingPromo] = useState(null);
 
     const handleTogglePause = (id) => {
@@ -55,16 +61,16 @@ const PromotionManagerPage = () => {
             <main className="px-6 space-y-8 flex-1">
                 {/* Stats Summary Bento */}
                 <section className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-900 p-6 rounded-[2.5rem] border border-white/5 shadow-xl flex flex-col">
-                        <span className="material-symbols-outlined text-emerald-400 text-lg mb-2">trending_up</span>
-                        <p className="text-2xl font-black text-white tracking-tighter leading-none mb-1">170+</p>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Redemptions</p>
-                    </div>
-                    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col">
-                        <span className="material-symbols-outlined text-primary text-lg mb-2">payments</span>
-                        <p className="text-2xl font-black text-primary tracking-tighter leading-none mb-1">₹4.2k</p>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Value</p>
-                    </div>
+                    {promoStats.map((stat, i) => (
+                        <div 
+                            key={i} 
+                            className={`${stat.variant === 'dark' ? 'bg-slate-900 text-white border border-white/5' : 'bg-white text-on-surface border border-slate-200'} p-6 rounded-[2.5rem] shadow-xl flex flex-col`}
+                        >
+                            <span className={`material-symbols-outlined text-${stat.color} text-lg mb-2`}>{stat.icon}</span>
+                            <p className={`text-2xl font-black tracking-tighter leading-none mb-1 ${stat.variant === 'dark' ? 'text-white' : 'text-primary'}`}>{stat.value}</p>
+                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">{stat.label}</p>
+                        </div>
+                    ))}
                 </section>
 
                 {/* Campaign List */}

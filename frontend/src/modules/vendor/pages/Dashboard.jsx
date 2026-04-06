@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import VendorHeader from '../components/VendorHeader';
@@ -8,7 +8,7 @@ const Dashboard = () => {
     const [activeTab, setActiveTab] = useState('Available');
     const [isOnline, setIsOnline] = useState(true);
 
-    const [orders, setOrders] = useState({
+    const initialOrders = useMemo(() => ({
         'Available': [
             { id: "EZ-8821", title: "Premium Wash & Fold", desc: "Estimated: 12.5 kg · Mixed Fabrics", dist: "0.8 km away", icon: "dry_cleaning" },
             { id: "EZ-8824", title: "Eco-Friendly Dry Clean", desc: "5 Items · 2 Suits, 3 Silk Shirts", dist: "2.4 km away", icon: "checkroom" },
@@ -22,8 +22,14 @@ const Dashboard = () => {
             { id: "EZ-8810", title: "Quick Wash", desc: "3 kg · Gym Wear", dist: "Ready for Pickup", icon: "shopping_basket" },
             { id: "EZ-8808", title: "Blanket Sterilization", desc: "2 Large Blankets", dist: "Out for Delivery", icon: "sanitizer" },
         ]
-    });
+    }), []);
 
+    const dashboardStats = useMemo(() => [
+        { label: 'Earnings Today', value: '₹1,420', change: '12% vs yesterday', trend: 'up', variant: 'surface' },
+        { label: 'Process Queue', value: '08', subValue: '4 Ready for Delivery', variant: 'primary' }
+    ], []);
+
+    const [orders, setOrders] = useState(initialOrders);
     const [selectedOrderForReady, setSelectedOrderForReady] = useState(null);
 
     const markAsReady = (order) => {
@@ -114,19 +120,23 @@ const Dashboard = () => {
             <main className="max-w-xl mx-auto px-6 pt-8 space-y-10">
                 {/* Compact Stats */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white p-5 rounded-3xl border border-slate-300 shadow-sm transition-all hover:shadow-md">
-                        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Earnings Today</p>
-                        <h2 className="text-2xl font-black text-on-surface tracking-tighter">₹1,420</h2>
-                        <span className="text-[9px] text-green-500 font-black uppercase mt-1.5 block flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[12px]">trending_up</span>
-                            12% vs yesterday
-                        </span>
-                    </div>
-                    <div className="bg-primary-gradient p-5 rounded-3xl text-on-primary shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]">
-                        <p className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Process Queue</p>
-                        <h2 className="text-3xl font-black tracking-tighter leading-none">08</h2>
-                        <p className="text-[9px] font-black uppercase mt-2.5 opacity-60">4 Ready for Delivery</p>
-                    </div>
+                    {dashboardStats.map((stat, i) => (
+                        <div 
+                            key={i} 
+                            className={`${stat.variant === 'primary' ? 'bg-primary-gradient text-on-primary shadow-xl shadow-primary/20' : 'bg-white text-on-surface border border-slate-300 shadow-sm'} p-5 rounded-3xl transition-all hover:scale-[1.02]`}
+                        >
+                            <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${stat.variant === 'primary' ? 'opacity-80' : 'text-on-surface-variant'}`}>{stat.label}</p>
+                            <h2 className={`text-${stat.variant === 'primary' ? '3xl' : '2xl'} font-black tracking-tighter leading-none`}>{stat.value}</h2>
+                            {stat.subValue ? (
+                                <p className="text-[9px] font-black uppercase mt-2.5 opacity-60">{stat.subValue}</p>
+                            ) : (
+                                <span className={`text-[9px] ${stat.trend === 'up' ? 'text-green-500' : 'text-rose-500'} font-black uppercase mt-1.5 block flex items-center gap-1`}>
+                                    <span className="material-symbols-outlined text-[12px]">{stat.trend === 'up' ? 'trending_up' : 'trending_down'}</span>
+                                    {stat.change}
+                                </span>
+                            )}
+                        </div>
+                    ))}
                 </div>
 
                 {/* Management Quick Actions */}

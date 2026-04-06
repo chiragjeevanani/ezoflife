@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -6,26 +6,28 @@ const SupplierDashboard = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('Consolidation');
 
-    const consolidationData = [
+    const consolidationData = useMemo(() => [
         { id: 'B2B-001', item: 'Eco-Friendly Detergent', total: '450 kg', deadline: 'Fri, 18:00', status: 'In Review' },
         { id: 'B2B-002', item: 'Biodegradable Laundry Bags', total: '1,200 units', deadline: 'Sat, 12:00', status: 'Ready to Dispatch' },
         { id: 'B2B-003', item: 'Starch Concentrate', total: '150 L', deadline: 'Sun, 09:00', status: 'Pending Rates' },
-    ];
+    ], []);
 
-    const historicalData = [
+    const historicalData = useMemo(() => [
         { id: 'SHP-998', date: 'Mar 25, 2026', total: '₹42,850', items: 12, status: 'Settled' },
         { id: 'SHP-992', date: 'Mar 18, 2026', total: '₹38,200', items: 8, status: 'Processing' },
-    ];
+    ], []);
 
-    const containerVariants = {
+    const containerVariants = useMemo(() => ({
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-    };
+    }), []);
 
-    const itemVariants = {
+    const itemVariants = useMemo(() => ({
         hidden: { y: 20, opacity: 0 },
         visible: { y: 0, opacity: 1 }
-    };
+    }), []);
+
+    const dashboardTabs = useMemo(() => ['Consolidation', 'History', 'Logistics'], []);
 
     return (
         <div className="bg-background text-on-surface min-h-screen pb-32 font-body">
@@ -68,7 +70,7 @@ const SupplierDashboard = () => {
 
                 {/* Custom Tabs */}
                 <div className="flex bg-white/30 p-1.5 rounded-full border border-black/5 mb-8 backdrop-blur-sm">
-                    {['Consolidation', 'History', 'Logistics'].map(tab => (
+                    {dashboardTabs.map(tab => (
                         <button 
                             key={tab}
                             onClick={() => setActiveTab(tab)}

@@ -1,20 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const SupplierProfile = () => {
     const navigate = useNavigate();
 
-    const PROFILE_OPTIONS = [
+    const profileOptions = useMemo(() => [
         { icon: 'business', label: 'Business Details', sub: 'Tax ID: GSTIN-88229', color: 'bg-primary' },
         { icon: 'shield_person', label: 'Identity Verification', sub: 'Completed: Nov 2025', color: 'bg-green-500' },
         { icon: 'star', label: 'Supplier Rating', sub: 'Platinum Partner (4.9/5)', color: 'bg-amber-400' },
         { icon: 'logout', label: 'Logout Session', sub: 'Account: LD-SUPP-42', color: 'bg-on-surface/10' }
-    ];
+    ], []);
 
     return (
         <div className="min-h-screen bg-background pb-40">
-            <header className="px-6 pt-4 mb-8">
+            <header className="px-6 pt-4 mb-4">
                 <motion.button 
                     whileTap={{ scale: 0.9 }}
                     onClick={() => navigate(-1)}
@@ -44,7 +44,7 @@ const SupplierProfile = () => {
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface/40 ml-2">Enterprise Account</h3>
                     <div className="space-y-4">
-                        {PROFILE_OPTIONS.map((opt, i) => (
+                        {profileOptions.map((opt, i) => (
                             <motion.div
                                 key={opt.label}
                                 initial={{ opacity: 0, y: 10 }}

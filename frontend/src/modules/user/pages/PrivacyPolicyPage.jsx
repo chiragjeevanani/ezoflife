@@ -1,22 +1,36 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const PrivacyPolicyPage = () => {
   const navigate = useNavigate();
 
-  const sections = [
+  const sections = useMemo(() => [
     { title: 'Data Collection', content: 'We collect your name, phone number, and address to facilitate laundry pickups and deliveries. Your location data is used only during active orders to provide real-time tracking.' },
     { title: 'Information Use', content: 'Your data is used to process orders, communicate status updates, and improve our services. We do not sell your personal information to third parties.' },
     { title: 'Security', content: 'We implement bank-grade encryption and secure storage for your payment and personal details. PCI-DSS compliance is maintained for all financial transactions.' },
     { title: 'User Rights', content: 'You can request deletion of your account and data at any time through our support center. We retain only what is legally required for tax and audit purposes.' }
-  ];
+  ], []);
+
+  const containerVariants = useMemo(() => ({
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  }), []);
+
+  const itemVariants = useMemo(() => ({
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
+  }), []);
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-background text-on-background min-h-[100dvh] flex flex-col"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="bg-background text-on-background min-h-[100dvh] flex flex-col font-body"
     >
       <header className="fixed top-0 z-50 bg-white/70 backdrop-blur-xl w-full flex items-center px-6 py-4 border-b border-outline-variant/10">
         <button onClick={() => navigate(-1)} className="material-symbols-outlined text-on-surface-variant mr-4">arrow_back</button>
@@ -25,8 +39,7 @@ const PrivacyPolicyPage = () => {
 
       <main className="max-w-2xl mx-auto px-6 pt-24 pb-36 w-full">
         <motion.section 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          variants={itemVariants}
           className="mb-12 ml-2"
         >
           <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-1 block opacity-60">Legal & Care</span>
@@ -40,9 +53,7 @@ const PrivacyPolicyPage = () => {
           {sections.map((sec, i) => (
             <motion.div 
               key={i}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: i * 0.1 }}
+              variants={itemVariants}
               className="space-y-4"
             >
               <h3 className="font-headline font-black text-lg text-primary tracking-tight leading-none uppercase">{sec.title}</h3>
@@ -53,7 +64,7 @@ const PrivacyPolicyPage = () => {
           ))}
         </section>
 
-        <section className="mt-20 p-8 rounded-[2.5rem] bg-surface-container-low border border-outline-variant/5 text-center">
+        <motion.section variants={itemVariants} className="mt-20 p-8 rounded-[2.5rem] bg-surface-container-low border border-outline-variant/5 text-center">
           <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40 mb-4 px-10">
             For further clarification on legal terms, please reach out via our support channel.
           </p>
@@ -63,10 +74,11 @@ const PrivacyPolicyPage = () => {
           >
             Contact Legal Team
           </button>
-        </section>
+        </motion.section>
       </main>
     </motion.div>
   );
 };
 
 export default PrivacyPolicyPage;
+

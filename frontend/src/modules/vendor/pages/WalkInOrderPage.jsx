@@ -2,23 +2,23 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const SERVICES = [
-    { id: 'wash', title: 'Wash & Fold', price: 99, icon: 'local_laundry_service' },
-    { id: 'wash_iron', title: 'Wash & Iron', price: 149, icon: 'dry_cleaning' },
-    { id: 'iron', title: 'Steam Iron', price: 49, icon: 'iron' },
-    { id: 'dry', title: 'Dry Clean', price: 299, icon: 'cleaning_services' },
-    { id: 'heritage', title: 'Heritage Care', price: 749, icon: 'award_star' },
-    { id: 'express', title: 'Express Fee', price: 200, icon: 'bolt' },
-    { id: 'carpet', title: 'Carpet/Rug', price: 1299, icon: 'texture' },
-    { id: 'curtain', title: 'Curtains', price: 499, icon: 'curtains' }
-];
-
 const WalkInOrderPage = () => {
     const navigate = useNavigate();
     const [customerPhone, setCustomerPhone] = useState('');
     const [selectedService, setSelectedService] = useState(null);
     const [items, setItems] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
+
+    const services = useMemo(() => [
+        { id: 'wash', title: 'Wash & Fold', price: 99, icon: 'local_laundry_service' },
+        { id: 'wash_iron', title: 'Wash & Iron', price: 149, icon: 'dry_cleaning' },
+        { id: 'iron', title: 'Steam Iron', price: 49, icon: 'iron' },
+        { id: 'dry', title: 'Dry Clean', price: 299, icon: 'cleaning_services' },
+        { id: 'heritage', title: 'Heritage Care', price: 749, icon: 'award_star' },
+        { id: 'express', title: 'Express Fee', price: 200, icon: 'bolt' },
+        { id: 'carpet', title: 'Carpet/Rug', price: 1299, icon: 'texture' },
+        { id: 'curtain', title: 'Curtains', price: 499, icon: 'curtains' }
+    ], []);
 
     const handlePhoneChange = (val) => {
         const cleanVal = val.replace(/\D/g, '');
@@ -78,7 +78,7 @@ const WalkInOrderPage = () => {
                         <span className="text-[8px] font-black text-on-surface-variant opacity-30">Scroll for more →</span>
                     </div>
                     <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar px-1">
-                        {SERVICES.map(s => (
+                        {services.map(s => (
                             <motion.button
                                 key={s.id}
                                 whileTap={{ scale: 0.95 }}

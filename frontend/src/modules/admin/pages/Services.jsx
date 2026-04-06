@@ -7,7 +7,15 @@ import StatusBadge from '../components/common/StatusBadge';
 import MetricRow from '../components/cards/MetricRow';
 
 export default function Services() {
-  const [data, setData] = React.useState(mockAdminData.services);
+  const initialServices = useMemo(() => mockAdminData.services, []);
+  const [data, setData] = React.useState(initialServices);
+
+  const serviceStats = useMemo(() => [
+    { label: 'Service Points', value: data.length.toString(), change: '+2', trend: 'up', icon: Sparkles },
+    { label: 'Laundry Yield', value: '₹124.2K', change: '+12.4K', trend: 'up', icon: IndianRupee, currency: 'INR' },
+    { label: 'Dry Clean Base', value: '08', change: '+1', trend: 'up', icon: Layers },
+    { label: 'Network Avg Price', value: '₹420', change: '+18', trend: 'up', icon: Settings, currency: 'INR' }
+  ], [data.length]);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingService, setEditingService] = React.useState(null);
 
@@ -56,7 +64,7 @@ export default function Services() {
     alert(`Service ${editingService ? 'updated' : 'created'} successfully!`);
   };
 
-  const serviceColumns = [
+  const serviceColumns = useMemo(() => [
     { 
       header: 'Service Name', 
       key: 'name',
@@ -111,7 +119,7 @@ export default function Services() {
         </div>
       )
     }
-  ];
+  ], []);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
@@ -248,10 +256,9 @@ export default function Services() {
       {/* Distribution Performance Index */}
       <div className="bg-white border-b border-slate-200 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 divide-x divide-slate-100 max-w-[1600px] mx-auto w-full">
-            <MetricRow label="Service Points" value={data.length.toString()} change="+2" trend="up" icon={Sparkles} />
-            <MetricRow label="Laundry Yield" value="₹124.2K" change="+12.4K" trend="up" icon={IndianRupee} currency="INR" />
-            <MetricRow label="Dry Clean Base" value="08" change="+1" trend="up" icon={Layers} />
-            <MetricRow label="Network Avg Price" value="₹420" change="+18" trend="up" icon={Settings} currency="INR" />
+            {serviceStats.map((stat, i) => (
+                <MetricRow key={i} {...stat} />
+            ))}
         </div>
       </div>
 

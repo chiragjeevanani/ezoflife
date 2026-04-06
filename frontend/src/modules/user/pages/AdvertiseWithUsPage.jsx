@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -6,13 +6,28 @@ const AdvertiseWithUsPage = () => {
     const navigate = useNavigate();
     const [isSubmitted, setIsSubmitted] = useState(false);
 
+    const campaignTypes = useMemo(() => ['Launch Boost', 'Retainer', 'One-Off'], []);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         setIsSubmitted(true);
     };
 
+    const containerVariants = useMemo(() => ({
+        hidden: { opacity: 0 },
+        visible: { 
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    }), []);
+
+    const itemVariants = useMemo(() => ({
+        hidden: { y: 10, opacity: 0 },
+        visible: { y: 0, opacity: 1, transition: { duration: 0.4 } }
+    }), []);
+
     return (
-        <div className="bg-background text-on-surface min-h-[100dvh] pb-24 flex flex-col overflow-x-hidden">
+        <div className="bg-background text-on-surface min-h-[100dvh] pb-24 flex flex-col overflow-x-hidden font-body">
             <header className="px-6 pt-4 flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                     <motion.button 
@@ -29,13 +44,18 @@ const AdvertiseWithUsPage = () => {
                 </div>
             </header>
 
-            <main className="px-6 max-w-md mx-auto w-full flex-grow">
-                <section className="mb-12">
+            <motion.main 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="px-6 max-w-md mx-auto w-full flex-grow"
+            >
+                <motion.section variants={itemVariants} className="mb-12">
                     <div className="bg-primary p-12 rounded-[3.5rem] text-on-primary shadow-2xl shadow-primary/20 relative overflow-hidden flex flex-col justify-end min-h-[300px]">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl animate-pulse"></div>
                         <div className="relative z-10">
                             <span className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 block opacity-60">Reach 50k+ Active Users</span>
-                            <h2 className="text-4xl font-black tracking-tighter italic leading-none mb-6">Drive Impact with Spinzyt</h2>
+                            <h2 className="text-4xl font-black tracking-tighter italic leading-none mb-6">Drive Impact with loondry</h2>
                             <button className="bg-white text-primary px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3">
                                 Download Media Kit
                                 <span className="material-symbols-outlined text-sm">download</span>
@@ -45,14 +65,15 @@ const AdvertiseWithUsPage = () => {
                             <span className="material-symbols-outlined text-[200px]" style={{ fontVariationSettings: "'FILL' 1" }}>tv</span>
                         </div>
                     </div>
-                </section>
+                </motion.section>
 
                 <AnimatePresence mode="wait">
                     {!isSubmitted ? (
                         <motion.form 
                             key="form"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            variants={itemVariants}
+                            initial="hidden"
+                            animate="visible"
                             exit={{ opacity: 0, scale: 0.95 }}
                             onSubmit={handleSubmit}
                             className="bg-white p-10 rounded-[3rem] border border-outline-variant/10 shadow-lg space-y-10"
@@ -79,7 +100,7 @@ const AdvertiseWithUsPage = () => {
                                 <div>
                                     <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1">Campaign Timeline</label>
                                     <div className="grid grid-cols-2 gap-3">
-                                        {['Launch Boost', 'Retainer', 'One-Off'].map(type => (
+                                        {campaignTypes.map(type => (
                                             <button type="button" key={type} className="px-5 py-4 border border-slate-300 rounded-2xl text-[10px] uppercase font-black tracking-widest hover:bg-primary/5 hover:border-primary/20 transition-all text-left">
                                                 {type}
                                             </button>
@@ -118,9 +139,10 @@ const AdvertiseWithUsPage = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </main>
+            </motion.main>
         </div>
     );
 };
 
 export default AdvertiseWithUsPage;
+

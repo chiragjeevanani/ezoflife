@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
-import BottomNav from '../components/BottomNav';
 
 const OrderTrackingPage = () => {
   const navigate = useNavigate();
@@ -18,25 +17,25 @@ const OrderTrackingPage = () => {
     }
   }, []);
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.6, ease: "easeOut" } }
-  };
+  }), []);
 
-  const timelineSteps = [
+  const timelineSteps = useMemo(() => [
     { label: 'Pickup', time: '10:20 AM', icon: 'photo_camera', status: 'completed', stepNum: 'Step 1 of 4' },
     { label: 'Shop Intake', time: '11:15 AM', icon: 'inventory_2', status: 'completed', stepNum: 'Step 2 of 4' },
     { label: 'Processing', time: '12:10 PM', icon: 'local_laundry_service', status: 'active', stepNum: 'Step 3 of 4' },
     { label: 'Handover', time: 'Pending', icon: 'verified_user', status: 'pending', stepNum: 'Step 4 of 4' }
-  ];
+  ], []);
 
 
   return (
@@ -233,3 +232,4 @@ const OrderTrackingPage = () => {
 };
 
 export default OrderTrackingPage;
+

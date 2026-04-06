@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const VendorOtp = () => {
     const navigate = useNavigate();
     const [otp, setOtp] = useState(['', '', '', '']);
+
+    const otpKeys = useMemo(() => [1, 2, 3, 4, 5, 6, 7, 8, 9, '·', 0, 'del'], []);
 
     const handleNumber = (n) => {
         const idx = otp.findIndex(v => v === '');
@@ -90,7 +92,7 @@ const VendorOtp = () => {
 
                 {/* Dialpad */}
                 <div className="w-full max-w-xs grid grid-cols-3 gap-y-1 gap-x-2">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, '·', 0, 'del'].map((key) => (
+                    {otpKeys.map((key) => (
                         key === 'del' ? (
                             <motion.button
                                 key="del"

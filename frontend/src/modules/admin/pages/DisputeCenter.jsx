@@ -1,16 +1,30 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { ShieldAlert, IndianRupee, Image, History, ArrowRight, User, CheckCircle2, XCircle, AlertCircle, Search, ExternalLink } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import MetricRow from '../components/cards/MetricRow';
 import StatusBadge from '../components/common/StatusBadge';
 
 export default function DisputeCenter() {
-  const [disputes] = React.useState([
+  const disputes = useMemo(() => [
     { id: 'DSP-9921', orderId: 'EZ-8815', vendor: 'Heritage Cleaners', amount: 1420, issue: 'Damaged Silk Saree', status: 'Pending', severity: 'High' },
     { id: 'DSP-9918', orderId: 'EZ-7712', vendor: 'EcoWash Hub', amount: 420, issue: 'Payment Missing', status: 'In Review', severity: 'Medium' }
-  ]);
+  ], []);
 
-  const [selectedDispute, setSelectedDispute] = React.useState(disputes[0]);
+  const disputeStats = useMemo(() => [
+    { label: 'Open Disputes', value: '12', change: '+2', trend: 'up', icon: ShieldAlert },
+    { label: 'Refund Vol (7d)', value: '₹12.4K', change: '+1.2K', trend: 'up', icon: IndianRupee, currency: 'INR' },
+    { label: 'Avg Resolution', value: '4.2h', change: '-0.5h', trend: 'up', icon: History },
+    { label: 'Vendor Penalties', value: '08', change: '+1', trend: 'up', icon: AlertCircle }
+  ], []);
+
+  const [selectedDispute, setSelectedDispute] = useState(disputes[0]);
+
+  const custodyLogs = useMemo(() => [
+    { time: '10:14 AM', event: 'Order Picked up from Customer', desc: 'Rider: Marcus Chen · Photo Linked' },
+    { time: '11:20 AM', event: 'Arrived at Heritage Cleaners', desc: 'Received by: Shop Manager (Verified)' },
+    { time: '02:40 PM', event: 'Processing Marked: In Progress', desc: 'Wash Type: Delicates (Heritage Grade)' },
+    { time: '04:15 PM', event: 'Customer Flagged Damage', desc: 'Ticket #T-8821 via Mobile App' }
+  ], []);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
@@ -24,10 +38,9 @@ export default function DisputeCenter() {
 
       <div className="bg-white border-b border-slate-200">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 divide-x divide-slate-100 max-w-[1600px] mx-auto w-full">
-            <MetricRow label="Open Disputes" value="12" change="+2" trend="up" icon={ShieldAlert} />
-            <MetricRow label="Refund Vol (7d)" value="₹12.4K" change="+1.2K" trend="up" icon={IndianRupee} currency="INR" />
-            <MetricRow label="Avg Resolution" value="4.2h" change="-0.5h" trend="up" icon={History} />
-            <MetricRow label="Vendor Penalties" value="08" change="+1" trend="up" icon={AlertCircle} />
+            {disputeStats.map((stat, i) => (
+                <MetricRow key={i} {...stat} />
+            ))}
         </div>
       </div>
 

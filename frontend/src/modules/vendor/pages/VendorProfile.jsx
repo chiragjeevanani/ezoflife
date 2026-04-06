@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import VendorHeader from '../components/VendorHeader';
@@ -6,7 +6,7 @@ import VendorHeader from '../components/VendorHeader';
 const VendorProfile = () => {
     const navigate = useNavigate();
 
-    const menuItems = [
+    const menuItems = useMemo(() => [
         { icon: 'edit', label: 'Edit Profile', path: '/vendor/edit-profile' },
         { icon: 'location_on', label: 'Shop Address', path: '/vendor/register' },
         { icon: 'account_balance', label: 'Bank & Payouts', path: '/vendor/payouts' },
@@ -14,7 +14,7 @@ const VendorProfile = () => {
         { icon: 'tune', label: 'Services & Pricing', path: '/vendor/services' },
         { icon: 'notifications', label: 'Notifications', path: '/vendor/notifications' },
         { icon: 'help_outline', label: 'Help & Support', path: '/vendor/support' },
-    ];
+    ], []);
 
     return (
         <div className="bg-background text-on-background min-h-screen pb-32 font-body">

@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const VendorSplash = () => {
     const navigate = useNavigate();
 
+    const loadingDots = useMemo(() => [0, 1, 2], []);
+
     React.useEffect(() => {
         const timer = setTimeout(() => navigate('/vendor/auth'), 3000);
         return () => clearTimeout(timer);
-    }, []);
+    }, [navigate]);
 
     return (
         <div className="vendor-gradient min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
@@ -55,7 +57,7 @@ const VendorSplash = () => {
                     transition={{ delay: 1 }}
                     className="mt-20 flex gap-2"
                 >
-                    {[0, 1, 2].map((i) => (
+                    {loadingDots.map((i) => (
                         <motion.div 
                             key={i}
                             animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}

@@ -1,39 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const services = [
-  { id: 'wash_fold', title: 'Wash & Fold', desc: 'Everyday wear, scented & stacked', icon: 'local_laundry_service', color: 'primary', price: '₹99/kg' },
-  { id: 'dry_clean', title: 'Dry Cleaning', desc: 'Suits, Silks & delicate fabrics', icon: 'dry_cleaning', color: 'tertiary', price: '₹149/pc' },
-  { id: 'ironing', title: 'Premium Ironing', desc: 'Crisp finish, steam pressed', icon: 'iron', color: 'secondary', price: '₹15/pc' },
-  { id: 'shoe_clean', title: 'Shoe Spa', desc: 'Deep clean & restoration', icon: 'checkroom', color: 'primary', price: '₹299/pair' },
-  { id: 'bag_care', title: 'Bag Care', desc: 'Leather conditioning & cleaning', icon: 'work', color: 'tertiary', price: '₹499/pc' },
-  { id: 'curtain_wash', title: 'Curtain Wash', desc: 'Dust removal & steam refresh', icon: 'window', color: 'secondary', price: '₹199/panel' },
-  { id: 'carpet_wash', title: 'Carpet Wash', desc: 'Industrial grade deep cleaning', icon: 'layers', color: 'primary', price: '₹49/sqft' },
-  { id: 'blanket_wash', title: 'Comforter Care', desc: 'Duvets, blankets & quilts', icon: 'bed', color: 'tertiary', price: '₹249/pc' }
-];
 
 const AllServicesPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredServices = services.filter(service => 
+  const services = useMemo(() => [
+    { id: 'wash_fold', title: 'Wash & Fold', desc: 'Everyday wear, scented & stacked', icon: 'local_laundry_service', color: 'primary', price: '₹99/kg' },
+    { id: 'dry_clean', title: 'Dry Cleaning', desc: 'Suits, Silks & delicate fabrics', icon: 'dry_cleaning', color: 'tertiary', price: '₹149/pc' },
+    { id: 'ironing', title: 'Premium Ironing', desc: 'Crisp finish, steam pressed', icon: 'iron', color: 'secondary', price: '₹15/pc' },
+    { id: 'shoe_clean', title: 'Shoe Spa', desc: 'Deep clean & restoration', icon: 'checkroom', color: 'primary', price: '₹299/pair' },
+    { id: 'bag_care', title: 'Bag Care', desc: 'Leather conditioning & cleaning', icon: 'work', color: 'tertiary', price: '₹499/pc' },
+    { id: 'curtain_wash', title: 'Curtain Wash', desc: 'Dust removal & steam refresh', icon: 'window', color: 'secondary', price: '₹199/panel' },
+    { id: 'carpet_wash', title: 'Carpet Wash', desc: 'Industrial grade deep cleaning', icon: 'layers', color: 'primary', price: '₹49/sqft' },
+    { id: 'blanket_wash', title: 'Comforter Care', desc: 'Duvets, blankets & quilts', icon: 'bed', color: 'tertiary', price: '₹249/pc' }
+  ], []);
+
+  const filteredServices = useMemo(() => services.filter(service => 
     service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     service.desc.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ), [services, searchQuery]);
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { y: 15, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.4, ease: "easeOut" } }
-  };
+  }), []);
 
   return (
     <motion.div 

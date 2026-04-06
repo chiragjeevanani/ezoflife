@@ -1,16 +1,16 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { MessageSquare, Clock, CheckCircle2, AlertCircle, Search, Filter, ArrowRight, User, Send } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import MetricRow from '../components/cards/MetricRow';
 
 export default function HelpDesk() {
-  const [tickets, setTickets] = React.useState([
+  const tickets = useMemo(() => [
     { id: 'T-8821', user: 'Amit Sharma', type: 'Payment', subject: 'Double Deduction on Order #8821', priority: 'High', status: 'Open', time: '12m ago' },
     { id: 'T-8819', user: 'Priya Verma', type: 'Service', subject: 'Stain not removed from Silk Saree', priority: 'Medium', status: 'Pending', time: '45m ago' },
     { id: 'T-8815', user: 'Rahul K.', type: 'Logistics', subject: 'Rider delayed by 30 mins', priority: 'Low', status: 'Resolved', time: '2h ago' }
-  ]);
+  ], []);
 
-  const [selectedTicket, setSelectedTicket] = React.useState(tickets[0]);
+  const [selectedTicket, setSelectedTicket] = useState(tickets[0]);
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)] bg-slate-50/50 pb-20">
@@ -107,31 +107,33 @@ export default function HelpDesk() {
                     <span className="px-3 py-1 bg-slate-200 text-slate-500 rounded-full text-[8px] font-black uppercase tracking-[0.2em] mb-4">Ticket Opened {selectedTicket.time}</span>
                  </div>
                  
-                 <div className="flex gap-4 max-w-[80%]">
-                    <div className="w-8 h-8 bg-slate-200 rounded-sm flex-shrink-0"></div>
-                    <div className="space-y-2">
-                       <div className="bg-white p-5 border border-slate-100 rounded-sm shadow-sm">
-                          <p className="text-[11px] font-bold text-slate-800 leading-relaxed uppercase tracking-tight">
-                            Hello, I noticed the payment was deducted twice for my order #8821. 
-                            The first attempt said failed but the money was debited, and the second attempt also went through.
-                          </p>
+                 {useMemo(() => [
+                    { 
+                      type: 'incoming',
+                      msg: 'Hello, I noticed the payment was deducted twice for my order #8821. The first attempt said failed but the money was debited, and the second attempt also went through.',
+                      time: '12:14 PM'
+                    },
+                    { 
+                      type: 'outgoing',
+                      msg: 'Apologies for the inconvenience, Amit. I am checking the settlement logs for EZ-REF-9921. Please hold on for 2 minutes while I verify with the gateway.',
+                      time: '12:16 PM',
+                      status: 'Seen'
+                    }
+                 ], []).map((chat, idx) => (
+                    <div key={idx} className={`flex gap-4 max-w-[80%] ${chat.type === 'outgoing' ? 'ml-auto flex-row-reverse' : ''}`}>
+                       <div className={`w-8 h-8 rounded-sm flex-shrink-0 ${chat.type === 'outgoing' ? 'bg-slate-900' : 'bg-slate-200'}`}></div>
+                       <div className={`space-y-2 ${chat.type === 'outgoing' ? 'items-end flex flex-col' : ''}`}>
+                          <div className={`p-5 rounded-sm shadow-sm ${chat.type === 'outgoing' ? 'bg-slate-900 text-white shadow-xl' : 'bg-white border border-slate-100 text-slate-800'}`}>
+                             <p className="text-[11px] font-bold leading-relaxed uppercase tracking-tight">
+                               {chat.msg}
+                             </p>
+                          </div>
+                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                            Sent {chat.time} {chat.status && `· ${chat.status}`}
+                          </span>
                        </div>
-                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Sent 12:14 PM</span>
                     </div>
-                 </div>
-
-                 <div className="flex gap-4 max-w-[80%] ml-auto flex-row-reverse">
-                    <div className="w-8 h-8 bg-slate-900 rounded-sm flex-shrink-0"></div>
-                    <div className="space-y-2 items-end flex flex-col">
-                       <div className="bg-slate-900 p-5 text-white rounded-sm shadow-xl">
-                          <p className="text-[11px] font-bold leading-relaxed uppercase tracking-tight">
-                            Apologies for the inconvenience, Amit. I am checking the settlement logs for EZ-REF-9921. 
-                            Please hold on for 2 minutes while I verify with the gateway.
-                          </p>
-                       </div>
-                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Sent 12:16 PM · Seen</span>
-                    </div>
-                 </div>
+                 ))}
               </div>
 
               {/* Input Area */}

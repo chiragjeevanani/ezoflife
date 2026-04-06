@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Store, MapPin, ShieldCheck, FileText, TrendingUp, Star, Package, CreditCard, AlertTriangle } from 'lucide-react';
@@ -8,8 +8,8 @@ export default function AdminVendorDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Mock data for the specific vendor
-  const vendor = {
+  // Memoized data for the specific vendor
+  const vendor = useMemo(() => ({
     id: id || '#VEN-1024',
     name: 'Julian Cleaners',
     shop: 'Pristine Heights',
@@ -30,7 +30,13 @@ export default function AdminVendorDetail() {
       { name: 'Dry Cleaning', price: '₹249/pc', status: 'Active' },
       { name: 'Steam Iron', price: '₹49/pc', status: 'Inactive' }
     ]
-  };
+  }), [id]);
+
+  const quickStats = useMemo(() => [
+    { label: 'Total Volume', value: vendor.totalOrders, icon: Package, color: 'text-blue-600' },
+    { label: 'Avg Rating', value: vendor.rating, icon: Star, color: 'text-amber-500' },
+    { label: 'Lifetime Revenue', value: vendor.revenue, icon: TrendingUp, color: 'text-emerald-600' }
+  ], [vendor.totalOrders, vendor.rating, vendor.revenue]);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
@@ -62,11 +68,7 @@ export default function AdminVendorDetail() {
         <div className="lg:col-span-2 space-y-6">
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              { label: 'Total Volume', value: vendor.totalOrders, icon: Package, color: 'text-blue-600' },
-              { label: 'Avg Rating', value: vendor.rating, icon: Star, color: 'text-amber-500' },
-              { label: 'Lifetime Revenue', value: vendor.revenue, icon: TrendingUp, color: 'text-emerald-600' }
-            ].map((stat, i) => (
+            {quickStats.map((stat, i) => (
               <div key={i} className="bg-white p-5 rounded-sm border border-slate-200 shadow-sm flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>

@@ -1,14 +1,35 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useNotificationStore from '../../../shared/stores/notificationStore';
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
-  const { notifications, unreadCount, markAsRead, clearAll } = useNotificationStore();
+  const { notifications, markAsRead, clearAll } = useNotificationStore();
   
   // Filter for user-specific notifications
-  const userNotifications = notifications.filter(n => n.persona === 'user');
+  const userNotifications = useMemo(() => 
+    notifications.filter(n => n.persona === 'user'),
+    [notifications]
+  );
+
+  const unreadUserCount = useMemo(() => 
+    userNotifications.filter(n => !n.read).length,
+    [userNotifications]
+  );
+
+  const containerVariants = useMemo(() => ({
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  }), []);
+
+  const itemVariants = useMemo(() => ({
+    hidden: { y: 10, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.4 } }
+  }), []);
 
   return (
     <motion.div 
@@ -34,19 +55,25 @@ const NotificationsPage = () => {
               Flow <br/><span className="text-primary tracking-tighter">Updates.</span>
             </h1>
             <span className="text-[10px] font-black text-primary bg-primary/10 px-4 py-2 rounded-full uppercase tracking-widest tabular-nums">
-              {unreadCount} New Active
+              {unreadUserCount} New Active
             </span>
           </div>
         </motion.header>
 
-        <div className="space-y-4">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-4"
+        >
           <AnimatePresence mode="popLayout">
             {userNotifications.length > 0 ? userNotifications.map((notif) => (
               <motion.div 
                 key={notif.id}
                 layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
                 exit={{ opacity: 0, scale: 0.95 }}
                 onClick={() => markAsRead(notif.id)}
                 className={`p-6 rounded-[2.5rem] flex items-start gap-5 border transition-all cursor-pointer ${
@@ -82,13 +109,13 @@ const NotificationsPage = () => {
                 </div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {userNotifications.length > 0 && (
             <motion.button 
               whileTap={{ scale: 0.98 }}
               onClick={clearAll}
-              className="w-full mt-10 py-5 rounded-3xl border border-slate-200 bg-white text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] hover:text-rose-500 hover:border-rose-100 transition-all shadow-sm"
+              className="w-full mt-10 py-5 rounded-3xl border border-slate-200 bg-white text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] hover:text-error hover:border-error/20 transition-all shadow-sm"
             >
               Clear Log Archive
             </motion.button>
@@ -97,7 +124,6 @@ const NotificationsPage = () => {
     </motion.div>
   );
 };
-
 
 export default NotificationsPage;
 

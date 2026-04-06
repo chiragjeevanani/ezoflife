@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   TrendingUp, 
   IndianRupee, 
@@ -33,7 +33,30 @@ import ProfessionalTooltip from '../components/common/ProfessionalTooltip';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const settlementColumns = [
+
+  const financialMetrics = useMemo(() => [
+    { label: 'Gross Merchandise (GMV)', value: '₹8,42,150', delta: '+14.2%', icon: TrendingUp, color: 'white' },
+    { label: 'Platform Net Yield', value: '₹1,26,322', delta: '15% Fee Base', icon: null, color: 'sky-400' },
+    { label: 'Logistics Disbursements', value: '₹64,280', delta: '12 Pending', icon: Clock, color: 'white' },
+    { label: 'Vendor Settlements', value: '₹6,51,548', delta: 'Cycle: Weekly', icon: null, color: 'white' }
+  ], []);
+
+  const healthStats = useMemo(() => [
+    { label: 'API Latency', value: '42ms', icon: Cpu },
+    { label: 'Uptime', value: '99.98%', icon: Monitor },
+    { label: 'Load', value: 'Low (12.4%)', icon: Activity }
+  ], []);
+
+  const alerts = useMemo(() => [
+    { id: 'EZ-9283', title: 'DELAYED PICKUP (>2HR)', type: 'CRITICAL', desc: 'Assigned to Marcus Chen · Delay: 142m', icon: Clock, variant: 'rose', action: '/admin/orders', actionLabel: 'Intercept' },
+    { id: 'EZ-7712', title: 'UNPAID DELIVERY DETECTED', type: 'DISPUTE', desc: 'COD Payment Missing · Handover Complete', icon: IndianRupee, variant: 'amber', action: '/admin/dispute-center', actionLabel: 'Resolve' }
+  ], []);
+
+  const revenueFlow = useMemo(() => mockAdminData.revenueFlow, []);
+  const orderStats = useMemo(() => mockAdminData.orderStats, []);
+  const payoutRequests = useMemo(() => mockAdminData.payoutRequests, []);
+
+  const settlementColumns = useMemo(() => [
     { 
       header: 'Partner Vendor', 
       key: 'vendor',
@@ -60,7 +83,7 @@ export default function Dashboard() {
       key: 'date', 
       render: (val) => <span className="text-[10px] text-slate-400 font-bold tracking-[0.2em] uppercase opacity-60 tabular-nums">{val}</span> 
     }
-  ];
+  ], []);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
@@ -76,34 +99,17 @@ export default function Dashboard() {
       <div className="bg-slate-900 border-b border-slate-800 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(2,132,199,0.15),transparent)] pointer-events-none"></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-x divide-slate-800 max-w-[1600px] mx-auto w-full relative z-10">
-            <div className="p-8 flex flex-col gap-2">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Gross Merchandise (GMV)</span>
+          {financialMetrics.map((metric, i) => (
+            <div key={i} className="p-8 flex flex-col gap-2">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">{metric.label}</span>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white tracking-tighter italic tabular-nums">₹8,42,150</span>
-                <span className="text-[10px] font-black text-emerald-400 flex items-center gap-1 uppercase tracking-widest"><TrendingUp size={12} /> +14.2%</span>
+                <span className={`text-3xl font-black text-${metric.color || 'white'} tracking-tighter italic tabular-nums`}>{metric.value}</span>
+                <span className={`text-[10px] font-black text-${metric.color === 'white' ? 'emerald-400' : metric.color} flex items-center gap-1 uppercase tracking-widest`}>
+                  {metric.icon && <metric.icon size={12} />} {metric.delta}
+                </span>
               </div>
             </div>
-            <div className="p-8 flex flex-col gap-2">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Platform Net Yield</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-sky-400 tracking-tighter italic tabular-nums">₹1,26,322</span>
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest opacity-60">15% Fee Base</span>
-              </div>
-            </div>
-            <div className="p-8 flex flex-col gap-2">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Logistics Disbursements</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white tracking-tighter italic tabular-nums">₹64,280</span>
-                <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-1"><Clock size={12} /> 12 Pending</span>
-              </div>
-            </div>
-            <div className="p-8 flex flex-col gap-2">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Vendor Settlements</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white tracking-tighter italic tabular-nums">₹6,51,548</span>
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest opacity-60">Cycle: Weekly</span>
-              </div>
-            </div>
+          ))}
         </div>
       </div>
 
@@ -120,18 +126,14 @@ export default function Dashboard() {
             </div>
             <div className="h-4 w-px bg-slate-200"></div>
             <div className="flex gap-6">
-               <div className="flex items-center gap-2">
-                 <Cpu size={12} className="text-slate-400" />
-                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">API Latency: <span className="text-slate-900">42ms</span></span>
-               </div>
-               <div className="flex items-center gap-2">
-                 <Monitor size={12} className="text-slate-400" />
-                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Uptime: <span className="text-slate-900">99.98%</span></span>
-               </div>
-               <div className="flex items-center gap-2">
-                 <Activity size={12} className="text-slate-400" />
-                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Load: <span className="text-slate-900">Low (12.4%)</span></span>
-               </div>
+            <div className="flex gap-6">
+              {healthStats.map((stat, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <stat.icon size={12} className="text-slate-400" />
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}: <span className="text-slate-900">{stat.value}</span></span>
+                </div>
+              ))}
+            </div>
             </div>
           </div>
           <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Live Sync: Active Protocol</p>
@@ -150,46 +152,28 @@ export default function Dashboard() {
             <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest bg-amber-400/10 px-2 py-0.5 rounded-sm">2 Critical Issues</span>
           </div>
           <div className="divide-y divide-slate-100">
-            <div className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-sm bg-rose-50 text-rose-500 flex items-center justify-center border border-rose-100">
-                  <Clock size={18} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-black text-slate-900 uppercase">DELAYED PICKUP (&gt;2HR)</span>
-                    <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-sm">CRITICAL</span>
+            {alerts.map((alert, i) => (
+              <div key={i} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-sm bg-${alert.variant}-50 text-${alert.variant}-500 flex items-center justify-center border border-${alert.variant}-100`}>
+                    <alert.icon size={18} />
                   </div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order #EZ-9283 · Assigned to Marcus Chen · Delay: 142m</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => navigate('/admin/orders')}
-                className="px-4 py-2 bg-white border border-slate-200 text-slate-900 text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all rounded-sm flex items-center gap-2"
-              >
-                Intercept <ArrowRight size={10} />
-              </button>
-            </div>
-            <div className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-sm bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
-                  <IndianRupee size={18} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-black text-slate-900 uppercase">UNPAID DELIVERY DETECTED</span>
-                    <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-black rounded-sm">DISPUTE</span>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[11px] font-black text-slate-900 uppercase">{alert.title}</span>
+                      <span className={`px-1.5 py-0.5 bg-${alert.variant}-500 text-white text-[8px] font-black rounded-sm`}>{alert.type}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order #{alert.id} · {alert.desc}</p>
                   </div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order #EZ-7712 · COD Payment Missing · Handover Complete</p>
                 </div>
+                <button 
+                  onClick={() => navigate(alert.action)}
+                  className="px-4 py-2 bg-white border border-slate-200 text-slate-900 text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all rounded-sm flex items-center gap-2"
+                >
+                  {alert.actionLabel} <ArrowRight size={10} />
+                </button>
               </div>
-              <button 
-                onClick={() => navigate('/admin/dispute-center')}
-                className="px-4 py-2 bg-white border border-slate-200 text-slate-900 text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all rounded-sm flex items-center gap-2"
-              >
-                Resolve <ArrowRight size={10} />
-              </button>
-            </div>
+            ))}
           </div>
         </div>
         {/* Analytics Grid: Enterprise Dark Border Technique */}
@@ -203,7 +187,7 @@ export default function Dashboard() {
           >
              <div className="w-full h-full p-4 overflow-visible">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={mockAdminData.revenueFlow}>
+                    <LineChart data={revenueFlow}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} dy={10} />
                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} />
@@ -227,7 +211,7 @@ export default function Dashboard() {
             actions={<div className="flex gap-1.5"><Calendar size={12} className="text-slate-400" /><span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Last 24 Hours</span></div>}
           >
              <ComparisonChart 
-                data={mockAdminData.orderStats}
+                data={orderStats}
                 type="composed"
                 metrics={[
                     { key: "orders", name: "Unit Volume", color: "#0f172a", type: "area" },
@@ -242,7 +226,7 @@ export default function Dashboard() {
         <DataGrid 
             title="Recent Payout Requests"
             columns={settlementColumns}
-            data={mockAdminData.payoutRequests}
+            data={payoutRequests}
             onAction={(row) => console.log('Auditing settlement row', row.id)}
         />
         

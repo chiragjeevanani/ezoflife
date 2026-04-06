@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useNotificationStore from '../../../shared/stores/notificationStore';
@@ -12,7 +12,7 @@ const TaskDetails = () => {
     const [checkedItems, setCheckedItems] = useState([]);
     const [photoUploaded, setPhotoUploaded] = useState(false);
 
-    const task = {
+    const task = useMemo(() => ({
         id: id || 'EZ-8821',
         type: 'Pickup',
         source: 'Heritage Cleaners',
@@ -24,7 +24,9 @@ const TaskDetails = () => {
             { id: 3, name: 'Trouser', count: 2 }
         ],
         contact: '+91 98822 11022'
-    };
+    }), [id]);
+
+    const handoffCode = useMemo(() => ['4', '2', '8', '1'], []);
 
     const handleToggleCheck = (itemId) => {
         setCheckedItems(prev => 
@@ -201,7 +203,7 @@ const TaskDetails = () => {
                                 </p>
 
                                 <div className="flex justify-center gap-3 mb-10">
-                                    {['4', '2', '8', '1'].map((digit, i) => (
+                                    {handoffCode.map((digit, i) => (
                                         <div key={i} className="w-14 h-16 bg-white/10 border border-white/20 rounded-2xl flex items-center justify-center text-2xl font-black tabular-nums">
                                             {digit}
                                         </div>

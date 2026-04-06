@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SupplierRateCard = () => {
     const navigate = useNavigate();
-    const [rates, setRates] = useState([
+
+    const initialRates = useMemo(() => [
         { id: 1, name: 'Eco-Friendly Detergent', unit: 'kg', baseRate: 120.00, inStock: true },
         { id: 2, name: 'Biodegradable Bags', unit: 'unit', baseRate: 1.50, inStock: true },
         { id: 3, name: 'Starch Concentrate', unit: 'L', baseRate: 85.00, inStock: false },
         { id: 4, name: 'Fabric Softener', unit: 'L', baseRate: 95.00, inStock: true },
-    ]);
+    ], []);
+
+    const [rates, setRates] = useState(initialRates);
     const [isSaving, setIsSaving] = useState(false);
-    const ADMIN_FEE = 1.15; // 15% Platform fee
+    
+    const ADMIN_FEE = useMemo(() => 1.15, []); // 15% Platform fee
 
     const handleRateChange = (id, newRate) => {
         setRates(prev => prev.map(item => item.id === id ? { ...item, baseRate: parseFloat(newRate) || 0 } : item));
@@ -28,15 +32,15 @@ const SupplierRateCard = () => {
         }, 1200);
     };
 
-    const containerVariants = {
+    const containerVariants = useMemo(() => ({
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-    };
+    }), []);
 
-    const itemVariants = {
+    const itemVariants = useMemo(() => ({
         hidden: { y: 20, opacity: 0 },
         visible: { y: 0, opacity: 1 }
-    };
+    }), []);
 
     return (
         <div className="bg-background text-on-surface min-h-screen pb-40">
