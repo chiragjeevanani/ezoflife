@@ -13,7 +13,6 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const { fetchNotifications } = useNotificationStore();
 
-<<<<<<< HEAD
     const vendorId = localStorage.getItem('userId') || '66112c3f8e4b8a2e5c8b4568';
 
     const fetchAllData = async () => {
@@ -51,23 +50,6 @@ const Dashboard = () => {
             'Ready': allOrders.filter(o => ['Ready', 'Out for Delivery', 'Delivered'].includes(o.status))
         };
     }, [allOrders]);
-=======
-    const initialOrders = useMemo(() => ({
-        'Available': [
-            { id: "SZ-8821", title: "Premium Wash & Fold", desc: "Estimated: 12.5 kg · Mixed Fabrics", dist: "0.8 km away", icon: "dry_cleaning" },
-            { id: "SZ-8824", title: "Eco-Friendly Dry Clean", desc: "5 Items · 2 Suits, 3 Silk Shirts", dist: "2.4 km away", icon: "checkroom" },
-            { id: "SZ-8825", title: "Ironing Only", desc: "15 Cotton Shirts · Starch Preferred", dist: "1.5 km away", icon: "iron" },
-        ],
-        'In Progress': [
-            { id: "SZ-8815", title: "Heavy Duty Wash", desc: "8 kg · Bed Linens & Towels", dist: "Processing (45%)", icon: "local_laundry_service" },
-            { id: "SZ-8816", title: "Delicate Silk Care", desc: "2 Items · Evening Gowns", dist: "Ironing Stage", icon: "opacity" },
-        ],
-        'Ready': [
-            { id: "SZ-8810", title: "Quick Wash", desc: "3 kg · Gym Wear", dist: "Ready for Pickup", icon: "shopping_basket" },
-            { id: "SZ-8808", title: "Blanket Sterilization", desc: "2 Large Blankets", dist: "Out for Delivery", icon: "sanitizer" },
-        ]
-    }), []);
->>>>>>> ece4e330e906b66198334d64589772fab6d3c0be
 
     const dashboardStats = useMemo(() => [
         { label: 'Earnings Today', value: '₹0', change: 'Keep it up!', trend: 'up', variant: 'surface' },

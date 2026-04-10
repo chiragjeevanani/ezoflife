@@ -217,11 +217,6 @@ const OrderDetails = () => {
                     <motion.button 
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
-<<<<<<< HEAD
-=======
-                            addNotification('processing', 'Cleaning Complete', 'Your order #SZ-8821 has been processed and is being packed.', 'user');
-                            addNotification('ready', 'Order Ready #SZ-8821', 'Pick up ready at Heritage Cleaners for final delivery.', 'rider');
->>>>>>> ece4e330e906b66198334d64589772fab6d3c0be
                             navigate(`/vendor/rider-verification/${orderId}`);
                         }}
                         className="flex-1 h-14 rounded-2xl vendor-gradient text-white font-black text-sm uppercase tracking-[0.15em] shadow-lg shadow-primary/20 flex items-center justify-center gap-3"

@@ -102,11 +102,7 @@ const SuccessPage = () => {
           <div className="flex justify-between items-center border-b border-outline-variant/10 pb-5">
             <div className="text-left">
               <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-black opacity-60">Order ID</span>
-<<<<<<< HEAD
               <p className="font-headline font-black text-lg text-primary">#EZ-{order._id?.toString().slice(-6).toUpperCase() || '8829-01'}</p>
-=======
-              <p className="font-headline font-black text-lg text-primary">#SZ-8829-01</p>
->>>>>>> ece4e330e906b66198334d64589772fab6d3c0be
             </div>
             <div className="text-right">
               <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-black opacity-60">Total Amount</span>
