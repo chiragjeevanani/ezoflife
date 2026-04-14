@@ -3,7 +3,14 @@ import Service from '../models/Service.js';
 // Get all services
 export const getAllServices = async (req, res) => {
     try {
-        const services = await Service.find().sort({ createdAt: -1 });
+        const { approvedOnly } = req.query;
+        let query = {};
+        
+        if (approvedOnly === 'true') {
+            query.approvalStatus = 'Approved';
+        }
+
+        const services = await Service.find(query).sort({ createdAt: -1 });
         res.status(200).json(services);
     } catch (err) {
         console.error('Get All Services Error:', err);
@@ -14,7 +21,21 @@ export const getAllServices = async (req, res) => {
 // Create a new service
 export const createService = async (req, res) => {
     try {
-        const newService = new Service(req.body);
+        const serviceData = { ...req.body };
+        
+        // If created by a vendor, it needs approval
+        if (serviceData.vendorId) {
+            serviceData.isMaster = false;
+            serviceData.approvalStatus = 'Pending';
+            serviceData.status = 'Pending Approval';
+        } else {
+            // Created by Admin
+            serviceData.isMaster = true;
+            serviceData.approvalStatus = 'Approved';
+            serviceData.status = 'Active';
+        }
+
+        const newService = new Service(serviceData);
         const savedService = await newService.save();
         res.status(201).json(savedService);
     } catch (err) {

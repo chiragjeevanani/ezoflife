@@ -2,7 +2,8 @@ import Notification from '../models/Notification.js';
 
 export const getNotifications = async (req, res) => {
     try {
-        const { userId, role } = req.params;
+        const { userId, role } = req.query;
+        if (!userId) return res.status(400).json({ message: 'User ID required' });
         const query = { recipient: userId };
         if (role) query.role = role.toLowerCase();
 

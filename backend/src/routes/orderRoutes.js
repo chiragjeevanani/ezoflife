@@ -7,7 +7,12 @@ import {
     getAllOrders,
     getRiderTasks,
     acceptOrder,
-    getRiderStats
+    verifyPickupOtp,
+    getRiderStats,
+    getOrderById,
+    vendorAcceptOrder,
+    getPoolOrders,
+    verifyDeliveryOtp
 } from '../controllers/orderController.js';
 
 const router = express.Router();
@@ -20,16 +25,23 @@ router.get('/my', getMyOrders);
 
 // Get vendor assigned orders
 router.get('/vendor', getVendorOrders);
+router.get('/pool', getPoolOrders);
+router.post('/vendor-accept/:id', vendorAcceptOrder);
 
 // Update order status
 router.patch('/status/:id', updateOrderStatus);
 
 // Rider Specific Routes
 router.post('/accept/:id', acceptOrder);
+router.post('/verify-pickup/:id', verifyPickupOtp);
+router.post('/verify-delivery/:id', verifyDeliveryOtp);
 router.get('/rider/:riderId', getRiderTasks);
 router.get('/rider-stats/:riderId', getRiderStats);
 
 // Admin: Get all orders
 router.get('/all', getAllOrders);
+
+// Specific order by ID (Must be at the bottom)
+router.get('/:id', getOrderById);
 
 export default router;

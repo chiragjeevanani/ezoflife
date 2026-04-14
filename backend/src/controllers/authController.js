@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 // Mock OTP Generator
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
@@ -219,25 +220,125 @@ export const getUserProfile = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
     try {
         const { id } = req.params;
-        const { displayName, phone, location, riderDetails, address, isProfileComplete, shopDetails } = req.body;
+        const updates = req.body;
 
+        // Surgical update: only change fields that are sent in the request
         const updatedUser = await User.findByIdAndUpdate(
             id,
-            { 
-                displayName, 
-                phone, 
-                location, 
-                riderDetails,
-                address,
-                isProfileComplete,
-                shopDetails
-            },
+            { $set: updates },
             { new: true, runValidators: true }
         );
 
         if (!updatedUser) return res.status(404).json({ message: 'User not found' });
         res.status(200).json(updatedUser);
     } catch (err) {
+        console.error('Update Profile Error:', err);
         res.status(500).json({ message: 'Error updating profile', error: err.message });
+    }
+};
+
+// Admin registering a vendor
+export const registerVendor = async (req, res) => {
+    try {
+        const { name, mobile, email, gstNumber, password, address } = req.body;
+
+        if (!name || !mobile || !email || !password) {
+            return res.status(400).json({ message: 'Name, mobile, email and password are required' });
+        }
+
+        // Check if vendor already exists
+        const existingUser = await User.findOne({ $or: [{ phone: mobile }, { email }] });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Vendor with this mobile or email already exists' });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newVendor = new User({
+            displayName: name,
+            phone: mobile,
+            email,
+            password: hashedPassword,
+            role: 'Vendor',
+            status: 'approved', // Admin registered vendors are auto-approved
+            address: address, // Main user address
+            shopDetails: {
+                name: name,
+                address: address,
+                gst: gstNumber,
+                services: []
+            },
+            isProfileComplete: true
+        });
+
+        await newVendor.save();
+
+        res.status(201).json({
+            message: 'Vendor registered successfully',
+            vendor: {
+                id: newVendor._id,
+                name: newVendor.displayName,
+                email: newVendor.email,
+                phone: newVendor.phone
+            }
+        });
+    } catch (err) {
+        console.error('Register Vendor Error:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// Vendor login with password
+export const vendorLogin = async (req, res) => {
+    try {
+        const { identifier, password } = req.body; // identifier can be email or phone
+
+        if (!identifier || !password) {
+            return res.status(400).json({ message: 'Email/Phone and password are required' });
+        }
+
+        const user = await User.findOne({ 
+            $or: [{ email: identifier }, { phone: identifier }],
+            role: 'Vendor'
+        });
+
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        if (user.status !== 'approved') {
+            return res.status(403).json({ message: `Your account status is: ${user.status}. Access denied.` });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        // Generate JWT
+        const token = jwt.sign(
+            { id: user._id, role: user.role, phone: user.phone },
+            process.env.JWT_SECRET || 'ezoflife_secret_key_2026',
+            { expiresIn: '7d' }
+        );
+
+        res.status(200).json({
+            message: 'Vendor login successful',
+            token,
+            user: {
+                id: user._id,
+                phone: user.phone,
+                email: user.email,
+                role: user.role,
+                displayName: user.displayName,
+                status: user.status,
+                isProfileComplete: user.isProfileComplete,
+                shopDetails: user.shopDetails
+            }
+        });
+    } catch (err) {
+        console.error('Vendor Login Error:', err);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };

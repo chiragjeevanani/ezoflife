@@ -1,11 +1,54 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
+import { orderApi } from '../../../lib/api';
+import { socket, connectSocket, disconnectSocket } from '../../../lib/socket';
 
 const OrderTrackingPage = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const mapRef = useRef(null);
+
+  const fetchOrder = async (isManual = false) => {
+    try {
+      if (isManual) setRefreshing(true);
+      const data = await orderApi.getById(id);
+      if (data) setOrder(data);
+    } catch (err) {
+      console.error('Error tracking order:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!id) return;
+    fetchOrder();
+
+    // Socket.io Real-time Setup
+    const customerId = localStorage.getItem('userId');
+    connectSocket(customerId);
+    
+    // Join a specific room for this order
+    socket.emit('join_room', `order_${id}`);
+
+    const handleStatusUpdate = (updatedOrder) => {
+      console.log('⚡ Real-time status update received:', updatedOrder.status);
+      setOrder(updatedOrder);
+    };
+
+    socket.on('order_status_update', handleStatusUpdate);
+
+    return () => {
+      socket.off('order_status_update', handleStatusUpdate);
+      disconnectSocket();
+    };
+  }, [id]);
 
   useEffect(() => {
     // Subtle map pan effect on mount
@@ -30,12 +73,49 @@ const OrderTrackingPage = () => {
     visible: { y: 0, opacity: 1, transition: { duration: 0.6, ease: "easeOut" } }
   }), []);
 
-  const timelineSteps = useMemo(() => [
-    { label: 'Pickup', time: '10:20 AM', icon: 'photo_camera', status: 'completed', stepNum: 'Step 1 of 4' },
-    { label: 'Shop Intake', time: '11:15 AM', icon: 'inventory_2', status: 'completed', stepNum: 'Step 2 of 4' },
-    { label: 'Processing', time: '12:10 PM', icon: 'local_laundry_service', status: 'active', stepNum: 'Step 3 of 4' },
-    { label: 'Handover', time: 'Pending', icon: 'verified_user', status: 'pending', stepNum: 'Step 4 of 4' }
-  ], []);
+  const timelineSteps = useMemo(() => {
+    const status = order?.status || 'Pending';
+    const steps = [
+      { label: 'Confirmed', time: 'Received', icon: 'check_circle', status: 'pending', stepNum: 'Step 1 of 5' },
+      { label: 'Pickup', time: 'In Route', icon: 'electric_moped', status: 'pending', stepNum: 'Step 2 of 5' },
+      { label: 'Processing', time: 'In Shop', icon: 'local_laundry_service', status: 'pending', stepNum: 'Step 3 of 5' },
+      { label: 'Ready', time: 'Packing', icon: 'verified_user', status: 'pending', stepNum: 'Step 4 of 5' },
+      { label: 'Delivering', time: 'Final Leg', icon: 'handshake', status: 'pending', stepNum: 'Step 5 of 5' }
+    ];
+
+    if (['Pending', 'Assigned'].includes(status)) {
+      steps[0].status = 'active'; 
+    }
+    
+    if (status === 'Assigned') steps[1].status = 'active';
+    if (status === 'Picked Up') {
+      steps[0].status = 'completed';
+      steps[1].status = 'completed';
+    }
+    if (status === 'In Progress') {
+      steps[0].status = 'completed';
+      steps[1].status = 'completed';
+      steps[2].status = 'active';
+    }
+    if (status === 'Ready') {
+      steps[0].status = 'completed';
+      steps[1].status = 'completed';
+      steps[2].status = 'completed';
+      steps[3].status = 'active';
+    }
+    if (status === 'Out for Delivery') {
+      steps[0].status = 'completed';
+      steps[1].status = 'completed';
+      steps[2].status = 'completed';
+      steps[3].status = 'completed';
+      steps[4].status = 'active';
+    }
+    if (status === 'Delivered') {
+      steps.forEach(s => s.status = 'completed');
+    }
+
+    return steps;
+  }, [order]);
 
 
   return (
@@ -54,9 +134,16 @@ const OrderTrackingPage = () => {
           >
             arrow_back
           </motion.button>
-          <h1 className="font-headline font-black text-xl text-primary tracking-tighter">Order #SZ-8821</h1>
+          <h1 className="font-headline font-black text-xl text-primary tracking-tighter">Order {order?.orderId || `#${id?.slice(-6) || '......'}`}</h1>
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => fetchOrder(true)}
+            className={`material-symbols-outlined p-2.5 bg-surface-container-low rounded-full text-primary transition-all ${refreshing ? 'animate-spin' : ''}`}
+            disabled={refreshing}
+          >
+            refresh
+          </button>
           <button 
             onClick={() => navigate('/user/notifications')}
             className="material-symbols-outlined p-2.5 bg-surface-container-low rounded-full text-primary"
@@ -107,26 +194,15 @@ const OrderTrackingPage = () => {
                 </motion.div>
               </div>
               <div>
-                <p className="text-[9px] text-on-surface-variant uppercase tracking-[0.2em] font-black opacity-60">Your Rider</p>
-                <h3 className="font-black text-md text-on-surface">Marcus Chen</h3>
+                <p className="text-[9px] text-on-surface-variant uppercase tracking-[0.2em] font-black opacity-60">Fleet Partner</p>
+                <h3 className="font-black text-md text-on-surface">{order?.rider?.displayName || 'Assigning Rider...'}</h3>
                 <div className="flex items-center gap-1 text-primary">
                   <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  <span className="text-xs font-black">4.9 • 2.1km away</span>
+                  <span className="text-xs font-black">4.9 • Nearby Zone</span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              <motion.button whileTap={{ scale: 0.9 }} className="bg-primary text-on-primary w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <span className="material-symbols-outlined text-xl">call</span>
-              </motion.button>
-              <motion.button 
-                whileTap={{ scale: 0.9 }} 
-                onClick={() => navigate('/user/chat/SZ-8821')}
-                className="bg-surface-container-high text-primary w-11 h-11 rounded-2xl flex items-center justify-center border border-outline-variant/10 shadow-sm"
-              >
-                <span className="material-symbols-outlined text-xl">chat_bubble</span>
-              </motion.button>
-            </div>
+            {/* Action buttons removed as per user request */}
           </motion.div>
         </motion.section>
 
@@ -149,11 +225,18 @@ const OrderTrackingPage = () => {
           {/* Timeline Wrapper */}
           <div className="relative flex justify-between items-start px-2">
             {/* Base Progress Line */}
-            <div className="absolute h-[2px] left-8 right-8 bg-surface-container-highest top-6 -translate-y-1/2 rounded-full overflow-hidden">
+            <div className="absolute h-[2px] left-10 right-10 bg-surface-container-highest top-6 -translate-y-1/2 rounded-full overflow-hidden">
               <motion.div 
                 initial={{ width: 0 }}
-                animate={{ width: '66.6%' }}
-                transition={{ duration: 1.5, ease: "easeOut", delay: 1.5 }}
+                animate={{ 
+                  width: `${(() => {
+                    const completedSteps = timelineSteps.filter(s => s.status === 'completed').length;
+                    if (completedSteps === 0) return 0;
+                    if (completedSteps === 5) return 100;
+                    return (completedSteps / 4) * 100; // 4 gaps for 5 steps
+                  })()}%` 
+                }}
+                transition={{ duration: 1.5, ease: "easeOut", delay: 1.2 }}
                 className="h-full bg-primary relative"
               >
                 <motion.div 
@@ -166,7 +249,7 @@ const OrderTrackingPage = () => {
 
             {/* Steps */}
             {timelineSteps.map((step, idx) => (
-              <div key={idx} className="relative flex flex-col items-center gap-4 z-10 w-20">
+              <div key={idx} className="relative flex flex-col items-center gap-4 z-10 w-16">
                 <motion.div 
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -194,21 +277,53 @@ const OrderTrackingPage = () => {
           </div>
         </motion.section>
 
+        {/* OTP Verification Section (Phase 5 Secure Logistics) */}
+        {((order?.status === 'Assigned' && order?.pickupOtp) || (order?.status === 'Out for Delivery' && order?.deliveryOtp)) && (
+          <motion.section 
+            variants={itemVariants}
+            className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl -mr-16 -mt-16"></div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex-1 space-y-2 text-center md:text-left">
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Security Protocol</p>
+                <h2 className="text-3xl font-black tracking-tighter uppercase">
+                  {order.status === 'Out for Delivery' ? 'Delivery Verification' : 'Pickup Verification'}
+                </h2>
+                <p className="text-xs font-bold text-slate-400 leading-relaxed">
+                  Please share this secret code with the rider only when they arrive at your door for {order.status === 'Out for Delivery' ? 'delivery' : 'pickup'}.
+                </p>
+              </div>
+              
+              <div className="bg-white/10 p-6 rounded-[2rem] border border-white/10 flex flex-col items-center gap-3 w-full md:w-auto min-w-[180px]">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Your secret OTP</span>
+                <div className="flex gap-2">
+                  {(order.status === 'Out for Delivery' ? order.deliveryOtp : order.pickupOtp).split('').map((digit, i) => (
+                    <div key={i} className="w-10 h-14 bg-white text-slate-900 rounded-xl flex items-center justify-center text-xl font-black shadow-inner">
+                      {digit}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.section>
+        )}
+
         {/* Info Cards Bento */}
         <motion.section variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
           <div className="bg-white p-8 rounded-[2.5rem] border border-outline-variant/10 shadow-sm flex flex-col justify-between group">
             <div>
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60">Service Package</span>
-              <h3 className="font-headline font-black text-2xl text-primary tracking-tighter mt-2 leading-none">Premium Wash & Fold</h3>
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60">Order Status</span>
+              <h3 className="font-headline font-black text-2xl text-primary tracking-tighter mt-2 leading-none uppercase">{order?.status}</h3>
             </div>
             <div className="mt-10 flex gap-8">
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-on-surface-variant opacity-50 uppercase tracking-widest">Weight</span>
-                <span className="font-headline font-black text-xl text-on-surface leading-none mt-1">12.5 kg</span>
+                <span className="text-[10px] font-bold text-on-surface-variant opacity-50 uppercase tracking-widest">Articles</span>
+                <span className="font-headline font-black text-xl text-on-surface leading-none mt-1">{order?.items?.length || 0} Items</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-on-surface-variant opacity-50 uppercase tracking-widest">Detergent</span>
-                <span className="font-headline font-black text-xl text-on-surface leading-none mt-1">Hypo</span>
+                <span className="text-[10px] font-bold text-on-surface-variant opacity-50 uppercase tracking-widest">Total</span>
+                <span className="font-headline font-black text-xl text-on-surface leading-none mt-1">₹{order?.totalAmount?.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -216,8 +331,8 @@ const OrderTrackingPage = () => {
           <div className="bg-primary p-8 rounded-[2.5rem] text-on-primary flex flex-col justify-between relative overflow-hidden shadow-xl shadow-primary/20">
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">Delivery Address</span>
-              <h3 className="font-headline font-black text-xl mt-3 leading-tight tracking-tight">221B Baker Street, NW1 6XE</h3>
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">Logistics Address</span>
+              <h3 className="font-headline font-black text-xl mt-3 leading-tight tracking-tight">{order?.pickupAddress || order?.address || 'Searching location...'}</h3>
             </div>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-10 relative z-10 cursor-pointer">
               <button className="w-full bg-white text-primary py-4.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-black/10">

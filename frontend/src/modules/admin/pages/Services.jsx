@@ -10,6 +10,7 @@ import MetricRow from '../components/cards/MetricRow';
 export default function Services() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('All'); // 'All' or 'Pending'
 
   const fetchServices = async () => {
     try {
@@ -99,6 +100,17 @@ export default function Services() {
     }
   };
 
+  const handleApprove = async (id) => {
+    try {
+        await serviceApi.update(id, { approvalStatus: 'Approved', status: 'Active' });
+        await fetchServices();
+        alert('Service approved successfully!');
+    } catch (error) {
+        console.error('Error approving service:', error);
+        alert('Failed to approve service');
+    }
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this service?')) {
         try {
@@ -127,7 +139,10 @@ export default function Services() {
              )}
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-slate-900 text-[11px] uppercase tracking-tight leading-none mb-1">{val}</span>
+            <div className="flex items-center gap-2 mb-1">
+                <span className="font-bold text-slate-900 text-[11px] uppercase tracking-tight leading-none">{val}</span>
+                {!row.isMaster && <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded-sm text-[7px] font-black uppercase tracking-tighter border border-amber-100">Vendor</span>}
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-1.5 tabular-nums leading-none">
                 <Layers size={10} className="text-slate-300" /> {row.category}
@@ -151,6 +166,11 @@ export default function Services() {
       )
     },
     { 
+      header: 'Approval', 
+      key: 'approvalStatus', 
+      render: (val) => <StatusBadge status={val} /> 
+    },
+    { 
       header: 'Status', 
       key: 'status', 
       render: (val) => <StatusBadge status={val} /> 
@@ -161,6 +181,14 @@ export default function Services() {
       align: 'right',
       render: (val, row) => (
         <div className="flex items-center justify-end gap-2.5">
+          {row.approvalStatus === 'Pending' && (
+            <button 
+              onClick={() => handleApprove(row._id)}
+              className="px-4 py-2 bg-emerald-600 text-white rounded-sm text-[8px] font-bold uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all flex items-center gap-2"
+            >
+              <CheckCircle2 size={11} /> APPROVE
+            </button>
+          )}
           <button 
             onClick={() => openModal(row)}
             className="px-4 py-2 bg-white border border-slate-200 text-slate-500 rounded-sm text-[8px] font-bold uppercase tracking-[0.2em] hover:bg-slate-950 hover:text-white hover:border-slate-950 transition-all flex items-center gap-2 group"
@@ -347,6 +375,25 @@ export default function Services() {
       </div>
 
       <div className="p-6 space-y-6 max-w-[1600px] mx-auto w-full">
+        {/* Tabs for Filtering */}
+        <div className="flex gap-8 border-b border-slate-200 mb-6 font-bold text-[10px] uppercase tracking-[0.2em]">
+            <button 
+                onClick={() => setActiveTab('All')}
+                className={`pb-4 px-2 transition-all relative ${activeTab === 'All' ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+                All Services ({data.length})
+            </button>
+            <button 
+                onClick={() => setActiveTab('Pending')}
+                className={`pb-4 px-2 transition-all relative ${activeTab === 'Pending' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+                Pending Approvals ({data.filter(s => s.approvalStatus === 'Pending').length})
+                {data.filter(s => s.approvalStatus === 'Pending').length > 0 && (
+                    <span className="ml-2 w-2 h-2 bg-amber-500 rounded-full inline-block animate-pulse" />
+                )}
+            </button>
+        </div>
+
         {/* Service List */}
         {loading ? (
             <div className="p-20 flex items-center justify-center bg-white border border-slate-200 rounded-sm animate-pulse">
@@ -357,9 +404,9 @@ export default function Services() {
             </div>
         ) : (
             <DataGrid 
-                title="Master Service Registry"
+                title={activeTab === 'Pending' ? "Approval Queue" : "Master Service Registry"}
                 columns={serviceColumns}
-                data={data}
+                data={data.filter(s => activeTab === 'All' ? true : s.approvalStatus === 'Pending')}
                 onAction={(row) => openModal(row)}
             />
         )}

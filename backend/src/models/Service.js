@@ -27,8 +27,22 @@ const serviceSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Active', 'Inactive', 'Suspended'],
+        enum: ['Active', 'Inactive', 'Suspended', 'Pending Approval'],
         default: 'Active'
+    },
+    vendorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    isMaster: {
+        type: Boolean,
+        default: true
+    },
+    approvalStatus: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected'],
+        default: 'Approved' // Master services are approved by default
     },
     image: {
         type: String,

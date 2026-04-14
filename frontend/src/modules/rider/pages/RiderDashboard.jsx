@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useNotificationStore from '../../../shared/stores/notificationStore';
 import { orderApi } from '../../../lib/api';
+import { socket, connectSocket, disconnectSocket } from '../../../lib/socket';
 
 const RiderDashboard = () => {
     const navigate = useNavigate();
     const [isOnline, setIsOnline] = useState(true);
-    const { notifications, dismissOrderNotification, fetchNotifications } = useNotificationStore();
+    const { notifications, dismissOrderNotification, fetchNotifications, addNotification } = useNotificationStore();
     const [activeTasks, setActiveTasks] = useState([]);
     const [riderStats, setRiderStats] = useState({
         earnings: '₹0',
@@ -39,10 +40,44 @@ const RiderDashboard = () => {
 
     useEffect(() => {
         fetchData();
-        // Polling for live updates every 15s (Faster for testing as requested)
-        const interval = setInterval(fetchData, 15000);
-        return () => clearInterval(interval);
-    }, [fetchData]);
+        connectSocket(riderId);
+        
+        if (riderId) {
+            console.log('🔗 [SOCKET_ROOM] Joining room:', `user_${riderId}`);
+            socket.emit('join_room', `user_${riderId}`);
+        }
+
+        socket.on('new_pickup_broadcast', (data) => {
+            console.log('--- LOGISTICS BROADCAST RECEIVED ---', data);
+            addNotification('pickup_available', 'New Pickup Task Available', `Pickup: ${data.pickupAddress}`, 'rider', {
+                orderId: data.mongoOrderId,
+                displayId: data.orderId,
+                customer: data.customerName,
+                from: data.pickupAddress,
+                to: data.dropAddress,
+                dist: data.distance,
+                pay: data.earnings
+            });
+        });
+
+        socket.on('rider_pool_update', (data) => {
+            console.log('--- POOL UPDATE RECEIVED ---', data);
+            if (data.action === 'removed') {
+                fetchNotifications(riderId, 'rider');
+                fetchData();
+            }
+        });
+
+        // Polling as fallback (30 minutes)
+        const interval = setInterval(fetchData, 1800000);
+        
+        return () => {
+            clearInterval(interval);
+            socket.off('new_pickup_broadcast');
+            socket.off('rider_pool_update');
+            disconnectSocket();
+        };
+    }, [riderId, fetchData, fetchNotifications]);
     
 
     const handleAcceptTask = async (notif) => {
@@ -66,9 +101,11 @@ const RiderDashboard = () => {
     };
 
     // Filter notifications for the 'rider' persona
-    const riderBroadcasts = useMemo(() => 
-        notifications.filter(n => n.persona === 'rider' && (n.type === 'ready' || n.type === 'assigned' || n.type === 'order_placed')),
-    [notifications]);
+    const riderBroadcasts = useMemo(() => {
+        const filtered = notifications.filter(n => n.persona === 'rider' && ['ready', 'assigned', 'order_placed', 'order_available', 'pickup_available'].includes(n.type));
+        console.log('--- RIDER BROADCASTS FILTERED ---', { total: notifications.length, riderCount: filtered.length, items: filtered });
+        return filtered;
+    }, [notifications]);
 
     const stats = useMemo(() => [
         { label: 'Earnings', value: riderStats.earnings, icon: 'payments' },
@@ -147,27 +184,69 @@ const RiderDashboard = () => {
                             {riderBroadcasts.map((notif) => (
                                 <motion.div 
                                     key={notif.id}
-                                    initial={{ scale: 0.9, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="bg-emerald-600 p-6 rounded-[2.5rem] shadow-xl shadow-emerald-600/30 text-white relative overflow-hidden"
+                                    initial={{ scale: 0.9, opacity: 0, y: 50 }}
+                                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                                    className="bg-emerald-600 rounded-[2.5rem] shadow-2xl shadow-emerald-500/40 text-white relative overflow-hidden"
                                 >
+                                    {/* Glass Decor */}
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 animate-pulse">
-                                            <span className="material-symbols-outlined">radio</span>
+                                    
+                                    <div className="p-8 space-y-6">
+                                        {/* Header */}
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                                    <span className="material-symbols-outlined animate-bounce">radio</span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">New Task</p>
+                                                    <h4 className="text-sm font-black tracking-tight leading-tight">{notif.displayId || 'Broadcast'}</h4>
+                                                </div>
+                                            </div>
+                                            <div className="text-right bg-black/20 px-3 py-1 rounded-lg">
+                                                <p className="text-[8px] font-black uppercase tracking-widest opacity-60">Earnings</p>
+                                                <p className="text-sm font-black italic">₹{notif.pay || '0.00'}</p>
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <span className="text-[9px] font-black uppercase tracking-widest opacity-80">New Task Broadcast</span>
-                                            <h4 className="text-sm font-black tracking-tight leading-tight mt-1">{notif.title}</h4>
-                                            <p className="text-[10px] font-bold opacity-70 mt-1 uppercase tracking-widest line-clamp-1">{notif.message}</p>
+
+                                        {/* Logistics Details */}
+                                        <div className="space-y-4">
+                                            <div className="flex gap-4">
+                                                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                                                    <span className="material-symbols-outlined text-sm">person</span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[8px] font-black uppercase tracking-widest opacity-50">Customer</p>
+                                                    <p className="text-xs font-bold leading-none">{notif.customer || 'Loading...'}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                                                <div>
+                                                    <p className="text-[8px] font-black uppercase tracking-widest opacity-50 mb-1">Pickup</p>
+                                                    <p className="text-[10px] font-bold leading-tight line-clamp-2">{notif.from || '---'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[8px] font-black uppercase tracking-widest opacity-50 mb-1">Drop (Shop)</p>
+                                                    <p className="text-[10px] font-bold leading-tight line-clamp-2 text-emerald-100 italic">{notif.to || '---'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Action */}
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex-1 bg-white/10 p-3 rounded-2xl flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-sm opacity-60">near_me</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest">{notif.dist || '0.0'} km away</span>
+                                            </div>
+                                            <button 
+                                                onClick={() => handleAcceptTask(notif)}
+                                                className="px-8 py-4 bg-white text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+                                            >
+                                                Accept
+                                            </button>
                                         </div>
                                     </div>
-                                    <button 
-                                        onClick={() => handleAcceptTask(notif)}
-                                        className="w-full mt-6 py-3.5 bg-white text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
-                                    >
-                                        Accept & Navigate
-                                    </button>
                                 </motion.div>
                             ))}
                         </AnimatePresence>
@@ -210,9 +289,18 @@ const RiderDashboard = () => {
                                         <span className="material-symbols-outlined text-emerald-600 text-sm">inventory_2</span>
                                         <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">{task.items?.length || 0} Clean Articles</span>
                                     </div>
-                                    <button className="px-5 py-2.5 bg-slate-950 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg shadow-black/10 flex items-center gap-2 transition-all active:scale-95">
-                                        Details <span className="material-symbols-outlined text-xs">arrow_forward_ios</span>
-                                    </button>
+                                    {!task.rider ? (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleAcceptTask({ orderId: task._id, title: 'Direct Order' }); }}
+                                            className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-200 flex items-center gap-2 transition-all active:scale-95"
+                                        >
+                                            Accept Task <span className="material-symbols-outlined text-xs">check_circle</span>
+                                        </button>
+                                    ) : (
+                                        <button className="px-5 py-2.5 bg-slate-950 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg shadow-black/10 flex items-center gap-2 transition-all active:scale-95">
+                                            Details <span className="material-symbols-outlined text-xs">arrow_forward_ios</span>
+                                        </button>
+                                    )}
                                 </div>
                             </motion.div>
                         )) : (

@@ -1,74 +1,166 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SupplierLogistics = () => {
     const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilter, setActiveFilter] = useState('All');
 
     const shipments = useMemo(() => [
         { id: 'SZ-4421', vendor: 'Spinzyt - HSR Layout', items: '50L Detergent, 200 Tags', status: 'In Transit', driver: 'Rahul S.', eta: '14 mins' },
         { id: 'SZ-4428', vendor: 'Spinzyt - Indiranagar', items: '100 Wooden Hangers', status: 'Picking Up', driver: 'Vikram K.', eta: '28 mins' },
-        { id: 'SZ-4430', vendor: 'FabriCare - Whitefield', items: '3 Steam Specialists', status: 'Dispatched', driver: 'Manish P.', eta: 'Reached' }
+        { id: 'SZ-4430', vendor: 'FabriCare - Whitefield', items: '3 Steam Specialists', status: 'Dispatched', driver: 'Manish P.', eta: 'Reached' },
+        { id: 'SZ-4435', vendor: 'Laundry Pro - Koramangala', items: '20kg Bleach, 50 Polybags', status: 'In Transit', driver: 'Suresh M.', eta: '5 mins' }
     ], []);
 
+    const filters = ['All', 'In Transit', 'Picking Up', 'Dispatched'];
+
+    const filteredShipments = useMemo(() => {
+        return shipments.filter(ship => {
+            const matchesSearch = ship.vendor.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                ship.id.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesFilter = activeFilter === 'All' || ship.status === activeFilter;
+            return matchesSearch && matchesFilter;
+        });
+    }, [shipments, searchQuery, activeFilter]);
+
     return (
-        <div className="min-h-screen bg-background pb-40">
-            <header className="px-6 pt-4 mb-4 z-20 pb-4">
-                <h1 className="text-2xl font-black tracking-tighter italic uppercase leading-none">Logistics</h1>
-                <p className="text-[9px] font-black text-on-surface/40 uppercase tracking-[0.3em] mt-1">Fleet & Dispatch Control</p>
+        <div className="min-h-screen bg-background pb-40 font-body text-on-background">
+            <header className="px-6 pt-6 mb-2">
+                <div className="flex justify-between items-start mb-6">
+                    <div>
+                        <h1 className="text-3xl font-black tracking-tighter italic uppercase leading-none">Logistics</h1>
+                        <p className="text-[10px] font-black text-on-surface/40 uppercase tracking-[0.3em] mt-1">Fleet & Dispatch Control</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-2xl bg-white/40 backdrop-blur-md flex items-center justify-center border border-white/20">
+                        <span className="material-symbols-outlined text-primary">hub</span>
+                    </div>
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative group mb-6">
+                    <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                        <span className="material-symbols-outlined text-[20px] text-on-surface/30 group-focus-within:text-primary transition-colors">search</span>
+                    </div>
+                    <input 
+                        type="text"
+                        placeholder="Search fleet or ID..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-14 pr-6 py-5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-[2rem] text-sm font-bold text-on-surface placeholder:text-on-surface/20 outline-none focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all shadow-sm"
+                    />
+                </div>
+
+                {/* Filter Chips */}
+                <div className="flex gap-2 overflow-x-auto pb-4 hide-scrollbar -mx-6 px-6">
+                    {filters.map(filter => (
+                        <button
+                            key={filter}
+                            onClick={() => setActiveFilter(filter)}
+                            className={`px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all duration-300 border ${
+                                activeFilter === filter 
+                                ? 'bg-primary text-white border-primary shadow-lg shadow-black/10' 
+                                : 'bg-white/40 text-on-surface/40 border-white/20 hover:bg-white/60'
+                            }`}
+                        >
+                            {filter}
+                        </button>
+                    ))}
+                </div>
             </header>
 
-            <main className="px-6 space-y-8 flex-1">
+            <main className="px-6 space-y-10 flex-1">
                 <section className="grid grid-cols-2 gap-4">
-                    <div className="bg-white p-5 rounded-3xl border border-black/5 shadow-sm transition-all hover:shadow-md">
-                        <p className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest mb-1">Active Drops</p>
-                        <h2 className="text-2xl font-black text-on-surface tracking-tighter">08</h2>
-                        <span className="text-[9px] text-primary font-black uppercase mt-1.5 block">↗ Live Requisition</span>
+                    <div className="bg-white/80 backdrop-blur-md p-6 rounded-[2.5rem] border border-white/30 shadow-sm transition-all hover:shadow-md">
+                        <p className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest mb-1">Active Deliveries</p>
+                        <h2 className="text-3xl font-black text-on-surface tracking-tighter">{filteredShipments.length.toString().padStart(2, '0')}</h2>
+                        <div className="flex items-center gap-1 mt-2 text-primary">
+                            <span className="material-symbols-outlined text-[14px]">sensors</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest">Live</span>
+                        </div>
                     </div>
-                    <div className="bg-primary p-5 rounded-3xl text-white shadow-xl shadow-black/20 transition-all hover:scale-[1.02]">
+                    <div className="bg-primary p-6 rounded-[2.5rem] text-white shadow-2xl shadow-black/20 transition-all hover:scale-[1.02] relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-white/20 transition-all"></div>
                         <p className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Avg. TAT</p>
                         <h2 className="text-3xl font-black tracking-tighter leading-none">42m</h2>
-                        <p className="text-[9px] font-black uppercase mt-2.5 opacity-60">Within SLA Threshold</p>
+                        <p className="text-[9px] font-black uppercase mt-2.5 opacity-60">SLA Optimization Active</p>
                     </div>
                 </section>
 
-                <section className="space-y-4">
+                <section className="space-y-5">
                     <div className="flex items-center justify-between px-2">
-                        <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface/40">Live Fulfillment Queue</h2>
-                        <span className="text-[8px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-widest">Real-time Feed</span>
+                        <h2 className="text-[11px] font-black uppercase tracking-[0.25em] text-on-surface/40 italic">Live Fulfillment Queue</h2>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest leading-none">Feed Live</span>
+                        </div>
                     </div>
                     
                     <div className="space-y-4">
-                        {shipments.map(ship => (
-                            <motion.div 
-                                key={ship.id}
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="bg-white/80 backdrop-blur-sm p-5 rounded-[2.5rem] border border-black/5 shadow-sm relative overflow-hidden group"
-                            >
-                                <div className={`absolute top-0 left-0 w-1.5 h-full ${ship.status === 'Dispatched' ? 'bg-primary' : 'bg-slate-400'}`}></div>
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 className="text-sm font-black text-on-surface leading-none mb-1.5">{ship.vendor}</h3>
-                                        <p className="text-[9px] font-bold text-on-surface/40 uppercase tracking-widest">{ship.items}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black text-primary uppercase tracking-widest">{ship.id}</p>
-                                        <p className="text-[9px] font-bold text-on-surface/20 uppercase tracking-widest mt-0.5">{ship.eta}</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-[16px] text-slate-400">person</span>
+                        <AnimatePresence mode="popLayout">
+                            {filteredShipments.map(ship => (
+                                <motion.div 
+                                    key={ship.id}
+                                    layout
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    className="bg-white/90 backdrop-blur-md p-6 rounded-[2.5rem] border border-white/40 shadow-sm relative overflow-hidden group hover:shadow-xl transition-all"
+                                >
+                                    <div className={`absolute top-0 left-0 w-2 h-full transition-all duration-500 ${
+                                        ship.status === 'Dispatched' ? 'bg-emerald-400' : 
+                                        ship.status === 'In Transit' ? 'bg-primary' : 'bg-amber-400'
+                                    }`}></div>
+                                    
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="max-w-[70%]">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                                                    ship.status === 'Dispatched' ? 'bg-emerald-50 text-emerald-600' : 
+                                                    ship.status === 'In Transit' ? 'bg-primary/5 text-primary' : 'bg-amber-50 text-amber-600'
+                                                }`}>
+                                                    {ship.status}
+                                                </span>
+                                            </div>
+                                            <h3 className="text-base font-black text-on-surface leading-tight mb-2 tracking-tight group-hover:text-primary transition-colors">{ship.vendor}</h3>
+                                            <p className="text-[10px] font-bold text-on-surface/30 uppercase tracking-widest truncate">{ship.items}</p>
                                         </div>
-                                        <p className="text-[10px] font-black text-slate-500">{ship.driver}</p>
+                                        <div className="text-right">
+                                            <p className="text-xs font-black text-primary tracking-tighter italic">{ship.id}</p>
+                                            <p className="text-[9px] font-black text-on-surface/20 uppercase tracking-widest mt-1.5 flex items-center justify-end gap-1">
+                                                <span className="material-symbols-outlined text-[12px]">schedule</span>
+                                                {ship.eta}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <button className="px-4 py-2 bg-primary text-white rounded-xl text-[8px] font-black uppercase tracking-[0.2em] shadow-sm">Details</button>
-                                </div>
+
+                                    <div className="flex items-center justify-between pt-5 border-t border-slate-50">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center transition-colors group-hover:bg-primary/5 group-hover:border-primary/10">
+                                                <span className="material-symbols-outlined text-[20px] text-slate-300 group-hover:text-primary transition-colors">delivery_dining</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <p className="text-[9px] font-black text-on-surface/20 uppercase tracking-widest mb-0.5">Pilot Assigned</p>
+                                                <p className="text-xs font-black text-on-surface italic">{ship.driver}</p>
+                                            </div>
+                                        </div>
+                                        <button className="h-10 px-6 bg-primary text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.25em] shadow-lg shadow-black/5 hover:scale-105 active:scale-95 transition-all">Details</button>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                        
+                        {filteredShipments.length === 0 && (
+                            <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="py-20 flex flex-col items-center justify-center text-center opacity-30"
+                            >
+                                <span className="material-symbols-outlined text-5xl mb-4">search_off</span>
+                                <p className="text-[11px] font-black uppercase tracking-widest italic">No matching shipments found</p>
                             </motion.div>
-                        ))}
+                        )}
                     </div>
                 </section>
             </main>
@@ -77,3 +169,4 @@ const SupplierLogistics = () => {
 };
 
 export default SupplierLogistics;
+

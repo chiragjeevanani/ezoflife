@@ -141,7 +141,7 @@ const SuccessPage = () => {
           <motion.button 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/user/tracking')}
+            onClick={() => navigate(`/user/tracking/${order._id}`)}
             className="w-full bg-primary-gradient py-5 rounded-2xl text-on-primary font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 hover:shadow-primary/30 transition-all"
           >
             Track Order

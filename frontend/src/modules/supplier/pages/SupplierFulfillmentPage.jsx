@@ -107,15 +107,17 @@ const SupplierFulfillmentPage = () => {
                     </motion.div>
                 </section>
 
-                {/* Action Footer */}
-                <div className="fixed bottom-0 left-0 right-0 p-6 pt-10 bg-gradient-to-t from-background to-transparent z-10">
-                    <motion.button 
-                        whileTap={{ scale: 0.98 }}
-                        className="w-full py-5.5 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-3xl shadow-2xl shadow-primary/20 flex items-center justify-center gap-3 active:scale-95 transition-all"
-                    >
-                        Notify Logistics Team
-                        <span className="material-symbols-outlined text-sm">rocket_launch</span>
-                    </motion.button>
+                {/* Action Footer - Elevated above global nav */}
+                <div className="fixed bottom-24 left-0 right-0 p-6 z-10 pointer-events-none">
+                    <div className="max-w-md mx-auto pointer-events-auto">
+                        <motion.button 
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full py-5.5 bg-black text-white font-black text-xs uppercase tracking-[0.2em] rounded-3xl shadow-2xl shadow-black/20 flex items-center justify-center gap-3 active:scale-95 transition-all border border-white/10"
+                        >
+                            Notify Logistics Team
+                            <span className="material-symbols-outlined text-sm">rocket_launch</span>
+                        </motion.button>
+                    </div>
                 </div>
             </main>
         </div>

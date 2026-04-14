@@ -7,6 +7,10 @@ const VendorHeader = ({ title = "Spinzyt", showBack = false }) => {
     const notifications = useNotificationStore((state) => state.notifications);
     const unreadCount = notifications.filter(n => n.persona === 'vendor' && !n.read).length;
 
+    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
+    const vendorName = vendorData.displayName || "Vendor Partner";
+    const vendorPhone = vendorData.phone || "98765 43210";
+
     return (
         <header className="bg-surface/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-outline-variant/10 min-h-[72px]">
             <div className="flex items-center gap-3">
@@ -18,18 +22,17 @@ const VendorHeader = ({ title = "Spinzyt", showBack = false }) => {
                 {!showBack && (
                     <div 
                         onClick={() => navigate('/vendor/profile')}
-                        className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center overflow-hidden cursor-pointer border border-outline-variant/5"
+                        className="w-10 h-10 rounded-xl vendor-gradient flex items-center justify-center overflow-hidden cursor-pointer border border-outline-variant/5 text-white"
                     >
-                        <img 
-                            className="w-full h-full object-cover" 
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAT1G7gcHTDKYAyUsrelXEMf2w6RQyBCMwtQmyqi-a7ZPOQcRRYhe1gqMBSPUsXY8Ru16zqZWc8aMj-kve41JSGpk8PBMQSmPvwiBPyQnE-KlBH_j2zy2u_kqX_CmMYKy2-bOYW3G-i3PiCbE759VmmQXpJyL_cmmWYbnIEV-rZR8sjSexO93iameBgS7Rd19y8CQTrD4Ke46jtuCZrbKo6LTv7KtyX4330_FAPFGYdMldUrndR32fDYqOWnPk42gI1Zxydi6FSoas" 
-                            alt="Vendor Profile"
-                        />
+                        <span className="material-symbols-outlined text-xl">person</span>
                     </div>
                 )}
                 <div className="flex flex-col">
-                    <h1 className="text-lg font-bold tracking-tight text-primary leading-none mb-1">{title}</h1>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Vendor Partner</p>
+                    <h1 className="text-[14px] font-black tracking-tight text-on-surface leading-none mb-1 uppercase italic">{vendorName}</h1>
+                    <p className="text-[10px] font-bold tracking-widest text-primary flex items-center gap-1 leading-none">
+                        <span className="material-symbols-outlined text-[12px]">smartphone</span>
+                        +91 {vendorPhone}
+                    </p>
                 </div>
             </div>
             <button 

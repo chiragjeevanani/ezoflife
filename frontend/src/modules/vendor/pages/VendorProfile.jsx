@@ -13,13 +13,17 @@ const VendorProfile = () => {
 
     const menuItems = useMemo(() => [
         { icon: 'edit', label: 'Edit Profile', path: '/vendor/edit-profile' },
-        { icon: 'location_on', label: 'Shop Address', path: '/vendor/register' },
+        { icon: 'location_on', label: 'Shop Address', onClick: () => navigate('/vendor/register', { state: { isEditing: true } }) },
         { icon: 'account_balance', label: 'Bank & Payouts', path: '/vendor/payouts' },
         { icon: 'receipt_long', label: 'Order History', path: '/vendor/order-history' },
         { icon: 'tune', label: 'Services & Pricing', path: '/vendor/services' },
         { icon: 'notifications', label: 'Notifications', path: '/vendor/notifications' },
         { icon: 'help_outline', label: 'Help & Support', path: '/vendor/support' },
     ], []);
+
+    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
+    const vendorName = vendorData.displayName || "Vendor Partner";
+    const vendorPhone = vendorData.phone || "98765 43210";
 
     return (
         <div className="bg-background text-on-background min-h-screen pb-32 font-body">
@@ -41,8 +45,8 @@ const VendorProfile = () => {
                         </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-xl font-bold tracking-tight text-on-surface leading-none mb-1.5 truncate">Pristine Cleaners</h2>
-                        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">+91 98765 43210</p>
+                        <h2 className="text-xl font-bold tracking-tight text-on-surface leading-none mb-1.5 truncate">{vendorName}</h2>
+                        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">+91 {vendorPhone}</p>
                         <div className="flex items-center gap-3">
                             <div className="flex text-amber-500 font-bold items-center gap-1">
                                 <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
@@ -84,7 +88,7 @@ const VendorProfile = () => {
                     {menuItems.map((item, i) => (
                         <button 
                             key={item.label}
-                            onClick={() => navigate(item.path)}
+                            onClick={() => item.onClick ? item.onClick() : navigate(item.path)}
                             className="w-full flex items-center justify-between p-4 px-5 hover:bg-surface-container transition-all border-b border-outline-variant/5 last:border-0 group"
                         >
                             <div className="flex items-center gap-4">

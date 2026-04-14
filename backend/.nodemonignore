@@ -1,0 +1,4 @@
+REAL_USER_DEBUG.log
+*.log
+node_modules
+.git

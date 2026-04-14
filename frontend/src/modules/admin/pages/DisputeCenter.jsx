@@ -61,7 +61,7 @@ export default function DisputeCenter() {
                 <div className="flex justify-between items-start mb-4">
                    <div className="flex flex-col gap-1">
                       <span className="text-[9px] font-black text-slate-400 tabular-nums uppercase leading-none">{dsp.id}</span>
-                      <h4 className="text-[12px] font-black text-slate-900 uppercase tracking-tight italic">Order #{dsp.orderId}</h4>
+                      <h4 className="text-[12px] font-black text-slate-900 uppercase tracking-tight">Order #{dsp.orderId}</h4>
                    </div>
                    <StatusBadge status={dsp.status} />
                 </div>

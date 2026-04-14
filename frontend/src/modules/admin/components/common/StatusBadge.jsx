@@ -13,6 +13,8 @@ export default function StatusBadge({ status }) {
         'Suspended': { color: 'bg-rose-50 text-rose-600 border-rose-100', dot: 'bg-rose-600' },
         'Cancelled': { color: 'bg-slate-100 text-slate-500 border-slate-200', dot: 'bg-slate-500' },
         'Inactive': { color: 'bg-slate-50 text-slate-400 border-slate-100', dot: 'bg-slate-400' },
+        'Pending Approval': { color: 'bg-amber-50 text-amber-600 border-amber-100', dot: 'bg-amber-600 animate-pulse' },
+        'Approved': { color: 'bg-emerald-50 text-emerald-600 border-emerald-100', dot: 'bg-emerald-600' },
     };
 
     const { color, dot } = statusMap[status] || { color: 'bg-slate-50 text-slate-400 border-slate-100', dot: 'bg-slate-400' };

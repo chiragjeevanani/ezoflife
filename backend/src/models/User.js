@@ -19,6 +19,16 @@ const userSchema = new mongoose.Schema({
             return this.role === 'Vendor' ? 'pending' : 'approved';
         }
     },
+    email: {
+        type: String,
+        trim: true,
+        lowercase: true,
+        default: ''
+    },
+    password: {
+        type: String,
+        default: ''
+    },
     address: {
         type: String,
         default: ''

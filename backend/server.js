@@ -10,11 +10,19 @@ import adminRoutes from './src/routes/adminRoutes.js';
 import orderRoutes from './src/routes/orderRoutes.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
 import serviceRoutes from './src/routes/serviceRoutes.js';
+import materialRoutes from './src/routes/materialRoutes.js';
+import ticketRoutes from './src/routes/ticketRoutes.js';
 
+import http from 'http';
+import { initSocket } from './src/socket.js';
 
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.io
+initSocket(server);
 
 // Middleware
 app.use(cors());
@@ -27,7 +35,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/services', serviceRoutes);
-
+app.use('/api/materials', materialRoutes);
+app.use('/api/tickets', ticketRoutes);
 
 // Database Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ezoflife';
@@ -40,16 +49,8 @@ app.get('/', (req, res) => {
     res.json({ message: 'Ez of Life API is running...' });
 });
 
-app.get('/api/debug', (req, res) => {
-    res.json({ 
-        status: 'online', 
-        time: new Date().toISOString(),
-        editVersion: 'v2-absolute-logs'
-    });
-});
-
 // API Routes
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });

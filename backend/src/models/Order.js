@@ -22,7 +22,8 @@ const orderSchema = new mongoose.Schema({
             name: { type: String, required: true },
             quantity: { type: Number, required: true },
             price: { type: Number, required: true },
-            unit: { type: String, default: 'pc' }
+            unit: { type: String, default: 'pc' },
+            clothCount: { type: Number, default: 0 }
         }
     ],
     status: {
@@ -38,11 +39,19 @@ const orderSchema = new mongoose.Schema({
         date: { type: String },
         time: { type: String }
     },
-    address: {
+    pickupAddress: {
         type: String,
         required: true
     },
-    location: {
+    pickupLocation: {
+        lat: { type: Number },
+        lng: { type: Number }
+    },
+    dropAddress: {
+        type: String,
+        required: true
+    },
+    dropLocation: {
         lat: { type: Number },
         lng: { type: Number }
     },
@@ -59,13 +68,25 @@ const orderSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
+    specialInstructions: {
+        type: String,
+        default: ''
+    },
     nearbyRiders: [
         {
             id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
             distance: String,
             name: String
         }
-    ]
+    ],
+    pickupOtp: {
+        type: String,
+        default: null
+    },
+    deliveryOtp: {
+        type: String,
+        default: null
+    }
 }, { timestamps: true });
 
 // Pre-save hook to generate a unique readable order ID like #EZ-8291

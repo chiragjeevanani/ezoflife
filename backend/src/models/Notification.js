@@ -21,7 +21,7 @@ const notificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['order_placed', 'ready', 'assigned', 'picked_up', 'delivered'],
+        enum: ['order_placed', 'order_available', 'pickup_available', 'ready', 'assigned', 'picked_up', 'delivered'],
         default: 'order_placed'
     },
     orderId: {

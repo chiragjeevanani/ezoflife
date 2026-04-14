@@ -15,11 +15,17 @@ const HomePage = () => {
     return saved ? JSON.parse(saved) : {};
   });
 
+  // Sync with localStorage
+  useEffect(() => {
+    localStorage.setItem('cart_quantities', JSON.stringify(selectedQuantities));
+  }, [selectedQuantities]);
+
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const data = await serviceApi.getAll();
-      setServices(data.filter(s => s.status === 'Active'));
+      const data = await serviceApi.getAll({ approvedOnly: true });
+      // Extra safety: Filter for 'Approved' status
+      setServices(data.filter(s => s.status === 'Active' && s.approvalStatus === 'Approved'));
     } catch (error) {
       console.error('Error fetching services:', error);
     } finally {
@@ -168,7 +174,8 @@ const HomePage = () => {
           </div>
         </motion.div>
 
-        {/* Active Order Banner */}
+        {/* Active Order Banner (Commented out until real active order API exists) */}
+        {/* 
         {activeOrder && (
           <motion.div 
             variants={cardVariants}
@@ -176,21 +183,10 @@ const HomePage = () => {
             onClick={() => navigate('/user/tracking')}
             className={`mb-8 bg-white border ${themeBorder} p-4 rounded-3xl flex items-center justify-between cursor-pointer group shadow-sm shadow-primary/5`}
           >
-            <div className="flex items-center gap-4">
-              <div className={`w-10 h-10 rounded-full ${isHeritage ? 'bg-[#996515]' : 'bg-primary'} flex items-center justify-center text-on-primary shadow-lg shadow-primary/20`}>
-                <span className="material-symbols-outlined text-xl animate-spin-slow">sync</span>
-              </div>
-              <div className="flex flex-col">
-                <span className={`text-[10px] font-black ${themeText} uppercase tracking-widest leading-none mb-1`}>Active Order</span>
-                <h3 className="text-sm font-black text-on-surface leading-none">{activeOrder.type} — {activeOrder.status}</h3>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-outline uppercase tracking-widest group-hover:text-primary transition-colors">Track</span>
-              <span className={`material-symbols-outlined ${themeText} text-sm`}>arrow_forward</span>
-            </div>
+            ...
           </motion.div>
         )}
+        */}
 
         {/* Search Bar */}
         <motion.div variants={cardVariants} className="mb-8">

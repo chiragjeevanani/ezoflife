@@ -1,50 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import VendorHeader from '../components/VendorHeader';
+import { serviceApi } from '../../../lib/api';
 
 const AddServicePage = () => {
     const navigate = useNavigate();
     const [serviceName, setServiceName] = useState('');
     const [price, setPrice] = useState('');
     const [unit, setUnit] = useState('Per Kg');
+    const [loading, setLoading] = useState(false);
 
     const icons = useMemo(() => [
         'local_laundry_service', 'dry_cleaning', 'iron', 'bed', 'checkroom', 'opacity', 'sanitizer', 'soap'
     ], []);
     const [selectedIcon, setSelectedIcon] = useState(icons[0]);
 
-    const handleAdd = () => {
-        // Logic to add service
-        navigate('/vendor/services');
+    const handleAdd = async () => {
+        if (!serviceName || !price) {
+            alert('Please fill all fields');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
+            const vendorId = vendorData._id || vendorData.id;
+
+            await serviceApi.create({
+                name: serviceName,
+                basePrice: Number(price),
+                unit: unit,
+                category: 'Premium', // Default for vendor services for now
+                icon: selectedIcon,
+                vendorId: vendorId
+            });
+
+            alert('Service submitted for approval!');
+            navigate('/vendor/services');
+        } catch (error) {
+            console.error('Add Service Error:', error);
+            alert('Failed to submit service');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-[#F8FAFC] text-slate-800 min-h-screen pb-32 font-sans"
+            className="bg-background text-on-background min-h-screen pb-32 font-body"
         >
-            <header className="bg-white/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-[#3D5AFE] transition-colors">
-                        <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-                    </button>
-                    <h1 className="text-lg font-bold tracking-tight">Add Service</h1>
-                </div>
-            </header>
+            <VendorHeader title="Add Service" showBack={true} />
 
             <main className="max-w-xl mx-auto px-6 pt-8 space-y-8">
-                <section className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+                <section className="bg-white p-8 rounded-[2.5rem] border border-outline-variant/10 shadow-sm space-y-8">
                     <div className="space-y-6">
                         {/* Icon Selection */}
                         <div className="space-y-4">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 ml-1">Select Icon</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface ml-1">SELECT ICON</p>
                             <div className="grid grid-cols-4 gap-4">
                                 {icons.map((icon) => (
                                     <button 
                                         key={icon}
                                         onClick={() => setSelectedIcon(icon)}
-                                        className={`w-full aspect-square rounded-2xl flex items-center justify-center transition-all ${selectedIcon === icon ? 'bg-[#3D5AFE] text-white shadow-lg shadow-blue-400/20' : 'bg-slate-50 text-slate-300 border border-slate-100'}`}
+                                        className={`w-full aspect-square rounded-2xl flex items-center justify-center transition-all ${selectedIcon === icon ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-surface-container text-on-surface-variant/30 border border-outline-variant/5'}`}
                                     >
                                         <span className="material-symbols-outlined text-[24px]">{icon}</span>
                                     </button>
@@ -54,34 +75,37 @@ const AddServicePage = () => {
 
                         {/* Name Input */}
                         <div className="space-y-3">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 ml-1">Service Name</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface ml-1">SERVICE NAME</p>
                             <input 
                                 type="text"
                                 value={serviceName}
                                 onChange={(e) => setServiceName(e.target.value)}
                                 placeholder="e.g. Premium Silk Clean"
-                                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-[#3D5AFE]/20 transition-all placeholder:text-slate-200"
+                                className="w-full px-6 py-4 bg-surface-container border-2 border-transparent rounded-[1.5rem] text-sm font-bold text-on-surface outline-none focus:bg-white focus:border-primary/20 transition-all placeholder:text-on-surface-variant/20 shadow-sm"
                             />
                         </div>
 
                         {/* Price & Unit Grid */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-3">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 ml-1">Price (₹)</p>
-                                <input 
-                                    type="number"
-                                    value={price}
-                                    onChange={(e) => setPrice(e.target.value)}
-                                    placeholder="0.00"
-                                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-[#3D5AFE]/20 transition-all placeholder:text-slate-200"
-                                />
+                                <p className="text-[10px] font-black uppercase tracking-widest text-on-surface ml-1">PRICE (₹)</p>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-on-surface-variant/40">₹</span>
+                                    <input 
+                                        type="number"
+                                        value={price}
+                                        onChange={(e) => setPrice(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-full pl-8 pr-4 py-4 bg-surface-container border-2 border-transparent rounded-[1.5rem] text-sm font-bold text-on-surface outline-none focus:bg-white focus:border-primary/20 transition-all placeholder:text-on-surface-variant/20 shadow-sm"
+                                    />
+                                </div>
                             </div>
                             <div className="space-y-3">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 ml-1">Unit</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-on-surface ml-1">UNIT</p>
                                 <select 
                                     value={unit}
                                     onChange={(e) => setUnit(e.target.value)}
-                                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-[#3D5AFE]/20 transition-all"
+                                    className="w-full px-6 py-4 bg-surface-container border-2 border-transparent rounded-[1.5rem] text-sm font-bold text-on-surface outline-none focus:border-primary/20 transition-all shadow-sm appearance-none"
                                 >
                                     <option>Per Kg</option>
                                     <option>Per Piece</option>
@@ -92,20 +116,21 @@ const AddServicePage = () => {
                         </div>
                     </div>
 
-                    <div className="pt-4 border-t border-slate-50">
+                    <div className="pt-4 border-t border-outline-variant/5">
                         <button 
                             onClick={handleAdd}
-                            className="w-full py-5 rounded-[2rem] bg-[#3D5AFE] text-white font-bold text-lg shadow-xl shadow-blue-400/20 hover:bg-[#304FFE] transition-all flex items-center justify-center gap-3"
+                            className="w-full py-5 rounded-[2rem] vendor-gradient text-white font-bold text-lg shadow-xl shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-3"
                         >
+                            <span className="material-symbols-outlined text-[20px]">add</span>
                             Create Service
                         </button>
                     </div>
                 </section>
 
                 {/* Aesthetic Info Tip */}
-                <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100 flex items-start gap-4">
-                    <span className="material-symbols-outlined text-[#3D5AFE] text-[20px] mt-1">info</span>
-                    <p className="text-[11px] font-bold text-slate-400 leading-relaxed uppercase tracking-wider">
+                <div className="bg-primary/5 p-6 rounded-3xl border border-primary/10 flex items-start gap-4">
+                    <span className="material-symbols-outlined text-primary text-[20px] mt-1">info</span>
+                    <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider leading-relaxed opacity-60">
                         NEW SERVICES WILL BE VISIBLE TO CUSTOMERS IMMEDIATELY AFTER CREATION. ENSURE PRICING IS ACCURATE FOR YOUR REGION.
                     </p>
                 </div>

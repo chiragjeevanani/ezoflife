@@ -1,36 +1,112 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { orderApi } from '../../../lib/api';
 
 const TaskDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
 
-    const [step, setStep] = useState(1); // 1: Navigation, 2: Verification, 3: Handoff
+    const riderData = JSON.parse(localStorage.getItem('riderData') || '{}');
+    const riderId = riderData.id || riderData._id || localStorage.getItem('userId');
+
+    const [task, setTask] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [step, setStep] = useState(1); 
     const [checkedItems, setCheckedItems] = useState([]);
     const [photoUploaded, setPhotoUploaded] = useState(false);
 
-    const task = useMemo(() => ({
-        id: id || 'SZ-8821',
-        type: 'Pickup',
-        source: 'Heritage Cleaners',
-        address: 'HSR Layout, Sector 7, Plot 42',
-        instructions: 'Call shop manager at gate. Fragile silk saree in the batch.',
-        items: [
-            { id: 1, name: 'Premium Saree', count: 2 },
-            { id: 2, name: 'Daily Wear Shirt', count: 8 },
-            { id: 3, name: 'Trouser', count: 2 }
-        ],
-        contact: '+91 98822 11022'
-    }), [id]);
+    useEffect(() => {
+        const fetchTask = async () => {
+            if (!id) return;
+            try {
+                setLoading(true);
+                const data = await orderApi.getById(id);
+                setTask(data);
+            } catch (err) {
+                console.error('Error fetching task details:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTask();
+    }, [id]);
 
-    const handoffCode = useMemo(() => ['4', '2', '8', '1'], []);
+    const handleAccept = async () => {
+        try {
+            setLoading(true);
+            await orderApi.acceptTask(task._id, riderId);
+            const data = await orderApi.getById(id);
+            setTask(data);
+        } catch (err) {
+            alert('Accept Error: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleToggleCheck = (itemId) => {
         setCheckedItems(prev => 
             prev.includes(itemId) ? prev.filter(i => i !== itemId) : [...prev, itemId]
         );
     };
+
+    const [otp, setOtp] = useState(['', '', '', '']);
+    const otpRefs = [useRef(), useRef(), useRef(), useRef()];
+
+    const handleOtpChange = (index, value) => {
+        if (!/^\d*$/.test(value)) return;
+        const newOtp = [...otp];
+        newOtp[index] = value.slice(-1);
+        setOtp(newOtp);
+
+        if (value && index < 3) {
+            otpRefs[index + 1].current.focus();
+        }
+    };
+
+    const handleKeyDown = (index, e) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            otpRefs[index - 1].current.focus();
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        const fullOtp = otp.join('');
+        if (fullOtp.length < 4) return;
+
+        try {
+            setLoading(true);
+            if (task.status === 'Out for Delivery') {
+                await orderApi.verifyDeliveryOtp(task._id, fullOtp);
+            } else {
+                await orderApi.verifyPickupOtp(task._id, fullOtp);
+            }
+            navigate('/rider/dashboard');
+        } catch (err) {
+            alert('Verification Failed: ' + (err.message || 'Incorrect OTP'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) return (
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Manifest...</p>
+        </div>
+    );
+
+    if (!task || !task._id) return (
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+            <span className="material-symbols-outlined text-4xl text-slate-300 mb-4">search_off</span>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Task Not Found</p>
+            <p className="text-[8px] text-slate-300 mt-2 uppercase tracking-widest">{id}</p>
+            <button onClick={() => navigate(-1)} className="mt-6 text-emerald-600 font-black text-[10px] uppercase tracking-widest">Return to Dashboard</button>
+        </div>
+    );
+
+    const isAcceptedByMe = task.rider === riderId || (task.rider?.id || task.rider?._id) === riderId;
 
     return (
         <div className="bg-slate-50 min-h-screen pb-32 font-sans relative overflow-x-hidden">
@@ -40,9 +116,9 @@ const TaskDetails = () => {
                     <span className="material-symbols-outlined text-slate-400">arrow_back</span>
                 </button>
                 <div className="text-center">
-                    <h1 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Trip ID: {task.id}</h1>
+                    <h1 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Trip ID: {task.orderId || task._id.slice(-6).toUpperCase()}</h1>
                     <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-sm text-[9px] font-black uppercase tracking-widest border border-blue-100">
-                        {task.type} Manifest
+                        {task.status === 'Picked Up' ? 'Delivery' : 'Pickup'} Manifest
                     </span>
                 </div>
                 <button className="p-2 bg-emerald-50 rounded-full text-emerald-600">
@@ -83,7 +159,7 @@ const TaskDetails = () => {
                                             <span className="material-symbols-outlined">distance</span>
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-sm font-black text-slate-900 tracking-tight italic uppercase">{task.source}</p>
+                                            <p className="text-sm font-black text-slate-900 tracking-tight italic uppercase">{task.customer?.displayName}</p>
                                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 leading-relaxed">
                                                 {task.address}
                                             </p>
@@ -104,14 +180,25 @@ const TaskDetails = () => {
                                     Navigate with Maps
                                 </button>
                             </div>
-                            <button 
-                                onClick={() => {
-                                    setStep(2);
-                                }}
-                                className="w-full py-5 bg-slate-900 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all"
-                            >
-                                Arrived at Location
-                            </button>
+
+                            {!isAcceptedByMe ? (
+                                <button 
+                                    onClick={handleAccept}
+                                    className="w-full py-5 bg-emerald-600 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
+                                >
+                                    <span className="material-symbols-outlined">check_circle</span>
+                                    Accept Task Now
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={() => {
+                                        setStep(2);
+                                    }}
+                                    className="w-full py-5 bg-slate-900 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all"
+                                >
+                                    Arrived at Location
+                                </button>
+                            )}
                         </motion.section>
                     )}
 
@@ -132,21 +219,30 @@ const TaskDetails = () => {
                                 </div>
                                 
                                 <div className="divide-y divide-slate-50">
-                                    {task.items.map(item => (
-                                        <div 
-                                            key={item.id} 
-                                            className="py-4 flex items-center justify-between"
-                                            onClick={() => handleToggleCheck(item.id)}
-                                        >
-                                            <div>
-                                                <h4 className="text-xs font-black text-slate-900 uppercase italic tracking-tight">{item.name}</h4>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{item.count} Units to confirm</p>
+                                    {task.items.map((item, idx) => {
+                                        const itemId = item._id || idx;
+                                        const isKg = item.unit === 'kg';
+                                        const targetCount = isKg ? item.clothCount : item.quantity;
+                                        const unitName = isKg ? 'Clothes' : 'Units';
+
+                                        return (
+                                            <div 
+                                                key={itemId} 
+                                                className="py-4 flex items-center justify-between"
+                                                onClick={() => handleToggleCheck(itemId)}
+                                            >
+                                                <div>
+                                                    <h4 className="text-xs font-black text-slate-900 uppercase italic tracking-tight">{item.name}</h4>
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                                        {targetCount} {unitName} to confirm {isKg && `(${item.quantity} kg)`}
+                                                    </p>
+                                                </div>
+                                                <div className={`w-6 h-6 rounded-lg border-2 transition-all flex items-center justify-center ${checkedItems.includes(itemId) ? 'bg-emerald-600 border-emerald-600 shadow-lg shadow-emerald-200' : 'border-slate-100 bg-slate-50'}`}>
+                                                    {checkedItems.includes(itemId) && <span className="material-symbols-outlined text-white text-[14px] font-bold">check</span>}
+                                                </div>
                                             </div>
-                                            <div className={`w-6 h-6 rounded-lg border-2 transition-all flex items-center justify-center ${checkedItems.includes(item.id) ? 'bg-emerald-600 border-emerald-600 shadow-lg shadow-emerald-200' : 'border-slate-100 bg-slate-50'}`}>
-                                                {checkedItems.includes(item.id) && <span className="material-symbols-outlined text-white text-[14px] font-bold">check</span>}
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
 
                                 {/* Photo Verification Engine */}
@@ -193,29 +289,37 @@ const TaskDetails = () => {
                                 <span className="material-symbols-outlined text-5xl text-emerald-500 mb-6 font-thin">key</span>
                                 <h3 className="text-sm font-black uppercase tracking-[0.3em] mb-2">Handoff Protocol</h3>
                                 <p className="text-[10px] opacity-60 font-bold uppercase tracking-[0.15em] mb-10 leading-relaxed italic">
-                                    Operator must enter this code <br/> to confirm chain of custody.
+                                    Ask customer for the secret code <br/> to confirm chain of custody.
                                 </p>
 
                                 <div className="flex justify-center gap-3 mb-10">
-                                    {handoffCode.map((digit, i) => (
-                                        <div key={i} className="w-14 h-16 bg-white/10 border border-white/20 rounded-2xl flex items-center justify-center text-2xl font-black tabular-nums">
-                                            {digit}
-                                        </div>
+                                    {otp.map((digit, i) => (
+                                        <input
+                                            key={i}
+                                            ref={otpRefs[i]}
+                                            type="text"
+                                            inputMode="numeric"
+                                            maxLength="1"
+                                            value={digit}
+                                            onChange={(e) => handleOtpChange(i, e.target.value)}
+                                            onKeyDown={(e) => handleKeyDown(i, e)}
+                                            className="w-14 h-16 bg-white/10 border border-white/20 rounded-2xl text-center text-2xl font-black tabular-nums outline-none focus:border-emerald-500 transition-colors"
+                                        />
                                     ))}
                                 </div>
 
                                 <div className="p-4 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl">
-                                    <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Security Token Active</p>
+                                    <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Awaiting Security Token</p>
                                 </div>
                             </div>
                             
                             <button 
-                                onClick={() => {
-                                    navigate('/rider/dashboard');
-                                }}
-                                className="w-full py-5 bg-white border border-slate-200 text-slate-900 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] active:scale-95 transition-all"
+                                onClick={handleVerifyOtp}
+                                disabled={otp.join('').length < 4 || loading}
+                                className="w-full py-5 bg-white text-slate-900 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                                Finish & Sync Trip
+                                <span className="material-symbols-outlined text-sm">enhanced_encryption</span>
+                                {loading ? 'Securing...' : 'Verify OTP & Complete Pickup'}
                             </button>
 
                         </motion.section>

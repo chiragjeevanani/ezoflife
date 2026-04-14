@@ -3,7 +3,7 @@ import { getNotifications, markAsRead, clearAll } from '../controllers/notificat
 
 const router = express.Router();
 
-router.get('/:userId/:role', getNotifications);
+router.get('/', getNotifications);
 router.patch('/:id/read', markAsRead);
 router.delete('/clear', clearAll);
 

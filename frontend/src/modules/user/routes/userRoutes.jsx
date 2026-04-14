@@ -33,6 +33,8 @@ import PartnershipInquiryPage from '../pages/PartnershipInquiryPage';
 import AdvertiseWithUsPage from '../pages/AdvertiseWithUsPage';
 import WalletPage from '../pages/WalletPage';
 import RegisterAsVendorPage from '../pages/RegisterAsVendorPage';
+import MaterialsCatalogPage from '../pages/MaterialsCatalogPage';
+import SupportTicketsPage from '../pages/SupportTicketsPage';
 
 
 import UserLayout from '../layouts/UserLayout';
@@ -51,11 +53,12 @@ const UserRoutes = () => {
         <Route path="/partnerships" element={<PartnershipInquiryPage />} />
         <Route path="/advertise" element={<AdvertiseWithUsPage />} />
         <Route path="/success" element={<SuccessPage />} />
-        <Route path="/tracking" element={<OrderTrackingPage />} />
+        <Route path="/tracking/:id" element={<OrderTrackingPage />} />
         <Route path="/verification" element={<DeliveryVerificationPage />} />
         <Route path="/payment" element={<PaymentSelectionPage />} />
         <Route path="/success-feedback" element={<SuccessFeedbackPage />} />
         <Route path="/orders" element={<OrdersHistoryPage />} />
+        <Route path="/support/tickets/:ticketId?" element={<SupportTicketsPage />} />
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/profile/edit" element={<EditProfilePage />} />
         <Route path="/profile/create" element={<ProfileCreationPage />} />
@@ -74,6 +77,7 @@ const UserRoutes = () => {
         <Route path="/terms" element={<TermsConditionsPage />} />
         <Route path="/become-vendor" element={<RegisterAsVendorPage />} />
         <Route path="/more" element={<MoreMenuPage />} />
+        <Route path="/materials" element={<MaterialsCatalogPage />} />
       </Route>
 
       {/* Fallback to splash */}

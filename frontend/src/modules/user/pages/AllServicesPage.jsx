@@ -12,8 +12,8 @@ const AllServicesPage = () => {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const data = await serviceApi.getAll();
-      setServices(data.filter(s => s.status === 'Active'));
+      const data = await serviceApi.getAll({ approvedOnly: true });
+      setServices(data.filter(s => s.status === 'Active' && s.approvalStatus === 'Approved'));
     } catch (error) {
       console.error('Error fetching services:', error);
     } finally {

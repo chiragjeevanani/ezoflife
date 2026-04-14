@@ -5,6 +5,16 @@ import { motion } from 'framer-motion';
 const SupplierProfile = () => {
     const navigate = useNavigate();
 
+    const handleOptionClick = (label) => {
+        if (label === 'Logout Session') {
+            localStorage.clear();
+            navigate('/supplier/auth');
+        } else {
+            // Mock feedback for other options
+            alert(`${label} settings are currently locked for this demo.`);
+        }
+    };
+
     const profileOptions = useMemo(() => [
         { icon: 'business', label: 'Business Details', sub: 'Tax ID: GSTIN-88229', color: 'bg-primary' },
         { icon: 'shield_person', label: 'Identity Verification', sub: 'Completed: Nov 2025', color: 'bg-green-500' },
@@ -50,6 +60,7 @@ const SupplierProfile = () => {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.1 }}
+                                onClick={() => handleOptionClick(opt.label)}
                                 className="bg-white p-5 rounded-[2.5rem] border border-black/5 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all cursor-pointer"
                             >
                                 <div className="flex items-center gap-5">

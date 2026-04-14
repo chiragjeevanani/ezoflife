@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -45,7 +45,7 @@ const PromotionManagerPage = () => {
                         <span className="material-symbols-outlined text-xl">arrow_back</span>
                     </motion.button>
                     <div>
-                        <h1 className="text-2xl font-black tracking-tighter italic leading-none">Promotions</h1>
+                        <h1 className="text-2xl font-black tracking-tighter leading-none">Promotions</h1>
                         <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em] opacity-40 mt-1">Campaign Center</p>
                     </div>
                 </div>
@@ -99,12 +99,12 @@ const PromotionManagerPage = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="text-lg font-black text-slate-900 tracking-tighter leading-tight italic truncate max-w-[200px]">{promo.title}</h3>
+                                        <h3 className="text-lg font-black text-slate-900 tracking-tighter leading-tight truncate max-w-[200px]">{promo.title}</h3>
                                         <div className="flex items-center gap-3">
                                             <div className="bg-slate-900 px-3 py-1 rounded-xl shadow-lg border border-white/10">
                                                 <p className="text-[10px] font-black text-white font-mono tracking-widest uppercase">{promo.code}</p>
                                             </div>
-                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic opacity-60">Expires {promo.expiry}</span>
+                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">Expires {promo.expiry}</span>
                                         </div>
                                     </div>
                                     <div className="text-right flex flex-col items-end">
@@ -172,29 +172,29 @@ const PromotionManagerPage = () => {
                             exit={{ y: 40, opacity: 0 }}
                             className="bg-white w-full max-w-sm rounded-[3rem] p-10 relative z-10 shadow-2xl border border-white/20"
                         >
-                            <h3 className="text-3xl font-black tracking-tighter italic leading-none mb-2">
+                            <h3 className="text-3xl font-black tracking-tighter leading-none mb-2">
                                 {editingPromo ? 'Edit Protocol' : 'Deploy Coupon'}
                             </h3>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-10">Campaign Logic Configuration</p>
                             
                             <div className="space-y-5">
                                 <div className="space-y-1.5 px-1">
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-primary ml-1 opacity-60">Internal Title</p>
-                                    <input type="text" defaultValue={editingPromo?.title || ''} placeholder="HAPPY DIWALI" className="w-full bg-slate-50 border-2 border-transparent rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:bg-white focus:border-primary/10 transition-all font-body uppercase tracking-tight" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-black ml-1">Internal Title</p>
+                                    <input type="text" defaultValue={editingPromo?.title || ''} placeholder="HAPPY DIWALI" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all font-body uppercase tracking-tight" />
                                 </div>
                                 <div className="space-y-1.5 px-1">
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-primary ml-1 opacity-60">Discount Code</p>
-                                    <input type="text" defaultValue={editingPromo?.code || ''} placeholder="DIWALI50" className="w-full bg-slate-900 border-2 border-white/10 text-white rounded-2xl px-5 py-4 text-[10px] font-black font-mono tracking-[0.3em] outline-none placeholder:text-slate-600 focus:border-primary transition-all uppercase" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-black ml-1">Discount Code</p>
+                                    <input type="text" defaultValue={editingPromo?.code || ''} placeholder="CODE50" className="w-full bg-slate-100 border border-slate-200 text-primary rounded-2xl px-5 py-4 text-[11px] font-black font-mono tracking-[0.3em] outline-none placeholder:text-slate-400 focus:bg-white focus:border-primary transition-all uppercase" />
                                 </div>
                                 
                                 <div className="grid grid-cols-2 gap-4">
                                      <div className="space-y-1.5 px-1">
-                                        <p className="text-[8px] font-black uppercase tracking-widest text-primary ml-1 opacity-60">Min. Order</p>
-                                        <input type="number" defaultValue={editingPromo?.mov || 0} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl px-5 py-4 text-xs font-black outline-none focus:bg-white focus:border-primary/10 transition-all tabular-nums" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-black ml-1">Min. Order</p>
+                                        <input type="number" defaultValue={editingPromo?.mov || 0} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-black text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all tabular-nums" />
                                     </div>
                                     <div className="space-y-1.5 px-1">
-                                        <p className="text-[8px] font-black uppercase tracking-widest text-primary ml-1 opacity-60">Usage Limit</p>
-                                        <input type="number" defaultValue={editingPromo?.limit || 500} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl px-5 py-4 text-xs font-black outline-none focus:bg-white focus:border-primary/10 transition-all tabular-nums" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-black ml-1">Usage Limit</p>
+                                        <input type="number" defaultValue={editingPromo?.limit || 500} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-black text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all tabular-nums" />
                                     </div>
                                 </div>
 

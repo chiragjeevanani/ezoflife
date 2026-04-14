@@ -26,8 +26,9 @@ const ProfileCreationPage = () => {
         libraries
     });
 
-    const riderId = localStorage.getItem('userId') || '66112c3f8e4b8a2e5c8b4569'; 
-
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = user.id || user._id; 
+    const riderId = userId || '66112c3f8e4b8a2e5c8b4569';
     const reverseGeocode = async (lat, lng) => {
         if (!window.google) return;
         const geocoder = new window.google.maps.Geocoder();
@@ -88,9 +89,12 @@ const ProfileCreationPage = () => {
     };
 
     const handleLaunch = async () => {
-        const userId = localStorage.getItem('userId');
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const userId = currentUser.id || currentUser._id;
+        
         if (!userId) {
-            navigate('/user/home');
+            console.error('No User ID found for profile update');
+            navigate('/user/auth');
             return;
         }
 
@@ -102,9 +106,14 @@ const ProfileCreationPage = () => {
                 location: mapLocation,
                 isProfileComplete: true
             });
-            // Update local storage if needed
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            localStorage.setItem('user', JSON.stringify({ ...user, displayName: name, isProfileComplete: true }));
+            
+            // Update local storage with the complete profile info
+            localStorage.setItem('user', JSON.stringify({ 
+                ...currentUser, 
+                displayName: name, 
+                address: address,
+                isProfileComplete: true 
+            }));
             
             navigate('/user/home');
         } catch (err) {
@@ -173,7 +182,7 @@ const ProfileCreationPage = () => {
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Your full name"
-                                className="w-full bg-transparent border-none focus:ring-0 p-0 text-md font-black placeholder:text-outline-variant/40"
+                                className="w-full bg-transparent border-none focus:ring-0 outline-none p-0 text-md font-black placeholder:text-outline-variant/40"
                             />
                         </div>
                     </motion.div>
@@ -196,7 +205,7 @@ const ProfileCreationPage = () => {
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
                                 placeholder="Search or type your home address"
-                                className="w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-bold text-on-surface leading-normal placeholder:text-outline-variant/40 resize-none"
+                                className="w-full bg-transparent border-none focus:ring-0 outline-none p-0 text-sm font-bold text-on-surface leading-normal placeholder:text-outline-variant/40 resize-none"
                             />
                         </div>
                         <p className="text-[9px] font-bold text-on-surface-variant opacity-50 mt-3 px-2 flex items-center gap-2">

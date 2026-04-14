@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { IndianRupee, ShieldCheck, Zap, Truck, Save, RefreshCw, AlertCircle, TrendingUp, Settings2 } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import MetricRow from '../components/cards/MetricRow';

@@ -60,6 +60,23 @@ const useNotificationStore = create((set, get) => ({
         } catch (err) {
             console.error('Clear Error:', err);
         }
+    },
+
+    addNotification: (type, title, message, role, extraData = {}) => {
+        const newNotif = {
+            id: Date.now().toString(),
+            type,
+            title,
+            message,
+            read: false,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            persona: role,
+            ...extraData
+        };
+        set((state) => ({
+            notifications: [newNotif, ...state.notifications],
+            unreadCount: state.unreadCount + 1
+        }));
     }
 }));
 

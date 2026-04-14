@@ -45,6 +45,7 @@ const MoreMenuPage = () => {
         isVendor ? 
           { icon: "dashboard_customize", title: "Vendor Dashboard", desc: "Manage your Shop Operations", path: "/vendor/dashboard", color: "secondary" } :
           { icon: "storefront", title: "Become a Vendor", desc: "Onboard Physical Shop", path: "/user/become-vendor" },
+        { icon: "inventory_2", title: "Industrial Catalog", desc: "Browse ecosystem supplies", path: "/user/materials", color: "primary" },
         { icon: "work", title: "Careers", desc: "Join the team", path: "/user/careers", color: "tertiary" }
       ]
     },
@@ -59,8 +60,12 @@ const MoreMenuPage = () => {
   ], [isVendor]);
 
   const handleLogout = () => {
-    localStorage.removeItem('userRole');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('token');
     localStorage.removeItem('user_auth_token');
+    localStorage.removeItem('userRole');
     navigate('/user/auth');
   };
 
@@ -73,7 +78,7 @@ const MoreMenuPage = () => {
           className="mb-10 px-2"
         >
           <span className="text-[10px] font-black text-on-background uppercase tracking-[0.3em] block mb-2">Management Terminal</span>
-          <h1 className="font-headline font-black text-4xl tracking-tighter leading-none italic">More Options</h1>
+          <h1 className="font-headline font-black text-4xl tracking-tighter leading-none">More Options</h1>
         </motion.header>
 
         <motion.div

@@ -25,7 +25,8 @@ import {
     HelpCircle,
     Home,
     Bike,
-    ShieldAlert
+    ShieldAlert,
+    Layers
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -60,6 +61,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
         {
             group: 'Core Assets', items: [
                 { icon: Package, label: 'Services', path: '/admin/services' },
+                { icon: Layers, label: 'Material Catalog', path: '/admin/materials' },
                 { icon: ShieldAlert, label: 'Dispute Center', path: '/admin/dispute-center' },
             ]
         },

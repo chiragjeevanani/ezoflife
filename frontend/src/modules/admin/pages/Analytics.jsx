@@ -61,6 +61,7 @@ export default function Analytics() {
           <ChartPanel 
             title="Revenue Overview" 
             subtitle="Platform revenue trend analysis"
+            height={300}
           >
             <div className="h-full w-full p-6">
               <ResponsiveContainer width="100%" height="100%">
@@ -84,6 +85,7 @@ export default function Analytics() {
           <ChartPanel 
             title="Orders by Category" 
             subtitle="Operational yield segmentation"
+            height={300}
           >
             <div className="h-full w-full p-6">
               <ResponsiveContainer width="100%" height="100%">
@@ -105,60 +107,67 @@ export default function Analytics() {
 
         {/* Platform Performance Layer */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white p-6 border border-slate-200 rounded-sm flex flex-col gap-8 shadow-sm">
-               <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-                  <div className="flex items-center gap-2">
-                     <Activity size={14} className="text-slate-900" />
-                     <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] leading-none">Operational Global Pulse</h3>
-                  </div>
-                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/5 px-2 py-0.5 border border-emerald-500/10">MISSION CRITICAL</span>
-               </div>
-               
-               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                  {performanceKPIs.map((kpi, i) => (
-                    <div key={i} className="flex flex-col gap-1">
-                      <span className={`text-[8px] font-black text-${kpi.variant === 'slate' ? 'primary' : kpi.variant}-500 uppercase tracking-widest opacity-60`}>{kpi.label}</span>
-                      <div className="flex items-end gap-2">
-                        <span className="text-2xl font-black text-slate-900 tabular-nums leading-none tracking-tighter italic">{kpi.value}</span>
-                        <span className={`text-[9px] text-${kpi.variant === 'slate' ? 'slate-300' : 'emerald-500'} font-bold mb-0.5 uppercase`}>{kpi.delta}</span>
+            <ChartPanel 
+              title="Operational Global Pulse" 
+              subtitle="Mission critical system metrics"
+              height={400}
+              collapsible={false}
+              className="lg:col-span-2"
+            >
+              <div className="p-10 h-full flex flex-col justify-between bg-white">
+                 <div className="grid grid-cols-2 md:grid-cols-2 gap-x-12 gap-y-10">
+                    {performanceKPIs.map((kpi, i) => (
+                      <div key={i} className="flex flex-col gap-2 p-1 border-l-2 border-slate-50 pl-6 hover:border-primary transition-all group">
+                        <span className={`text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-primary transition-colors`}>{kpi.label}</span>
+                        <div className="flex items-baseline gap-3">
+                          <span className="text-3xl font-black text-slate-900 tabular-nums leading-none tracking-tighter">{kpi.value}</span>
+                          <span className={`text-[10px] ${kpi.variant === 'rose' ? 'text-rose-500' : 'text-emerald-500'} font-black uppercase tracking-tight`}>
+                             {kpi.delta}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-               </div>
+                    ))}
+                 </div>
 
-               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-slate-50">
-                  {operationalStats.map((stat, i) => (
-                    <div key={i} className="flex flex-col gap-1">
-                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">{stat.label}</span>
-                      <span className={`text-xl font-black ${stat.variant === 'emerald' ? 'text-emerald-500' : 'text-slate-900'} tabular-nums leading-none tracking-tighter italic`}>{stat.value}</span>
-                    </div>
-                  ))}
-               </div>
-            </div>
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-10 border-t border-slate-100 mt-6">
+                    {operationalStats.map((stat, i) => (
+                      <div key={i} className="flex flex-col gap-1.5">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">{stat.label}</span>
+                        <span className={`text-xl font-black ${stat.variant === 'emerald' ? 'text-emerald-500' : 'text-slate-900'} tabular-nums leading-none tracking-tighter`}>{stat.value}</span>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+            </ChartPanel>
 
-            <ChartPanel title="Market Segmentation" subtitle="Category yield breakdown" height={325}>
-               <div className="h-full w-full p-2">
-                 <ResponsiveContainer width="100%" height="100%">
-                   <PieChart>
-                     <Pie
-                       data={marketSegmentation}
-                       innerRadius={60}
-                       outerRadius={80}
-                       paddingAngle={5}
-                       dataKey="value"
-                     >
-                       {marketSegmentation.map((entry, index) => (
-                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                       ))}
-                     </Pie>
-                     <Tooltip />
-                   </PieChart>
-                 </ResponsiveContainer>
-                 <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-[-20px] pb-4">
+            <ChartPanel title="Market Segmentation" subtitle="Category yield breakdown" height={400}>
+               <div className="h-full w-full p-6 flex flex-col items-center justify-between">
+                 <div className="flex-1 w-full max-h-[220px] mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={marketSegmentation}
+                          innerRadius={65}
+                          outerRadius={85}
+                          paddingAngle={10}
+                          dataKey="value"
+                        >
+                          {marketSegmentation.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(255,255,255,0.2)" strokeWidth={2} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ borderRadius: '0px', border: '1px solid #f1f5f9', fontSize: '10px', fontWeight: 'bold' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                 </div>
+                 <div className="grid grid-cols-2 gap-x-8 gap-y-4 w-full px-4 pt-6 mt-2 border-t border-slate-50">
                     {marketSegmentation.map((cat, i) => (
-                        <div key={cat.name} className="flex items-center gap-1.5">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">{cat.name}</span>
+                        <div key={cat.name} className="flex items-center gap-3">
+                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
+                            <div className="flex flex-col">
+                               <span className="text-[9px] font-black uppercase tracking-widest text-slate-900 leading-none">{cat.name}</span>
+                               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">₹{cat.value}K</span>
+                            </div>
                         </div>
                     ))}
                  </div>

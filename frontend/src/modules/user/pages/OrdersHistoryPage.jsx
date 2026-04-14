@@ -1,10 +1,48 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { orderApi } from '../../../lib/api';
 
 const OrdersHistoryPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('active');
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const userData = JSON.parse(localStorage.getItem('userData') || localStorage.getItem('user') || '{}');
+  const userId = userData._id || userData.id || localStorage.getItem('userId');
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      console.log('📡 Fetching orders for UserID:', userId);
+      const data = await orderApi.getMyOrders(userId);
+      console.log('✅ Received orders count:', data?.length || 0);
+      setOrders(data || []);
+    } catch (err) {
+      console.error('❌ Error fetching orders:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    console.log('📦 OrdersHistoryPage Mounted. UserID:', userId);
+    if (!userId) {
+      console.warn('⚠️ No UserID found in local storage. Fetch aborted.');
+      setLoading(false);
+      return;
+    }
+    fetchOrders();
+  }, [userId]);
+
+  const activeOrders = useMemo(() => 
+    orders.filter(o => !['Delivered', 'Cancelled'].includes(o.status)), 
+  [orders]);
+
+  const pastOrders = useMemo(() => 
+    orders.filter(o => ['Delivered', 'Cancelled'].includes(o.status)), 
+  [orders]);
 
   const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
@@ -19,23 +57,6 @@ const OrdersHistoryPage = () => {
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
   }), []);
 
-  const activeOrders = useMemo(() => [
-    { 
-      id: '#SZ-8291', 
-      status: 'Processing', 
-      detailStatus: 'Cleaning at Shop',
-      date: 'Oct 24, 2026', 
-      price: 899.00, 
-      progress: 66,
-      rider: 'Marcus Chen'
-    }
-  ], []);
-
-  const pastOrders = useMemo(() => [
-    { id: '#SZ-7104', status: 'Delivered', date: 'Oct 18, 2026', price: 749.00, desc: '2x Heavy Duty Wash, 1x Delicate Care Silk' },
-    { id: '#SZ-6552', status: 'Delivered', date: 'Oct 05, 2026', price: 499.00, desc: 'Mixed Casual Load, Scented Finish' }
-  ], []);
-
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -43,39 +64,50 @@ const OrdersHistoryPage = () => {
       className="bg-background text-on-background min-h-[100dvh] flex flex-col"
     >
       <main className="pt-24 pb-44 px-6 max-w-2xl mx-auto w-full">
-        {/* Editorial Header Section - Compacted */}
+        {loading ? (
+          <div className="py-20 text-center flex flex-col items-center">
+             <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full mb-6"
+            />
+            <p className="text-xs font-black uppercase tracking-[0.2em] opacity-40">Syncing with server...</p>
+            <p className="text-[10px] opacity-20 mt-4">Session: {userId || 'Guest'}</p>
+          </div>
+        ) : (
+          <>
         <motion.section 
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          className="mb-10 ml-2"
+          className="mb-12"
         >
-          <span className="font-label text-[9px] uppercase tracking-[0.3em] text-primary font-black opacity-60 mb-1.5 block">Management Center</span>
-          <h2 className="text-3xl font-black text-on-surface leading-none tracking-tighter mb-8">My Orders</h2>
+          <span className="font-headline text-[10px] uppercase tracking-[0.4em] text-primary font-black mb-3 block opacity-40">Account Dashboard</span>
+          <h2 className="text-4xl font-black text-on-surface tracking-tighter leading-none mb-10 uppercase">Your Orders</h2>
           
-          {/* Custom Modern Tabs - Compacted */}
-          <div className="flex gap-2 p-1.5 bg-white rounded-full w-fit shadow-sm border border-outline-variant/5">
-            <motion.button 
-              layout
+          <div className="flex gap-4 mb-2">
+            <button 
               onClick={() => setActiveTab('active')}
-              className={`px-8 py-2.5 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${
+              className={`flex-1 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all relative overflow-hidden ${
                 activeTab === 'active' 
-                  ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' 
-                  : 'text-on-surface-variant opacity-60 hover:opacity-100'
+                  ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/20' 
+                  : 'bg-slate-100 text-slate-400'
               }`}
             >
-              Active
-            </motion.button>
-            <motion.button 
-              layout
+              Active Requests
+              {activeTab === 'active' && activeOrders.length > 0 && (
+                <span className="ml-2 bg-primary text-on-primary px-2 py-0.5 rounded-full text-[8px]">{activeOrders.length}</span>
+              )}
+            </button>
+            <button 
               onClick={() => setActiveTab('past')}
-              className={`px-8 py-2.5 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${
+              className={`flex-1 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all ${
                 activeTab === 'past' 
-                  ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' 
-                  : 'text-on-surface-variant opacity-60 hover:opacity-100'
+                  ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/20' 
+                  : 'bg-slate-100 text-slate-400'
               }`}
             >
-              Past
-            </motion.button>
+              Order History
+            </button>
           </div>
         </motion.section>
 
@@ -94,14 +126,11 @@ const OrdersHistoryPage = () => {
                 {activeOrders.length > 0 ? (
                   activeOrders.map((order) => (
                     <motion.div 
-                      key={order.id}
+                      key={order._id || order.id}
                       variants={itemVariants}
                       whileHover={{ scale: 1.01 }}
                       className="bg-white rounded-3xl p-6 relative overflow-hidden group shadow-lg shadow-primary/5 border border-outline-variant/10"
                     >
-                      {/* Status Glow Accent */}
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-12 -mt-12 blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-700"></div>
-                      
                       <div className="flex justify-between items-start mb-6 relative z-10">
                         <div>
                           <div className="flex items-center gap-2 mb-2">
@@ -110,46 +139,36 @@ const OrdersHistoryPage = () => {
                               transition={{ duration: 2, repeat: Infinity }}
                               className="w-2 h-2 rounded-full bg-primary"
                             ></motion.span>
-                            <span className="text-primary font-black text-[9px] tracking-[0.1em] uppercase leading-none mt-0.5">{order.detailStatus}</span>
+                            <span className="text-primary font-black text-[9px] tracking-[0.1em] uppercase leading-none mt-0.5">{order.status}</span>
                           </div>
-                          <h3 className="text-xl font-black text-on-surface tracking-tighter leading-none">{order.id}</h3>
+                          <h3 className="text-xl font-black text-on-surface tracking-tighter leading-none">{order.orderId || `#${order._id.slice(-6)}`}</h3>
                           <div className="flex items-center gap-2 mt-1.5 opacity-50">
                             <span className="material-symbols-outlined text-[12px]">person</span>
-                            <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{order.rider} Assigned</p>
+                            <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{order.rider?.displayName || 'Assigning Rider...'}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-headline font-black text-primary tracking-tighter leading-none">₹{order.price.toFixed(2)}</p>
-                          {order.status === 'Processing' && (
-                            <div className="mt-2 text-[8px] font-black text-error uppercase tracking-widest bg-error/5 px-2 py-1 rounded-lg animate-pulse">
-                              Payment Pending
-                            </div>
-                          )}
+                          <p className="text-2xl font-headline font-black text-primary tracking-tighter leading-none">₹{order.totalAmount?.toFixed(2)}</p>
                         </div>
                       </div>
 
 
-                      {/* Progress Streamline - BRD Granular Labels */}
+
+                      {/* Progress Streamline */}
                       <div className="mb-8 px-1 relative z-10">
                         <div className="flex justify-between text-[8px] text-on-surface-variant font-black uppercase tracking-widest opacity-50 mb-3">
-                          <span className={order.progress >= 25 ? 'text-primary opacity-100' : ''}>Picked up</span>
-                          <span className={order.progress >= 50 ? 'text-primary opacity-100' : ''}>At Shop</span>
-                          <span className={order.progress >= 75 ? 'text-primary opacity-100' : ''}>Processed</span>
-                          <span className={order.progress >= 100 ? 'text-primary opacity-100' : ''}>Arrival</span>
+                          <span className={order.status !== 'Pending' ? 'text-primary opacity-100' : ''}>Picked up</span>
+                          <span className={['In Progress', 'Ready', 'Delivered'].includes(order.status) ? 'text-primary opacity-100' : ''}>At Shop</span>
+                          <span className={['Ready', 'Delivered'].includes(order.status) ? 'text-primary opacity-100' : ''}>Processed</span>
+                          <span className={['Delivered'].includes(order.status) ? 'text-primary opacity-100' : ''}>Arrival</span>
                         </div>
                         <div className="relative h-1.5 bg-surface-container-low rounded-full overflow-hidden shadow-inner">
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${order.progress}%` }}
-                            transition={{ duration: 1.5, ease: "easeOut", delay: 1 }}
-                            className="absolute top-0 left-0 h-full bg-primary-gradient rounded-full"
-                          >
-                             <motion.div 
-                                 animate={{ x: ['100%', '-100%'] }}
-                                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                 className="absolute inset-0 bg-white/30 skew-x-12"
-                             />
-                          </motion.div>
+                          <div className={`absolute top-0 left-0 h-full bg-primary-gradient rounded-full transition-all duration-1000 w-[${
+                            order.status === 'Picked Up' ? '25%' : 
+                            order.status === 'In Progress' ? '50%' : 
+                            order.status === 'Ready' ? '75%' : 
+                            order.status === 'Delivered' ? '100%' : '5%'
+                          }]`} />
                         </div>
                       </div>
 
@@ -157,7 +176,7 @@ const OrdersHistoryPage = () => {
                         <motion.button 
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          onClick={() => navigate('/user/tracking')}
+                          onClick={() => navigate(`/user/tracking/${order._id || order.id.replace('#', '')}`)}
                           className="flex-[2] bg-primary-gradient text-on-primary py-4 rounded-2xl font-headline font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center justify-center gap-2.5 transition-all"
                         >
                           <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>local_shipping</span>
@@ -165,7 +184,7 @@ const OrdersHistoryPage = () => {
                         </motion.button>
                         <motion.button 
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => navigate(`/user/chat/${order.id.replace('#', '')}`)}
+                          onClick={() => navigate(`/user/chat/${order._id}`)}
                           className="w-14 h-14 bg-primary/5 text-primary border border-primary/20 rounded-2xl hover:bg-primary/10 transition-colors shadow-inner flex items-center justify-center"
                           title="Contact Support"
                         >
@@ -206,7 +225,7 @@ const OrdersHistoryPage = () => {
                 {pastOrders.length > 0 ? (
                   pastOrders.map((order) => (
                     <motion.div 
-                      key={order.id}
+                      key={order._id || order.id}
                       variants={itemVariants}
                       whileHover={{ x: 4 }}
                       className="bg-white/50 backdrop-blur-sm rounded-3xl p-6 flex flex-col group border border-outline-variant/10 shadow-sm"
@@ -217,15 +236,15 @@ const OrdersHistoryPage = () => {
                             <span className="material-symbols-outlined text-[12px] text-outline-variant">check_circle</span>
                             <span className="text-on-surface-variant/50 font-black text-[9px] tracking-widest uppercase">Verified Delivery</span>
                           </div>
-                          <h3 className="text-lg font-black text-on-surface tracking-tighter leading-none">{order.id}</h3>
-                          <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40">{order.date}</p>
+                          <h3 className="text-lg font-black text-on-surface tracking-tighter leading-none">{order.orderId || `#${order._id.slice(-6)}`}</h3>
+                          <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40">{new Date(order.createdAt).toLocaleDateString()}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-black text-on-surface-variant/40 tracking-tighter leading-none">₹{order.price.toFixed(2)}</p>
+                          <p className="text-xl font-black text-on-surface-variant/40 tracking-tighter leading-none">₹{order.totalAmount?.toFixed(2)}</p>
                         </div>
                       </div>
                       <div className="bg-surface-container-low/40 rounded-xl p-4 mb-6 border border-white/50">
-                        <p className="text-[11px] font-bold text-on-surface-variant opacity-70 leading-relaxed italic line-clamp-1">{order.desc}</p>
+                        <p className="text-[11px] font-bold text-on-surface-variant opacity-70 leading-relaxed italic line-clamp-1">{order.items?.map(i => i.name).join(', ')}</p>
                       </div>
                       <div className="flex gap-3">
                         <motion.button 
@@ -263,6 +282,8 @@ const OrdersHistoryPage = () => {
             )}
           </AnimatePresence>
         </div>
+        </>
+        )}
       </main>
     </motion.div>
   );

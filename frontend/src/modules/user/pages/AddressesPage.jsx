@@ -5,10 +5,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 const AddressesPage = () => {
   const navigate = useNavigate();
   
-  const initialAddresses = useMemo(() => [
-    { id: 1, type: 'Home', address: '249 Editorial Ave, Suite 4B, Pristine Heights, NY 10012', isDefault: true },
-    { id: 2, type: 'Office', address: '88 Creative Plaza, 12th Floor, Metro Central, NY 10001', isDefault: false }
-  ], []);
+  const initialAddresses = useMemo(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const list = [];
+
+    if (user.address) {
+      list.push({ 
+        id: 1, 
+        type: 'Home', 
+        address: user.address, 
+        isDefault: true, 
+        isProfileAddress: true 
+      });
+    }
+    
+    return list;
+  }, []);
 
   const addressTypes = useMemo(() => ['Home', 'Office', 'Other'], []);
 

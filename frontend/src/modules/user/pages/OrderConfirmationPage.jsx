@@ -184,7 +184,13 @@ const OrderConfirmationPage = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
+                    if (order?.orderId || order?._id) {
+                      const displayId = order.orderId || order._id;
+                      addNotification('order_placed', 'Order Confirmed', `Your laundry request ${displayId} has been successfully queued.`, 'user');
+                      addNotification('order_placed', `New Order ${displayId}`, 'A new laundry request is available for pickup.', 'rider');
+                    }
                     navigate('/user/success', { state: { order } });
+
                   }}
                   className="w-full py-6 rounded-2xl bg-primary-gradient text-on-primary font-headline font-black text-xl shadow-2xl shadow-primary/20 flex items-center justify-center gap-3 uppercase tracking-widest"
                 >

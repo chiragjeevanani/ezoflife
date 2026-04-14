@@ -46,7 +46,10 @@ const HelpCenterPage = () => {
           <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-1 block">Customer Care</span>
           <h2 className="text-3xl font-black tracking-tighter leading-none mb-3">How can we<br/>help you?</h2>
           <div className="flex gap-4 mt-6">
-            <button className="flex-1 bg-primary text-on-primary py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+            <button 
+              onClick={() => navigate('/user/support/tickets')}
+              className="flex-1 bg-primary text-on-primary py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+            >
               <span className="material-symbols-outlined text-sm">chat_bubble</span>
               Live Chat
             </button>

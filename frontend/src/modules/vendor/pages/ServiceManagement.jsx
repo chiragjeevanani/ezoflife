@@ -8,7 +8,8 @@ const ServiceManagement = () => {
     const navigate = useNavigate();
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
-    const vendorId = JSON.parse(localStorage.getItem('user'))?.id;
+    const vendorData = JSON.parse(localStorage.getItem('vendorData'));
+    const vendorId = vendorData?._id || vendorData?.id;
 
     const fetchConfig = async () => {
         try {
@@ -40,7 +41,7 @@ const ServiceManagement = () => {
         if (vendorId) {
             fetchConfig();
         } else {
-            navigate('/user/auth');
+            navigate('/vendor/auth');
         }
     }, [vendorId]);
 
@@ -58,7 +59,7 @@ const ServiceManagement = () => {
 
     const handleUpdate = async () => {
         try {
-            const user = JSON.parse(localStorage.getItem('user'));
+            const user = JSON.parse(localStorage.getItem('vendorData'));
             const profile = await authApi.getProfile(vendorId);
             
             const updatedShopDetails = {
@@ -99,18 +100,31 @@ const ServiceManagement = () => {
                 <section className="space-y-4">
                     <div className="flex items-center justify-between px-2">
                         <h3 className="text-[11px] font-bold text-on-background uppercase tracking-widest">Active Offerings</h3>
+                        <button 
+                            onClick={() => navigate('/vendor/services/add')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-xl hover:bg-primary hover:text-white transition-all"
+                        >
+                            <span className="material-symbols-outlined text-[16px]">add</span>
+                            <span className="text-[10px] font-black uppercase tracking-wider">Add New</span>
+                        </button>
                     </div>
                     
                     <div className="space-y-3">
                         {services.map((service, idx) => {
                             const aggregatorFee = Math.round(service.basePrice * 0.15);
                             const netEarnings = service.basePrice - aggregatorFee;
+                            const isPending = service.approvalStatus === 'Pending';
 
                             return (
-                                <div key={service.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-4 transition-all group overflow-hidden relative">
-                                    <div className="flex items-center justify-between">
+                                <div key={service.id || service._id} className={`bg-white p-6 rounded-[2.5rem] border ${isPending ? 'border-amber-100 bg-amber-50/10' : 'border-slate-100'} shadow-sm flex flex-col gap-4 transition-all group overflow-hidden relative`}>
+                                    {isPending && (
+                                        <div className="absolute top-0 left-0 w-full px-4 py-1 bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest text-center">
+                                            Waiting for Admin Approval
+                                        </div>
+                                    )}
+                                    <div className={`flex items-center justify-between ${isPending ? 'pt-4' : ''}`}>
                                         <div className="flex items-center gap-4 min-w-0">
-                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${service.active ? 'bg-primary/5 text-primary' : 'bg-surface-container text-outline-variant/30'}`}>
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${service.active && !isPending ? 'bg-primary/5 text-primary' : 'bg-surface-container text-outline-variant/30'}`}>
                                                 <span className="material-symbols-outlined text-[20px]">{service.icon}</span>
                                             </div>
                                             <div className="min-w-0">
@@ -119,15 +133,15 @@ const ServiceManagement = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <span className={`text-[8px] font-black uppercase tracking-widest ${service.active ? 'text-emerald-600' : 'text-slate-300'}`}>
-                                                {service.active ? 'Active' : 'Inactive'}
+                                            <span className={`text-[8px] font-black uppercase tracking-widest ${isPending ? 'text-amber-500' : (service.active ? 'text-emerald-600' : 'text-slate-300')}`}>
+                                                {isPending ? 'Pending' : (service.active ? 'Active' : 'Inactive')}
                                             </span>
                                             <div 
-                                                onClick={() => toggleService(idx)}
-                                                className={`w-12 h-6 rounded-full relative cursor-pointer transition-all duration-300 ${service.active ? 'bg-emerald-500 shadow-lg shadow-emerald-200' : 'bg-slate-200 shadow-inner'}`}
+                                                onClick={() => !isPending && toggleService(idx)}
+                                                className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isPending ? 'bg-slate-100 opacity-50 cursor-not-allowed' : (service.active ? 'bg-emerald-500 shadow-lg shadow-emerald-200 cursor-pointer' : 'bg-slate-200 shadow-inner cursor-pointer')}`}
                                             >
                                                 <motion.div 
-                                                    animate={{ x: service.active ? 26 : 4 }}
+                                                    animate={{ x: (service.active && !isPending) ? 26 : 4 }}
                                                     className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
                                                 />
                                             </div>

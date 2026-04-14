@@ -2,6 +2,8 @@ import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { GoogleMap, useLoadScript, Marker, Autocomplete } from '@react-google-maps/api';
+import { authApi } from '../../../lib/api';
+import { toast } from 'react-hot-toast';
 
 const libraries = ['places'];
 const mapContainerStyle = {
@@ -23,6 +25,30 @@ const ShopDetails = () => {
     const [address, setAddress] = useState('');
     const [location, setLocation] = useState(defaultCenter);
     const [selectedServices, setSelectedServices] = useState([1]);
+    const [saving, setSaving] = useState(false);
+
+    const isEditing = locationState.state?.isEditing;
+    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
+    const vendorId = vendorData.id || vendorData._id;
+
+    React.useEffect(() => {
+        if (isEditing && vendorId) {
+            const loadProfile = async () => {
+                try {
+                    const profile = await authApi.getProfile(vendorId);
+                    if (profile.shopDetails) {
+                        setShopName(profile.shopDetails.name || '');
+                        setAddress(profile.shopDetails.address || '');
+                        setGst(profile.shopDetails.gst || '');
+                        if (profile.location?.lat) setLocation(profile.location);
+                    }
+                } catch (err) {
+                    console.error('Error loading profile:', err);
+                }
+            };
+            loadProfile();
+        }
+    }, [isEditing, vendorId]);
 
     const autocompleteRef = useRef(null);
     const mapRef = useRef(null);
@@ -78,9 +104,32 @@ const ShopDetails = () => {
         reverseGeocode(newPos.lat, newPos.lng);
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (!shopName) return alert('Please enter shop name');
         if (!address) return alert('Please provide shop address');
+
+        if (isEditing) {
+            try {
+                setSaving(true);
+                await authApi.updateProfile(vendorId, {
+                    shopDetails: {
+                        name: shopName,
+                        address: address,
+                        gst: gst,
+                        services: selectedServices.map(id => availableServices.find(s => s.id === id).title)
+                    },
+                    location: location
+                });
+                toast.success('Shop details updated!');
+                navigate('/vendor/profile');
+            } catch (err) {
+                toast.error('Failed to update: ' + err.message);
+            } finally {
+                setSaving(false);
+            }
+            return;
+        }
+
         navigate('/vendor/upload-documents', { 
             state: { 
                 phone, 
@@ -276,10 +325,11 @@ const ShopDetails = () => {
                     <motion.button 
                         whileTap={{ scale: 0.98 }}
                         onClick={handleNext}
-                        className="w-full py-5 rounded-2xl bg-[#3D5AFE] text-white font-bold text-lg shadow-xl shadow-[#3D5AFE]/20 flex items-center justify-center gap-3 hover:bg-[#304FFE] transition-all"
+                        disabled={saving}
+                        className={`w-full py-5 rounded-2xl bg-[#3D5AFE] text-white font-bold text-lg shadow-xl shadow-[#3D5AFE]/20 flex items-center justify-center gap-3 hover:bg-[#304FFE] transition-all ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        <span>Next Step</span>
-                        <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                        <span>{isEditing ? (saving ? 'Saving...' : 'Save Changes') : 'Next Step'}</span>
+                        <span className="material-symbols-outlined text-[20px]">{isEditing ? 'check' : 'arrow_forward'}</span>
                     </motion.button>
                     <p className="text-center text-[11px] font-bold text-slate-300 uppercase tracking-[0.2em]">
                         Standard verification: 24h

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { materialApi } from '../../../lib/api';
 
 const B2BFulfillmentPage = () => {
     const navigate = useNavigate();
@@ -8,11 +9,27 @@ const B2BFulfillmentPage = () => {
     const [cart, setCart] = useState([]);
     const [isRequesting, setIsRequesting] = useState(false);
 
-    const supplies = useMemo(() => [
-        { id: 'det', title: 'Premium Detergent (50L)', price: 4299, icon: 'fluid_med' },
-        { id: 'tag', title: 'Smart NFC Tags (500pk)', price: 1299, icon: 'sell' },
-        { id: 'han', title: 'Wooden Hangers (100pk)', price: 2499, icon: 'checkroom' }
-    ], []);
+    const [liveSupplies, setLiveSupplies] = useState([]);
+
+    const supplies = useMemo(() => liveSupplies.map(m => ({
+        id: m._id,
+        title: m.name,
+        price: m.price,
+        icon: m.icon || 'fluid_med'
+    })), [liveSupplies]);
+
+    const fetchMaterials = async () => {
+        try {
+            const data = await materialApi.getAll();
+            setLiveSupplies(data);
+        } catch (error) {
+            console.error('Fetch Materials Error:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchMaterials();
+    }, []);
 
     const labor = useMemo(() => [
         { id: 'iron', title: 'Steam Specialist', rate: '₹600/shift', icon: 'iron' },

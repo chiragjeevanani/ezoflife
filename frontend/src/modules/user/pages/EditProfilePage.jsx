@@ -1,17 +1,22 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { authApi } from '../../../lib/api';
 
 const EditProfilePage = () => {
   const navigate = useNavigate();
   
-  const initialProfile = useMemo(() => ({
-    name: 'Chirag Jeevanani',
-    email: 'chira@example.com',
-    phone: '9876543210'
-  }), []);
+  const [profile, setProfile] = useState({ name: '', email: '', phone: '' });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [profile, setProfile] = useState(initialProfile);
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    setProfile({
+      name: user.displayName || '',
+      email: user.email || '',
+      phone: user.phone || ''
+    });
+  }, []);
 
   const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
@@ -26,10 +31,39 @@ const EditProfilePage = () => {
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
   }), []);
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    // In a real app, this would hit an API
-    navigate('/user/profile');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = user.id || user._id;
+
+    if (!userId) {
+        alert('Authentication error. Please login again.');
+        return;
+    }
+
+    try {
+        setIsLoading(true);
+        const updatedUser = await authApi.updateProfile(userId, {
+            displayName: profile.name,
+            email: profile.email,
+            phone: profile.phone
+        });
+
+        // Update local storage
+        localStorage.setItem('user', JSON.stringify({
+            ...user,
+            displayName: updatedUser.displayName,
+            email: updatedUser.email,
+            phone: updatedUser.phone
+        }));
+
+        navigate('/user/profile');
+    } catch (error) {
+        console.error('Update Profile Error:', error);
+        alert('Failed to update profile: ' + error.message);
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -122,12 +156,15 @@ const EditProfilePage = () => {
           <motion.button 
             variants={itemVariants}
             type="submit"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full bg-primary-gradient py-6 rounded-2xl text-on-primary font-headline font-black text-xl shadow-2xl shadow-primary/20 uppercase tracking-widest flex items-center justify-center gap-3"
+            disabled={isLoading}
+            whileHover={!isLoading ? { scale: 1.02 } : {}}
+            whileTap={!isLoading ? { scale: 0.98 } : {}}
+            className={`w-full py-6 rounded-2xl text-on-primary font-headline font-black text-xl shadow-2xl uppercase tracking-widest flex items-center justify-center gap-3 transition-opacity ${
+                isLoading ? 'opacity-70 bg-slate-400' : 'bg-primary-gradient shadow-primary/20'
+            }`}
           >
-            Save Changes
-            <span className="material-symbols-outlined text-2xl">check</span>
+            {isLoading ? 'Saving...' : 'Save Changes'}
+            {!isLoading && <span className="material-symbols-outlined text-2xl">check</span>}
           </motion.button>
         </form>
       </main>

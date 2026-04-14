@@ -1,5 +1,5 @@
 import express from 'express';
-import { requestOtp, verifyOtp, adminLogin, completeVendorProfile, getStatus, getUserProfile, updateUserProfile } from '../controllers/authController.js';
+import { requestOtp, verifyOtp, adminLogin, completeVendorProfile, getStatus, getUserProfile, updateUserProfile, registerVendor, vendorLogin } from '../controllers/authController.js';
 import upload from '../middleware/upload.js';
 
 const router = express.Router();
@@ -7,6 +7,8 @@ const router = express.Router();
 router.post('/request-otp', requestOtp);
 router.post('/verify-otp', verifyOtp);
 router.post('/admin-login', adminLogin);
+router.post('/register-vendor', registerVendor);
+router.post('/vendor-login', vendorLogin);
 router.post('/complete-vendor-profile', upload.fields([
     { name: 'idCard', maxCount: 1 },
     { name: 'businessProof', maxCount: 1 }

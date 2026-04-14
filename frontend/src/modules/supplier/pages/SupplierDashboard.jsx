@@ -30,7 +30,7 @@ const SupplierDashboard = () => {
     const dashboardTabs = useMemo(() => ['Consolidation', 'History', 'Logistics'], []);
 
     return (
-        <div className="bg-background text-on-surface min-h-screen pb-32 font-body">
+        <div className="bg-background text-on-surface min-h-screen pb-60 font-body">
             {/* Header */}
             <header className="px-6 pt-4 flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
@@ -147,7 +147,7 @@ const SupplierDashboard = () => {
             </main>
 
             {/* Logistics Timeline Preview fixed at bottom */}
-            <div className="fixed bottom-24 left-6 right-6 p-5 bg-white border border-outline-variant/10 rounded-[2.5rem] shadow-2xl z-20">
+            <div className="fixed bottom-32 left-6 right-6 p-5 bg-white border border-outline-variant/10 rounded-[2.5rem] shadow-2xl z-20">
                 <div className="flex items-center justify-between mb-4 px-1">
                     <p className="text-[10px] font-black text-on-surface/40 uppercase tracking-widest leading-none">Next Batch Dispatch</p>
                     <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none underline underline-offset-4">Sun Night</p>

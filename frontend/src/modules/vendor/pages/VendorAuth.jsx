@@ -8,6 +8,7 @@ const VendorAuth = () => {
     const [isLogin, setIsLogin] = useState(true);
 
     const [loginPhone, setLoginPhone] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
     const [registerShop, setRegisterShop] = useState('');
     const [registerPhone, setRegisterPhone] = useState('');
     const [apiError, setApiError] = useState('');
@@ -89,14 +90,14 @@ const VendorAuth = () => {
                                         <motion.div variants={itemVariants} className="mb-8">
                                             <h2 className="font-headline text-2xl font-black mb-1.5 text-on-surface tracking-tighter">Welcome Back</h2>
                                             <p className="text-on-surface-variant text-sm font-semibold opacity-70">
-                                                Enter your phone number to receive a verification code.
+                                                Enter your registered mobile number to receive a verification code.
                                             </p>
                                         </motion.div>
 
                                         <div className="space-y-6">
                                             <motion.div variants={itemVariants} className="relative group">
-                                                <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Phone Number</label>
-                                                <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 border border-slate-300 transition-all focus-within:bg-white focus-within:ring-2 ${loginPhone.length > 0 && !isLoginValid ? 'focus-within:ring-error/20 ring-error/10' : 'focus-within:ring-primary/20'}`}>
+                                                <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1">Mobile Number</label>
+                                                <div className={`flex items-center bg-surface-container-low rounded-2xl p-1 border border-slate-300 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20 ${loginPhone.length > 0 && loginPhone.length !== 10 ? 'focus-within:ring-error/20 ring-error/10' : ''}`}>
                                                     <div className="px-4 font-black text-on-surface text-sm">+91</div>
                                                     <input
                                                         className="w-full bg-transparent border-none focus:ring-0 py-4 px-2 text-on-surface font-black placeholder:text-on-surface/30 placeholder:font-medium outline-none"
@@ -107,16 +108,16 @@ const VendorAuth = () => {
                                                         onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
                                                     />
                                                 </div>
-                                                {loginPhone.length > 0 && !isLoginValid && (
+                                                {loginPhone.length > 0 && loginPhone.length !== 10 && (
                                                     <p className="text-[9px] text-error font-bold mt-2 ml-1 animate-pulse">Enter a valid 10-digit number</p>
                                                 )}
                                             </motion.div>
 
                                             <motion.button
                                                 variants={itemVariants}
-                                                whileTap={isLoginValid ? { scale: 0.98 } : {}}
+                                                whileTap={loginPhone.length === 10 ? { scale: 0.98 } : {}}
                                                 onClick={async () => {
-                                                    if (isLoginValid) {
+                                                    if (loginPhone.length === 10) {
                                                         setApiError('');
                                                         try {
                                                             const response = await authApi.requestOtp(loginPhone, 'WhatsApp', 'login', 'Vendor');
@@ -130,10 +131,10 @@ const VendorAuth = () => {
                                                         }
                                                     }
                                                 }}
-                                                disabled={!isLoginValid}
-                                                className={`w-full font-headline font-black py-5 rounded-2xl shadow-xl tracking-widest uppercase text-xs transition-all duration-300 ${isLoginValid ? 'vendor-gradient text-on-primary shadow-primary/20' : 'bg-surface-container-high text-outline-variant cursor-not-allowed opacity-50'}`}
+                                                disabled={loginPhone.length !== 10}
+                                                className={`w-full font-headline font-black py-5 rounded-2xl shadow-xl tracking-widest uppercase text-xs transition-all duration-300 ${loginPhone.length === 10 ? 'vendor-gradient text-on-primary shadow-primary/20' : 'bg-surface-container-high text-outline-variant cursor-not-allowed opacity-50'}`}
                                             >
-                                                Send OTP
+                                                Request OTP
                                             </motion.button>
                                             {apiError && isLogin && (
                                                 <p className="text-[10px] text-error font-black text-center mt-2 animate-pulse">{apiError}</p>

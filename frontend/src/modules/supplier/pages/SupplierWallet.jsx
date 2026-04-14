@@ -1,9 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SupplierWallet = () => {
     const navigate = useNavigate();
+    const [isRequesting, setIsRequesting] = useState(false);
+    const [requestSuccess, setRequestSuccess] = useState(false);
 
     const transactions = useMemo(() => [
         { id: '#WAL-8822', type: 'Settlement', vendor: 'Spinzyt - HSR', amount: '₹14,290', date: 'Oct 23, 10:45 AM', status: 'Credited' },
@@ -11,10 +13,19 @@ const SupplierWallet = () => {
         { id: '#WAL-8818', type: 'Settlement', vendor: 'FabriCare - Wfd', amount: '₹22,150', date: 'Oct 22, 06:15 PM', status: 'Credited' }
     ], []);
 
+    const handlePayout = () => {
+        setIsRequesting(true);
+        setTimeout(() => {
+            setIsRequesting(false);
+            setRequestSuccess(true);
+            setTimeout(() => setRequestSuccess(false), 3000);
+        }, 1500);
+    };
+
     return (
         <div className="min-h-screen bg-background pb-40">
             <header className="px-6 pt-4 mb-4 z-20 pb-4">
-                <h1 className="text-2xl font-black tracking-tighter italic uppercase leading-none text-on-surface">Wallet</h1>
+                <h1 className="text-2xl font-black tracking-tighter uppercase leading-none text-on-surface">Wallet</h1>
                 <p className="text-[9px] font-black text-on-surface/40 uppercase tracking-[0.3em] mt-1">Bulk Sourcing Settlements</p>
             </header>
 
@@ -32,10 +43,16 @@ const SupplierWallet = () => {
                     <div className="flex gap-3">
                         <motion.button 
                             whileTap={{ scale: 0.95 }}
-                            className="flex-[2] py-4 bg-white text-primary rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-lg shadow-black/5"
+                            onClick={handlePayout}
+                            disabled={isRequesting || requestSuccess}
+                            className={`flex-[2] py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-lg shadow-black/5 transition-all ${
+                                requestSuccess ? 'bg-emerald-500 text-white' : 'bg-white text-primary'
+                            }`}
                         >
-                            <span className="material-symbols-outlined text-sm">payments</span>
-                            Request Payout
+                            <span className="material-symbols-outlined text-sm">
+                                {isRequesting ? 'sync' : requestSuccess ? 'check_circle' : 'payments'}
+                            </span>
+                            {isRequesting ? 'Processing...' : requestSuccess ? 'Request Sent' : 'Request Payout'}
                         </motion.button>
                         <motion.button 
                             whileTap={{ scale: 0.95 }}

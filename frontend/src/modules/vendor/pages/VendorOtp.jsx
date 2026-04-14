@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authApi } from '../../../lib/api';
@@ -7,30 +7,45 @@ const VendorOtp = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { phone } = location.state || { phone: '98765 43210' };
+    
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [timer, setTimer] = useState(30);
     const [error, setError] = useState('');
+    const inputRefs = useRef([]);
 
-    const otpKeys = useMemo(() => [1, 2, 3, 4, 5, 6, 7, 8, 9, '·', 0, 'del'], []);
+    useEffect(() => {
+        let interval;
+        if (timer > 0) {
+            interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+        }
+        return () => clearInterval(interval);
+    }, [timer]);
 
-    const handleNumber = (n) => {
-        const idx = otp.findIndex(v => v === '');
-        if (idx !== -1) {
-            const next = [...otp]; next[idx] = String(n); setOtp(next);
+    const handleChange = (index, value) => {
+        if (isNaN(value)) return;
+        const newOtp = [...otp];
+        newOtp[index] = value.substring(value.length - 1);
+        setOtp(newOtp);
+
+        // Auto-focus next input
+        if (value && index < 5) {
+            inputRefs.current[index + 1].focus();
         }
     };
-    const handleDelete = () => {
-        const last = otp.findLastIndex(v => v !== '');
-        if (last !== -1) {
-            const next = [...otp]; next[last] = ''; setOtp(next);
+
+    const handleKeyDown = (index, e) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            inputRefs.current[index - 1].focus();
         }
     };
 
     const handleVerify = async () => {
-        if (otp.every(v => v !== '')) {
+        if (otp.every(digit => digit !== '')) {
             setError('');
             try {
                 const fullOtp = otp.join('');
                 const response = await authApi.verifyOtp(phone, fullOtp);
+                
                 if (response.token) {
                     const user = response.user;
                     localStorage.setItem('vendorToken', response.token);
@@ -58,120 +73,114 @@ const VendorOtp = () => {
         }
     };
 
+    const isOtpComplete = useMemo(() => otp.every(digit => digit !== ''), [otp]);
+
+    const containerVariants = useMemo(() => ({
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { duration: 0.5 } }
+    }), []);
+
+    const cardVariants = useMemo(() => ({
+        hidden: { scale: 0.9, opacity: 0, y: 20 },
+        visible: { scale: 1, opacity: 1, y: 0, transition: { type: "spring", damping: 25, stiffness: 200 } }
+    }), []);
+
     return (
-        <div className="bg-surface min-h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="px-6 pt-4 flex-shrink-0">
-                <motion.button whileTap={{ scale: 0.9 }} onClick={() => navigate('/vendor/auth')} className="p-2 rounded-full hover:bg-surface-container-low transition-colors">
-                    <span className="material-symbols-outlined text-primary">arrow_back</span>
-                </motion.button>
+        <motion.div 
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="bg-background text-on-background min-h-[100dvh] flex flex-col items-center justify-center px-6 relative overflow-hidden"
+        >
+            {/* Decorative Background */}
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
+                <div className="absolute top-20 right-[-10%] w-80 h-80 bg-primary/5 rounded-full blur-[80px]" />
+                <div className="absolute bottom-20 left-[-10%] w-80 h-80 bg-primary/5 rounded-full blur-[80px]" />
             </div>
 
-            {/* Content — fills remaining height */}
-            <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex-1 flex flex-col items-center justify-between px-6 pb-6 overflow-hidden"
+            <motion.main 
+                variants={cardVariants}
+                className="max-w-md w-full bg-white rounded-[3rem] p-8 md:p-10 shadow-[0_40px_80px_rgba(47,50,58,0.1)] border border-outline-variant/10"
             >
-                {/* Top Section: icon + title + OTP boxes */}
-                <div className="flex flex-col items-center w-full gap-5 mt-2">
-                    {/* Icon */}
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                        className="w-16 h-16 vendor-gradient rounded-[1.2rem] flex items-center justify-center shadow-2xl shadow-primary/30"
-                    >
-                        <span className="material-symbols-outlined text-white text-[32px]" style={{ fontVariationSettings: "'FILL' 1" }}>sms</span>
-                    </motion.div>
-
-                    {/* Title */}
-                    <div className="text-center">
-                        <h1 className="font-headline font-black text-2xl tracking-tighter text-on-surface mb-1">Verify your number</h1>
-                        <p className="text-on-surface-variant font-medium text-sm">We sent a 6-digit code to <strong className="text-primary">+91 {phone}</strong></p>
-                        {error && <p className="text-[10px] text-error font-bold mt-2 animate-pulse">{error}</p>}
+                <div className="text-center mb-10">
+                    <div className="w-20 h-20 vendor-gradient rounded-3xl flex items-center justify-center text-white mx-auto mb-6 shadow-inner">
+                        <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>sms</span>
                     </div>
-
-                    {/* OTP Boxes */}
-                    <div className="flex gap-3">
-                        {otp.map((digit, i) => (
-                            <motion.div
-                                key={i}
-                                animate={{
-                                    scale: digit ? 1.06 : 1,
-                                }}
-                                transition={{ type: "spring", stiffness: 300 }}
-                                className={`w-12 h-14 rounded-2xl flex items-center justify-center text-xl font-black font-headline border-4 transition-all duration-300 ${
-                                    digit
-                                        ? 'bg-primary/5 text-primary border-primary shadow-md shadow-primary/10'
-                                        : 'bg-surface-container-high/40 text-on-surface-variant border-slate-300'
-                                }`}
-                            >
-                                <AnimatePresence mode="wait">
-                                    <motion.span
-                                        key={digit || 'dot'}
-                                        initial={{ y: 8, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
-                                        exit={{ y: -8, opacity: 0 }}
-                                        className="inline-block"
-                                    >
-                                        {digit || '·'}
-                                    </motion.span>
-                                </AnimatePresence>
-                            </motion.div>
-                        ))}
-                    </div>
-
-                    {/* Resend */}
-                    <p className="text-on-surface-variant text-sm">
-                        Didn't receive it? <button className="text-primary font-black">Resend OTP</button>
-                    </p>
+                    <h1 className="text-3xl font-black tracking-tighter text-on-surface mb-3 leading-tight">Verification Code</h1>
+                    <p className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest leading-none">We've sent a 6-digit code to</p>
+                    <p className="text-sm font-black text-primary mt-2 tracking-tight">+91 {phone}</p>
+                    {error && <p className="text-[10px] text-error font-bold mt-3 animate-pulse">{error}</p>}
                 </div>
 
-                {/* Dialpad */}
-                <div className="w-full max-w-xs grid grid-cols-3 gap-y-1 gap-x-2">
-                    {otpKeys.map((key) => (
-                        key === 'del' ? (
-                            <motion.button
-                                key="del"
-                                whileHover={{ scale: 1.08 }}
-                                whileTap={{ scale: 0.88 }}
-                                onClick={handleDelete}
-                                className="h-14 mx-auto w-full rounded-full flex items-center justify-center text-red-500 hover:bg-red-50 transition-all"
-                            >
-                                <span className="material-symbols-outlined text-[22px]">backspace</span>
-                            </motion.button>
-                        ) : (
-                            <motion.button
-                                key={key}
-                                whileHover={{ scale: 1.08 }}
-                                whileTap={{ scale: 0.88 }}
-                                onClick={() => key !== '·' && handleNumber(key)}
-                                className="h-14 mx-auto w-full rounded-full font-headline font-black text-xl text-on-surface hover:bg-surface-container-low transition-all"
-                            >
-                                {key}
-                            </motion.button>
-                        )
+                {/* OTP Inputs */}
+                <div className="flex justify-center gap-2 md:gap-3 mb-10">
+                    {otp.map((digit, index) => (
+                        <input
+                            key={index}
+                            ref={(el) => (inputRefs.current[index] = el)}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleChange(index, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(index, e)}
+                            className="w-11 h-14 md:w-14 md:h-16 bg-surface-container-low border-2 border-slate-200 rounded-xl text-center text-2xl font-black text-on-surface focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/10 transition-all outline-none shadow-sm"
+                        />
                     ))}
                 </div>
 
-                {/* Confirm Button */}
-                <motion.button
+                {/* Resend Logic */}
+                <div className="text-center mb-10">
+                    {timer > 0 ? (
+                        <p className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest">
+                            Resend code in <span className="text-primary font-black ml-1">{timer}s</span>
+                        </p>
+                    ) : (
+                        <motion.button 
+                            whileHover={{ scale: 1.05 }}
+                            onClick={() => setTimer(30)}
+                            className="text-xs font-black text-primary uppercase tracking-widest underline decoration-2 underline-offset-4"
+                        >
+                            Resend Code Now
+                        </motion.button>
+                    )}
+                </div>
+
+                <motion.button 
                     whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={handleVerify}
-                    disabled={otp.some(v => v === '')}
-                    className={`w-full max-w-xs h-14 rounded-2xl font-headline font-black text-base shadow-2xl transition-all flex items-center justify-center gap-3 ${
-                        otp.every(v => v !== '')
-                            ? 'vendor-gradient text-white shadow-primary/30'
-                            : 'bg-surface-container-high text-on-surface-variant cursor-not-allowed'
+                    disabled={!isOtpComplete}
+                    className={`w-full py-5.5 rounded-2xl font-headline font-black text-xs uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 ${
+                        !isOtpComplete 
+                        ? 'bg-outline-variant/20 text-on-surface-variant/40 shadow-none cursor-not-allowed' 
+                        : 'vendor-gradient text-white shadow-primary/30'
                     }`}
                 >
-                    Verify & Enter
-                    <span className="material-symbols-outlined">check_circle</span>
+                    Verify & Continue
+                    <span className="material-symbols-outlined text-lg">arrow_forward</span>
                 </motion.button>
-            </motion.div>
-        </div>
+
+                <button 
+                    onClick={() => navigate('/vendor/auth')}
+                    className="w-full mt-6 text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity"
+                >
+                    Change Phone Number
+                </button>
+            </motion.main>
+
+            {/* Floating Decorative Elements */}
+            <motion.div 
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="fixed top-1/2 right-[5%] w-12 h-12 bg-primary/10 rounded-full blur-xl pointer-events-none"
+            />
+            <motion.div 
+                animate={{ y: [0, 10, 0] }}
+                transition={{ duration: 5, repeat: Infinity }}
+                className="fixed bottom-[15%] left-[5%] w-16 h-16 bg-primary/10 rounded-full blur-xl pointer-events-none"
+            />
+        </motion.div>
     );
 };
 

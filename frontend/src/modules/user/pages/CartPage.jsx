@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MASTER_SERVICES } from '../../../shared/data/sharedData';
-import { orderApi } from '../../../lib/api';
+import { orderApi, serviceApi, authApi } from '../../../lib/api';
 import { GoogleMap, useLoadScript, Marker, Autocomplete } from '@react-google-maps/api';
 
 const libraries = ['places'];
@@ -14,6 +14,24 @@ const CartPage = () => {
   const location = useLocation();
   const selectedService = location.state?.selectedService;
 
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const data = await serviceApi.getAll();
+        setServices(data);
+      } catch (error) {
+        console.error('Error fetching services for cart:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchServices();
+  }, []);
+
   const [quantities, setQuantities] = useState(() => {
     const saved = localStorage.getItem('cart_quantities');
     const q = saved ? JSON.parse(saved) : {};
@@ -23,15 +41,35 @@ const CartPage = () => {
     return q;
   });
 
-  const cartItems = useMemo(() => MASTER_SERVICES.filter(s => quantities[s.id] > 0), [quantities]);
+  const [clothCounts, setClothCounts] = useState({});
 
-  const [billingUnits, setBillingUnits] = useState(() => {
-    const u = {};
-    cartItems.forEach(item => {
-      u[item.id] = item.unit || (item.id.includes('wash') || item.id.includes('carpet') ? 'kg' : 'pc');
+  const cartItems = useMemo(() => {
+    if (services.length === 0) return [];
+    return services.filter(s => {
+      const id = s._id || s.id;
+      return quantities[id] > 0;
     });
-    return u;
-  });
+  }, [services, quantities]);
+
+  const [billingUnits, setBillingUnits] = useState({});
+
+  useEffect(() => {
+    if (cartItems.length > 0 && Object.keys(billingUnits).length === 0) {
+      const u = {};
+      cartItems.forEach(item => {
+        const id = item._id || item.id;
+        u[id] = item.unit || (id.includes('wash') || id.includes('carpet') ? 'kg' : 'pc');
+      });
+      setBillingUnits(u);
+    }
+  }, [cartItems]);
+  
+  // Sync with localStorage whenever quantities change
+  useEffect(() => {
+    if (Object.keys(quantities).length > 0) {
+      localStorage.setItem('cart_quantities', JSON.stringify(quantities));
+    }
+  }, [quantities]);
   
   const [isExpress, setIsExpress] = useState(false);
   const [garmentPhotos, setGarmentPhotos] = useState([]);
@@ -125,18 +163,69 @@ const CartPage = () => {
     reverseGeocode(newPos.lat, newPos.lng);
   };
 
-  const [addresses, setAddresses] = useState([
-    { id: 1, type: 'Home', address: 'B-402, Skyline Residency, Sector 44, Gurgaon, HR - 122003', location: { lat: 28.4595, lng: 77.0266 } },
-    { id: 2, type: 'Work', address: 'Tower C, Cyber Hub, Phase 3, Gurgaon, HR - 122018', location: { lat: 28.4895, lng: 77.0866 } }
-  ]);
-  const [selectedAddress, setSelectedAddress] = useState(addresses[0]);
+  const [addresses, setAddresses] = useState([]);
+  const [selectedPickupAddress, setSelectedPickupAddress] = useState(null);
+  const [selectedDropAddress, setSelectedDropAddress] = useState(null);
+  const [isSameAddress, setIsSameAddress] = useState(true);
+  const [activeAddressType, setActiveAddressType] = useState('pickup');
 
-  const confirmMapAddress = () => {
-    const newAddr = { id: Date.now(), type: 'Pinned', address: mapAddress, location: mapLocation };
-    setAddresses(prev => [newAddr, ...prev]);
-    setSelectedAddress(newAddr);
-    setShowMapPicker(false);
-    setShowAddressPicker(false);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = userData._id || userData.id;
+      if (!userId) return;
+      try {
+        const profile = await authApi.getProfile(userId);
+        if (profile.address) {
+          const mainAddr = { 
+            id: 'main', 
+            type: 'Home', 
+            address: profile.address, 
+            location: profile.location || defaultCenter 
+          };
+          setAddresses([mainAddr]);
+          setSelectedPickupAddress(mainAddr);
+          setSelectedDropAddress(mainAddr);
+        }
+      } catch (error) {
+        console.error('Error fetching profile for address:', error);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const confirmMapAddress = async () => {
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = userData._id || userData.id;
+    if (!userId) {
+        alert('Please login to save address');
+        return;
+    }
+
+    try {
+        const newAddr = { id: Date.now(), type: 'New Address', address: mapAddress, location: mapLocation };
+        
+        // Save to backend
+        await authApi.updateProfile(userId, { 
+            address: mapAddress,
+            location: mapLocation 
+        });
+
+        setAddresses(prev => [newAddr, ...prev]);
+        
+        if (activeAddressType === 'pickup') {
+            setSelectedPickupAddress(newAddr);
+            if (isSameAddress) setSelectedDropAddress(newAddr);
+        } else {
+            setSelectedDropAddress(newAddr);
+        }
+
+        setShowMapPicker(false);
+        setShowAddressPicker(false);
+    } catch (error) {
+        console.error('Save address error:', error);
+        alert('Failed to save address');
+    }
   };
 
   const [promoCode, setPromoCode] = useState('');
@@ -197,8 +286,9 @@ const CartPage = () => {
   };
 
   const getItemPrice = (item) => {
-    const unit = billingUnits[item.id] || 'pc';
-    const rawPrice = item.price;
+    const id = item._id || item.id;
+    const unit = billingUnits[id] || 'pc';
+    const rawPrice = item.basePrice || item.price;
     const parsePrice = (p) => {
       if (typeof p === 'number') return p;
       if (typeof p === 'string') {
@@ -208,19 +298,22 @@ const CartPage = () => {
       return 0;
     };
     const price = parsePrice(rawPrice);
-    if (item.id.includes('wash') || item.id.includes('carpet') || item.id.includes('curtain')) {
-      if (unit === 'kg') return price > 0 ? price : 99;
+    
+    // Platform fee (aggregator margin)
+    const aggregatorFee = 1.15;
+    const finalPrice = Math.round(price * aggregatorFee);
+
+    if (id.includes('wash') || id.includes('carpet') || id.includes('curtain')) {
+      if (unit === 'kg') return finalPrice > 0 ? finalPrice : 99;
       return 18;
     }
-    if (unit === 'pc') return price > 0 ? price : 49;
+    if (unit === 'pc') return finalPrice > 0 ? finalPrice : 49;
     return 199;
   };
 
   const subtotal = useMemo(() => cartItems.reduce((acc, item) => {
-    const aggregatorFee = 1.1;
-    const price = (item.basePrice || 0) * aggregatorFee;
-    return acc + (price * (quantities[item.id] || 0));
-  }, 0), [cartItems, quantities]);
+    return acc + (getItemPrice(item) * (quantities[item._id || item.id] || 0));
+  }, 0), [cartItems, quantities, billingUnits]);
 
   const logisticsFee = 50.00;
   const surcharge = useMemo(() => isExpress ? 1.5 : 1.0, [isExpress]);
@@ -238,16 +331,21 @@ const CartPage = () => {
     }
   };
 
+  const [specialInstructions, setSpecialInstructions] = useState('');
+
   const handlePlaceOrder = async () => {
     try {
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = userData._id || userData.id || '66112c3f8e4b8a2e5c8b4567'; 
       const orderData = {
-        customerId: localStorage.getItem('userId') || '66112c3f8e4b8a2e5c8b4567', // Dummy if not logged in
+        customerId: userId,
         items: cartItems.map(item => ({
-          serviceId: item.id,
+          serviceId: item._id || item.id,
           name: item.name,
-          quantity: quantities[item.id],
+          quantity: quantities[item._id || item.id],
           price: getItemPrice(item),
-          unit: billingUnits[item.id]
+          unit: billingUnits[item._id || item.id],
+          clothCount: billingUnits[item._id || item.id] === 'kg' ? (clothCounts[item._id || item.id] || 1) : 0
         })),
         pickupSlot: {
           date: selectedPickup,
@@ -257,9 +355,12 @@ const CartPage = () => {
           date: selectedDelivery,
           time: deliveryTime
         },
-        address: selectedAddress.address,
-        location: selectedAddress.location,
-        totalAmount: finalTotal
+        pickupAddress: selectedPickupAddress?.address || '',
+        pickupLocation: selectedPickupAddress?.location || defaultCenter,
+        dropAddress: isSameAddress ? (selectedPickupAddress?.address || '') : (selectedDropAddress?.address || ''),
+        dropLocation: isSameAddress ? (selectedPickupAddress?.location || defaultCenter) : (selectedDropAddress?.location || defaultCenter),
+        totalAmount: finalTotal,
+        specialInstructions
       };
 
       const response = await orderApi.createOrder(orderData);
@@ -280,6 +381,21 @@ const CartPage = () => {
       animate="visible"
       className="bg-background font-body text-on-background min-h-[100dvh] flex flex-col"
     >
+      {/* Sticky Header with Back Button */}
+      <header className="fixed top-0 left-0 right-0 z-[80] bg-background/80 backdrop-blur-xl border-b border-outline-variant/10 px-6 py-4">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-primary shadow-sm active:bg-primary/10 transition-colors"
+          >
+            <span className="material-symbols-outlined font-black">arrow_back</span>
+          </motion.button>
+          <h1 className="text-sm font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60">Cart Details</h1>
+          <div className="w-10" />
+        </div>
+      </header>
+
       <motion.main 
         variants={containerVariants}
         className="max-w-5xl mx-auto px-6 pt-24 pb-36 w-full flex-1 overflow-y-auto hide-scrollbar"
@@ -294,10 +410,15 @@ const CartPage = () => {
             </motion.div>
 
             <motion.div variants={containerVariants} className="space-y-4">
-              {cartItems.length > 0 ? (
+              {loading ? (
+                <div className="py-20 flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-outline-variant/10 shadow-sm animate-pulse">
+                   <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40">Syncing Cart Data...</p>
+                </div>
+              ) : cartItems.length > 0 ? (
                 cartItems.map((item) => (
                   <motion.div 
-                    key={item.id}
+                    key={item._id || item.id}
                     variants={itemVariants}
                     whileHover={{ scale: 1.01 }}
                     className="bg-white rounded-3xl p-5 md:p-6 flex items-center justify-between shadow-sm border border-outline-variant/10 group"
@@ -305,7 +426,7 @@ const CartPage = () => {
                     <div className="flex items-center gap-5">
                       <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm group-hover:shadow-lg transition-shadow`}>
                         <span className="material-symbols-outlined text-3xl md:text-3xl">
-                          {item.icon}
+                          {item.icon || 'local_laundry_service'}
                         </span>
                       </div>
                       <div>
@@ -315,17 +436,17 @@ const CartPage = () => {
                           <div className="flex items-center bg-surface-container-low rounded-2xl p-1 w-fit shadow-xs border border-outline-variant/5">
                             <motion.button 
                               whileTap={{ scale: 0.9 }}
-                              onClick={() => updateQuantity(item.id, -1)}
+                              onClick={() => updateQuantity(item._id || item.id, -1)}
                               className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-primary bg-white rounded-xl shadow-xs"
                             >
                               <span className="material-symbols-outlined text-sm font-bold">remove</span>
                             </motion.button>
                             <span className="font-black text-on-surface px-4 md:px-5 text-sm md:text-md uppercase tabular-nums">
-                              {quantities[item.id] || 0} {billingUnits[item.id] === 'kg' ? 'kg' : 'pcs'}
+                              {quantities[item._id || item.id] || 0} {billingUnits[item._id || item.id] === 'kg' ? 'kg' : 'pcs'}
                             </span>
                             <motion.button 
                               whileTap={{ scale: 0.9 }}
-                              onClick={() => updateQuantity(item.id, 1)}
+                              onClick={() => updateQuantity(item._id || item.id, 1)}
                               className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-primary bg-white rounded-xl shadow-xs"
                             >
                               <span className="material-symbols-outlined text-sm font-bold">add</span>
@@ -333,20 +454,41 @@ const CartPage = () => {
                           </div>
                           <div className="flex bg-surface-container-low rounded-2xl p-1 w-fit shadow-xs border border-outline-variant/5">
                             <button 
-                              onClick={() => setBillingUnits(prev => ({...prev, [item.id]: 'kg'}))}
-                              className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${billingUnits[item.id] === 'kg' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant opacity-40'}`}
+                              onClick={() => setBillingUnits(prev => ({...prev, [item._id || item.id]: 'kg'}))}
+                              className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${billingUnits[item._id || item.id] === 'kg' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant opacity-40'}`}
                             >Kg</button>
                             <button 
-                              onClick={() => setBillingUnits(prev => ({...prev, [item.id]: 'pc'}))}
-                              className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${billingUnits[item.id] === 'pc' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant opacity-40'}`}
+                              onClick={() => setBillingUnits(prev => ({...prev, [item._id || item.id]: 'pc'}))}
+                              className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${billingUnits[item._id || item.id] === 'pc' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant opacity-40'}`}
                             >Cloth</button>
                           </div>
+
+                          {billingUnits[item._id || item.id] === 'kg' && (
+                            <div className="flex items-center gap-3 bg-surface-container-low rounded-2xl p-1 shadow-xs border border-primary/10">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-primary ml-2">Clothes:</span>
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={() => setClothCounts(prev => ({...prev, [item._id || item.id]: Math.max(1, (prev[item._id || item.id] || 1) - 1)}))}
+                                  className="w-6 h-6 flex items-center justify-center bg-white rounded-lg text-primary shadow-xs"
+                                >
+                                  <span className="material-symbols-outlined text-xs">remove</span>
+                                </button>
+                                <span className="text-[10px] font-black min-w-[20px] text-center">{clothCounts[item._id || item.id] || 1}</span>
+                                <button 
+                                  onClick={() => setClothCounts(prev => ({...prev, [item._id || item.id]: (prev[item._id || item.id] || 1) + 1}))}
+                                  className="w-6 h-6 flex items-center justify-center bg-white rounded-lg text-primary shadow-xs"
+                                >
+                                  <span className="material-symbols-outlined text-xs">add</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
                       <span className="font-headline font-black text-lg md:text-xl text-primary leading-none tracking-tight">
-                        ₹{(getItemPrice(item) * (quantities[item.id] || 0)).toFixed(2)}
+                        ₹{(getItemPrice(item) * (quantities[item._id || item.id] || 0)).toFixed(2)}
                       </span>
                     </div>
                   </motion.div>
@@ -514,19 +656,104 @@ const CartPage = () => {
               <div className="flex items-center justify-between">
                 <h3 className="font-headline font-black text-2xl flex items-center gap-3 tracking-tighter">
                   <span className="material-symbols-outlined text-primary text-3xl">location_on</span>
-                  Pickup Address
+                  Address Selection
                 </h3>
-                <button onClick={() => setShowAddressPicker(true)} className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-4 py-2 rounded-xl">Change</button>
               </div>
-              <div className="bg-surface-container-low p-6 rounded-3xl flex items-center gap-5 border border-outline-variant/5">
-                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm">
-                  <span className="material-symbols-outlined">{selectedAddress.type === 'Home' ? 'home' : 'work'}</span>
+              
+              <div className="space-y-4">
+                {/* Pickup Address */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 ml-4">Pickup from</p>
+                  {selectedPickupAddress ? (
+                    <div className="bg-surface-container-low p-4 rounded-3xl flex items-center justify-between border border-outline-variant/5 gap-2">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="w-10 h-10 shrink-0 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm">
+                          <span className="material-symbols-outlined text-xl">home</span>
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="font-black text-on-surface text-[12px] uppercase leading-none mb-1">{selectedPickupAddress.type}</p>
+                          <p className="text-[10px] font-bold text-on-surface-variant opacity-60 leading-tight truncate">{selectedPickupAddress.address}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => { setActiveAddressType('pickup'); setShowAddressPicker(true); }} className="shrink-0 text-[10px] font-black text-primary uppercase tracking-widest bg-white px-4 py-2.5 rounded-xl shadow-sm hover:bg-primary/5 transition-colors">Change</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => { setActiveAddressType('pickup'); setShowAddressPicker(true); }} className="w-full py-8 border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center gap-3 text-primary hover:bg-primary/5 transition-all outline-none">
+                      <span className="material-symbols-outlined">add_location</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest">Select Pickup Address</span>
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <p className="font-black text-on-surface text-sm uppercase">{selectedAddress.type}</p>
-                  <p className="text-[11px] font-bold text-on-surface-variant opacity-60 leading-relaxed max-w-[200px]">{selectedAddress.address}</p>
+
+                {/* Same as pickup toggle */}
+                <div className="flex items-center justify-between px-6 py-4 bg-primary/5 rounded-[2rem] border border-primary/10">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-primary text-xl">sync_alt</span>
+                    <p className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest">Deliver to the same address</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                        const next = !isSameAddress;
+                        setIsSameAddress(next);
+                        if (next) setSelectedDropAddress(selectedPickupAddress);
+                    }}
+                    className={`w-12 h-7 rounded-full transition-all relative ${isSameAddress ? 'bg-primary' : 'bg-outline-variant/40'}`}
+                  >
+                    <motion.div 
+                        animate={{ x: isSameAddress ? 24 : 4 }}
+                        className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-sm"
+                    />
+                  </button>
                 </div>
+
+                {/* Drop Address (only if not same) */}
+                <AnimatePresence>
+                    {!isSameAddress && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="space-y-2"
+                        >
+                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 ml-4">Drop at</p>
+                            {selectedDropAddress ? (
+                                <div className="bg-surface-container-low p-4 rounded-3xl flex items-center justify-between border border-outline-variant/5 gap-2">
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className="w-10 h-10 shrink-0 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm">
+                                            <span className="material-symbols-outlined text-xl">local_shipping</span>
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <p className="font-black text-on-surface text-[12px] uppercase leading-none mb-1">{selectedDropAddress.type}</p>
+                                            <p className="text-[10px] font-bold text-on-surface-variant opacity-60 leading-tight truncate">{selectedDropAddress.address}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => { setActiveAddressType('drop'); setShowAddressPicker(true); }} className="shrink-0 text-[10px] font-black text-primary uppercase tracking-widest bg-white px-4 py-2.5 rounded-xl shadow-sm hover:bg-primary/5 transition-colors">Change</button>
+                                </div>
+                            ) : (
+                                <button onClick={() => { setActiveAddressType('drop'); setShowAddressPicker(true); }} className="w-full py-8 border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center gap-3 text-primary hover:bg-primary/5 transition-all outline-none">
+                                    <span className="material-symbols-outlined">add_location_alt</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest">Select Drop Address</span>
+                                </button>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
               </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
+              <h3 className="font-headline font-black text-2xl flex items-center gap-3 tracking-tighter">
+                <span className="material-symbols-outlined text-primary text-3xl">notes</span>
+                Special Instructions
+              </h3>
+              <p className="text-[11px] font-bold text-on-surface-variant opacity-60 leading-relaxed -mt-2">Anything else we should know? (e.g. no starch, handle with care)</p>
+              <textarea 
+                value={specialInstructions}
+                onChange={(e) => setSpecialInstructions(e.target.value)}
+                placeholder="Type your instructions here..."
+                className="w-full bg-surface-container-low border border-outline-variant/10 p-5 rounded-[2rem] text-sm font-bold focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all outline-none resize-none"
+                rows="3"
+              />
             </motion.div>
 
             <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
@@ -641,15 +868,23 @@ const CartPage = () => {
                 </button>
 
                 {addresses.map((addr) => (
-                  <button key={addr.id} onClick={() => { setSelectedAddress(addr); setShowAddressPicker(false); }} className={`w-full p-6 rounded-[2rem] flex items-center justify-between border-2 transition-all ${selectedAddress.id === addr.id ? 'bg-primary/5 border-primary shadow-sm' : 'bg-surface-container-low border-transparent'}`}>
+                  <button key={addr.id} onClick={() => { 
+                    if (activeAddressType === 'pickup') {
+                        setSelectedPickupAddress(addr);
+                        if (isSameAddress) setSelectedDropAddress(addr);
+                    } else {
+                        setSelectedDropAddress(addr);
+                    }
+                    setShowAddressPicker(false); 
+                  }} className={`w-full p-6 rounded-[2rem] flex items-center justify-between border-2 transition-all ${(activeAddressType === 'pickup' ? selectedPickupAddress : selectedDropAddress)?.id === addr.id ? 'bg-primary/5 border-primary shadow-sm' : 'bg-surface-container-low border-transparent'}`}>
                     <div className="flex items-center gap-5">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedAddress.id === addr.id ? 'bg-primary text-white' : 'bg-white text-on-surface-variant'}`}><span className="material-symbols-outlined text-lg">{addr.type === 'Home' ? 'home' : 'work'}</span></div>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${(activeAddressType === 'pickup' ? selectedPickupAddress : selectedDropAddress)?.id === addr.id ? 'bg-primary text-white' : 'bg-white text-on-surface-variant'}`}><span className="material-symbols-outlined text-lg">{addr.type === 'Home' ? 'home' : 'work'}</span></div>
                       <div className="text-left">
                         <p className="font-black text-sm text-on-surface leading-none mb-1">{addr.type}</p>
                         <p className="text-[10px] font-bold text-on-surface-variant opacity-60 truncate max-w-[180px]">{addr.address}</p>
                       </div>
                     </div>
-                    {selectedAddress.id === addr.id && <span className="material-symbols-outlined text-primary">check_circle</span>}
+                    {(activeAddressType === 'pickup' ? selectedPickupAddress : selectedDropAddress)?.id === addr.id && <span className="material-symbols-outlined text-primary">check_circle</span>}
                   </button>
                 ))}
               </div>

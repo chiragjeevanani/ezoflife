@@ -4,9 +4,12 @@ import User from '../models/User.js';
 import axios from 'axios';
 import Notification from '../models/Notification.js';
 import fs from 'fs';
+import { getIO } from '../socket.js';
 
 const logToFile = (msg) => {
-    fs.appendFileSync('c:\\Users\\Hp\\Desktop\\ezoflife\\backend\\REAL_USER_DEBUG.log', `${new Date().toISOString()} - ${msg}\n`);
+    try {
+        fs.appendFileSync('./REAL_USER_DEBUG.log', `${new Date().toISOString()} - ${msg}\n`);
+    } catch (e) {}
 };
 
 // Haversine formula to calculate distance between two points in km
@@ -37,6 +40,32 @@ const calculateGoogleDistance = async (lat1, lon1, lat2, lon2) => {
     } catch (error) {
         console.error('Google Maps API Error:', error);
         return null;
+    }
+};
+
+export const getNearbyVendors = async (customerLat, customerLng, radiusKm = 4) => {
+    try {
+        const cLat = Number(customerLat);
+        const cLng = Number(customerLng);
+        const vendors = await User.find({ role: 'Vendor', status: 'approved' });
+        const nearbyVendors = [];
+
+        for (const vendor of vendors) {
+            const vLat = Number(vendor.location?.lat || 0);
+            const vLng = Number(vendor.location?.lng || 0);
+            let distance = calculateHaversineDistance(cLat, cLng, vLat, vLng);
+            if (distance <= radiusKm) {
+                nearbyVendors.push({
+                    id: vendor._id,
+                    name: vendor.shopDetails?.shopName || vendor.displayName,
+                    distance: distance.toFixed(2)
+                });
+            }
+        }
+        return nearbyVendors;
+    } catch (err) {
+        console.error('Nearby Vendors Error:', err);
+        return [];
     }
 };
 
@@ -104,78 +133,66 @@ export const getNearbyRiders = async (customerLat, customerLng, radiusKm = 4) =>
 
 export const createOrder = async (req, res) => {
     try {
-        const { items, pickupSlot, deliverySlot, address, location, totalAmount } = req.body;
-        // In a real app, customer ID would come from auth middleware (req.user.id)
-        // For testing, we'll assume it's passed or find a dummy
+        const { items, pickupSlot, deliverySlot, pickupAddress, pickupLocation, dropAddress, dropLocation, totalAmount, specialInstructions } = req.body;
         const customerId = req.body.customerId; 
 
         if (!customerId) return res.status(400).json({ message: 'Customer ID required' });
 
-        const vendorId = await assignVendor(location.lat, location.lng);
-        const nearbyRiders = await getNearbyRiders(location.lat, location.lng, 4); 
+        // Search vendors near pickup location
+        const nearbyVendors = await getNearbyVendors(pickupLocation.lat, pickupLocation.lng, 4);
         
-        logToFile(`New Order: ${address}, Lat: ${location.lat}, Lng: ${location.lng}`);
-        logToFile(`Nearby Found: ${nearbyRiders.length}`);
-
         const newOrder = new Order({
             customer: customerId,
-            vendor: vendorId,
             items,
             pickupSlot,
             deliverySlot,
-            address,
-            location,
+            pickupAddress,
+            pickupLocation,
+            dropAddress,
+            dropLocation,
             totalAmount,
-            vendor: vendorId,
-            status: vendorId ? 'Assigned' : 'Pending',
-            nearbyRiders: nearbyRiders.map(r => ({
-                id: r.id,
-                distance: r.distance,
-                name: r.name
-            }))
+            specialInstructions: specialInstructions || '',
+            status: 'Pending'
         });
 
         await newOrder.save();
 
-        // Create Persistent Notifications
-        const notifications = [];
-        
-        // 1. For Vendor
-        if (vendorId) {
-            notifications.push({
-                recipient: vendorId,
-                role: 'vendor',
-                title: 'New Assignment',
-                message: `Order #${newOrder._id.toString().slice(-6)} assigned to your shop.`,
-                type: 'assigned',
-                orderId: newOrder._id
-            });
-        }
-
-        // 2. For Nearby Riders
-        nearbyRiders.forEach(rider => {
-            notifications.push({
-                recipient: rider.id,
-                role: 'rider',
-                title: 'New Nearby Order',
-                message: 'Pickup available within 4km. Claim now!',
-                type: 'order_placed',
-                orderId: newOrder._id
-            });
+        // Real-time broadcast to ALL vendors in the pool (Diagnostic/Redundancy)
+        const io = getIO();
+        io.to('vendors_pool').emit('new_order_available', {
+            orderId: newOrder._id,
+            displayId: newOrder.orderId,
+            distance: 'Global'
         });
+        logToFile(`Global broadcast sent for Order ${newOrder.orderId}`);
+
+        const notifications = nearbyVendors.map(vendor => ({
+            recipient: vendor.id,
+            role: 'vendor',
+            title: 'New Order Available',
+            message: `A new laundry request at ${pickupAddress}. Distance: ${vendor.distance}km.`,
+            type: 'order_available',
+            orderId: newOrder._id
+        }));
 
         if (notifications.length > 0) {
             try {
                 await Notification.insertMany(notifications);
+                
+                nearbyVendors.forEach(v => {
+                    logToFile(`Broadcasting to vendor room: user_${v.id}`);
+                    io.to(`user_${v.id}`).emit('new_order_available', {
+                        orderId: newOrder._id,
+                        displayId: newOrder.orderId,
+                        distance: v.distance
+                    });
+                });
             } catch (notifErr) {
                 console.error('Notification Insert Error:', notifErr.message);
             }
         }
 
-        res.status(201).json({ 
-            ...newOrder._doc, 
-            nearbyRiders 
-        });
+        res.status(201).json(newOrder);
     } catch (err) {
         res.status(500).json({ message: 'Error creating order', error: err.message });
     }
@@ -183,10 +200,44 @@ export const createOrder = async (req, res) => {
 
 export const getMyOrders = async (req, res) => {
     try {
-        const { customerId } = req.query; // Assume passed for now
-        const orders = await Order.find({ customer: customerId }).sort({ createdAt: -1 });
+        const { customerId } = req.query;
+        if (!customerId) return res.status(400).json({ message: 'Customer ID required' });
+
+        logToFile(`[DEBUG] Fetching orders for CustomerID: ${customerId}. Detecting phone...`);
+
+        // Phase 1: Get the current user to find their phone number
+        const currentUser = await User.findById(customerId);
+        if (!currentUser) {
+            logToFile(`[DEBUG] ERROR: User not found for ID: ${customerId}`);
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!currentUser.phone) {
+            logToFile(`[DEBUG] WARNING: User ${customerId} has NO phone number. Fallback to ID search.`);
+            const orders = await Order.find({ customer: customerId }).sort({ createdAt: -1 });
+            return res.status(200).json(orders);
+        }
+
+        logToFile(`[DEBUG] Found phone: ${currentUser.phone} for account ${customerId}`);
+
+        // Phase 2: Find ALL user accounts associated with this phone number (normalize to last 10 digits)
+        const last10 = currentUser.phone.slice(-10);
+        const allUserAccounts = await User.find({ phone: new RegExp(last10 + '$') });
+        const accountIds = allUserAccounts.map(acc => acc._id);
+
+        logToFile(`[DEBUG] Cross-account search for ${last10}. Found ${accountIds.length} linked IDs.`);
+
+        // Phase 3: Fetch all orders for those accounts
+        const orders = await Order.find({ customer: { $in: accountIds } })
+            .populate('rider', 'displayName phone')
+            .populate('vendor', 'shopDetails phone address')
+            .sort({ createdAt: -1 });
+
+        logToFile(`[DEBUG] Orders found for ${currentUser.phone}: ${orders.length}`);
+
         res.status(200).json(orders);
     } catch (err) {
+        console.error('Fetch My Orders Error:', err);
         res.status(500).json({ message: 'Error fetching orders' });
     }
 };
@@ -205,9 +256,83 @@ export const updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
-        const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
-        res.status(200).json(order);
+        
+        const order = await Order.findById(id)
+            .populate('customer', 'displayName phone address location')
+            .populate('vendor', 'shopDetails address location');
+            
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        const updateData = { status };
+
+        if (status === 'Ready') {
+            console.log(`[LOGISTICS] Order ${order.orderId} marked as READY. Searching for delivery riders...`);
+            
+            // Delivery Phase: Start searching for riders from Vendor to Customer
+            // Fallback to dropLocation if vendor profile location is missing
+            const vLat = order.vendor?.location?.lat || 22.7984; // Default to test region if shop location is 0
+            const vLng = order.vendor?.location?.lng || 75.9225;
+
+            console.log(`[LOGISTICS] Provider (${order.vendor?.shopDetails?.name || 'Vendor'}) at ${vLat}, ${vLng}`);
+
+            const nearbyRiders = await getNearbyRiders(vLat, vLng, 4);
+            console.log(`[LOGISTICS] Found ${nearbyRiders.length} riders within 4km`);
+
+            updateData.nearbyRiders = nearbyRiders;
+            updateData.rider = null; // Open task for delivery rider
+            
+            // Generate deliveryOtp
+            updateData.deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+
+            const io = getIO();
+            
+            if (nearbyRiders.length > 0) {
+                // Notifications and Broadcast
+                nearbyRiders.forEach(rider => {
+                    const riderRoom = `user_${rider.id.toString()}`;
+                    const earnings = 20 + (parseFloat(rider.distance) * 5);
+                    
+                    console.log(`[LOGISTICS] Sending delivery broadcast to Room: ${riderRoom}`);
+                    
+                    // Socket broadcast for real-time card
+                    io.to(riderRoom).emit('new_pickup_broadcast', {
+                        orderId: order.orderId,
+                        mongoOrderId: id,
+                        mongoId: id,
+                        customerName: order.customer?.displayName || 'Customer',
+                        pickupAddress: order.vendor?.shopDetails?.address || order.vendor?.address || 'Vendor Shop',
+                        dropAddress: order.customer?.address || order.pickupAddress, 
+                        distance: rider.distance,
+                        earnings: earnings.toFixed(2),
+                        type: 'pickup_available'
+                    });
+                });
+
+                // Persistent Notifications
+                const riderNotifs = nearbyRiders.map(rider => ({
+                    recipient: rider.id,
+                    role: 'rider',
+                    title: 'New Delivery Task',
+                    message: `Pickup: ${order.vendor?.shopDetails?.address || 'Vendor'} | Drop: ${order.customer?.displayName}`,
+                    type: 'pickup_available',
+                    orderId: id
+                }));
+                await Notification.insertMany(riderNotifs);
+            }
+        }
+
+        const updatedOrder = await Order.findByIdAndUpdate(id, updateData, { new: true })
+            .populate('customer', 'displayName phone address email')
+            .populate('vendor', 'shopDetails address location')
+            .populate('rider', 'displayName phone location');
+            
+        // Socket.io: Notify Customer room
+        const io = getIO();
+        io.to(`order_${id}`).emit('order_status_update', updatedOrder);
+
+        res.status(200).json(updatedOrder);
     } catch (err) {
+        console.error('Update Status Error:', err);
         res.status(500).json({ message: 'Error updating order status' });
     }
 };
@@ -231,7 +356,7 @@ export const getRiderTasks = async (req, res) => {
             $or: [
                 { rider: rid },
                 { 
-                    status: { $in: ['Pending', 'Assigned'] }, 
+                    status: { $in: ['Assigned', 'Ready'] }, 
                     'nearbyRiders.id': rid 
                 }
             ]
@@ -245,6 +370,105 @@ export const getRiderTasks = async (req, res) => {
     }
 };
 
+export const getPoolOrders = async (req, res) => {
+    try {
+        const { vendorId } = req.query;
+        const vendor = await User.findById(vendorId);
+        if (!vendor) return res.status(404).json({ message: 'Vendor not found' });
+
+        const vLat = vendor.location?.lat || 0;
+        const vLng = vendor.location?.lng || 0;
+
+        // Find all Pending orders that have no vendor yet
+        const orders = await Order.find({ 
+            status: 'Pending', 
+            vendor: null 
+        }).populate('customer', 'displayName address location');
+        
+        const pool = orders.filter(order => {
+            if (!order.location?.lat) return false;
+            const dist = calculateHaversineDistance(vLat, vLng, order.location.lat, order.location.lng);
+            return dist <= 4; // 4km radius
+        }).map(o => ({
+            ...o._doc,
+            distance: calculateHaversineDistance(vLat, vLng, o.location.lat, o.location.lng).toFixed(2)
+        }));
+
+        res.status(200).json(pool);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching pool orders' });
+    }
+};
+
+export const vendorAcceptOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { vendorId } = req.body;
+        
+        const order = await Order.findById(id);
+        if (order.vendor) return res.status(400).json({ message: 'Order already accepted by another vendor' });
+
+        const pickupOtp = Math.floor(1000 + Math.random() * 9000).toString();
+        const updatedOrder = await Order.findByIdAndUpdate(
+            id, 
+            { vendor: vendorId, status: 'Assigned', pickupOtp }, 
+            { new: true }
+        ).populate('customer', 'displayName phone address location');
+
+        // Remove availability notifications for other vendors
+        await Notification.deleteMany({ orderId: id, type: 'order_available' });
+
+        // Notify nearby riders (within 4km as per user request)
+        const nearbyRiders = await getNearbyRiders(updatedOrder.pickupLocation.lat, updatedOrder.pickupLocation.lng, 4);
+        
+        const vendor = await User.findById(vendorId);
+
+        if (nearbyRiders.length > 0) {
+            const riderNotifs = nearbyRiders.map(rider => {
+                const earnings = 20 + (parseFloat(rider.distance) * 5); // Base 20 + 5/km
+                return {
+                    recipient: rider.id,
+                    role: 'rider',
+                    title: 'New Pickup Task',
+                    message: `Pickup: ${updatedOrder.pickupAddress} | Drop: ${vendor?.shopDetails?.address || 'Vendor'}`,
+                    type: 'order_placed',
+                    orderId: id
+                };
+            });
+            await Notification.insertMany(riderNotifs);
+        }
+
+        // Update nearby riders in order for dashboard listing
+        updatedOrder.nearbyRiders = nearbyRiders;
+        await updatedOrder.save();
+
+        // Socket.io updates
+        const io = getIO();
+        
+        // Notify all vendors that order is taken
+        io.emit('pool_update', { orderId: id, action: 'removed' }); 
+        
+        // Notify specific riders with EXTENDED DATA
+        nearbyRiders.forEach(rider => {
+            const earnings = 20 + (parseFloat(rider.distance) * 5);
+            io.to(`user_${rider.id}`).emit('new_pickup_broadcast', {
+                orderId: updatedOrder.orderId,
+                mongoOrderId: id,
+                customerName: updatedOrder.customer?.displayName || 'Customer',
+                pickupAddress: updatedOrder.pickupAddress,
+                dropAddress: vendor?.shopDetails?.address || vendor?.address || 'Vendor Shop',
+                distance: rider.distance,
+                earnings: earnings.toFixed(2)
+            });
+        });
+
+        res.status(200).json(updatedOrder);
+    } catch (err) {
+        console.error('Vendor Accept Error:', err);
+        res.status(500).json({ message: 'Error accepting order' });
+    }
+};
+
 export const acceptOrder = async (req, res) => {
     try {
         const { id } = req.params;
@@ -254,11 +478,21 @@ export const acceptOrder = async (req, res) => {
         const order = await Order.findById(id);
         if (order.rider) return res.status(400).json({ message: 'Order already accepted by another rider' });
 
+        // Determine new status: If it was Ready for delivery, it's now Out for Delivery
+        const newStatus = order.status === 'Ready' ? 'Out for Delivery' : 'Assigned';
+
         const updatedOrder = await Order.findByIdAndUpdate(
             id, 
-            { rider: riderId, status: 'Picked Up' }, 
+            { rider: riderId, status: newStatus }, 
             { new: true }
-        ).populate('customer', 'displayName phone address location');
+        )
+        .populate('customer', 'displayName phone address location')
+        .populate('rider', 'displayName phone location')
+        .populate('vendor', 'shopDetails address location');
+
+        // Socket.io: Notify Customer room
+        io.to(`order_${id}`).emit('order_status_update', updatedOrder);
+        io.emit('rider_pool_update', { orderId: id, action: 'removed' });
 
         res.status(200).json(updatedOrder);
     } catch (err) {
@@ -281,5 +515,88 @@ export const getRiderStats = async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ message: 'Error fetching rider stats' });
+    }
+};
+
+export const getOrderById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        let query = {};
+
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            query._id = id;
+        } else {
+            // Check for human-readable orderId (e.g. #SZ-8291)
+            const cleanId = id.startsWith('#') ? id : `#${id}`;
+            query.orderId = cleanId;
+        }
+
+        const order = await Order.findOne(query)
+            .populate('customer', 'displayName phone address email')
+            .populate('vendor', 'shopDetails phone')
+            .populate('rider', 'displayName phone');
+
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+        res.status(200).json(order);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching order details', error: err.message });
+    }
+};
+
+export const verifyPickupOtp = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { otp } = req.body;
+
+        const order = await Order.findById(id);
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        if (order.pickupOtp !== otp) {
+            return res.status(400).json({ message: 'Invalid OTP. Please check with customer.' });
+        }
+
+        order.status = 'Picked Up';
+        await order.save();
+        
+        const populatedOrder = await Order.findById(id)
+            .populate('customer', 'displayName phone address email')
+            .populate('vendor', 'shopDetails address location')
+            .populate('rider', 'displayName phone location');
+
+        const io = getIO();
+        io.to(`order_${id}`).emit('order_status_update', populatedOrder);
+
+        res.status(200).json({ message: 'Pickup verified and completed!', order: populatedOrder });
+    } catch (err) {
+        res.status(500).json({ message: 'Verification error', error: err.message });
+    }
+};
+
+export const verifyDeliveryOtp = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { otp } = req.body;
+
+        const order = await Order.findById(id);
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        if (order.deliveryOtp !== otp) {
+            return res.status(400).json({ message: 'Invalid OTP. Please check with customer.' });
+        }
+
+        order.status = 'Delivered';
+        await order.save();
+        
+        const populatedOrder = await Order.findById(id)
+            .populate('customer', 'displayName phone address email')
+            .populate('vendor', 'shopDetails address location')
+            .populate('rider', 'displayName phone location');
+
+        const io = getIO();
+        io.to(`order_${id}`).emit('order_status_update', populatedOrder);
+
+        res.status(200).json({ message: 'Delivery completed successfully!', order: populatedOrder });
+    } catch (err) {
+        res.status(500).json({ message: 'Verification error', error: err.message });
     }
 };
