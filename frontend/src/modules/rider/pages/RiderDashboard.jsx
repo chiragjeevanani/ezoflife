@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useNotificationStore from '../../../shared/stores/notificationStore';
 import { orderApi } from '../../../lib/api';
-import { socket, connectSocket, disconnectSocket } from '../../../lib/socket';
+import socket from '../../../lib/socket';
 
 const RiderDashboard = () => {
     const navigate = useNavigate();
@@ -40,7 +40,7 @@ const RiderDashboard = () => {
 
     useEffect(() => {
         fetchData();
-        connectSocket(riderId);
+        // Socket will connect automatically
         
         if (riderId) {
             console.log('🔗 [SOCKET_ROOM] Joining room:', `user_${riderId}`);
@@ -75,7 +75,7 @@ const RiderDashboard = () => {
             clearInterval(interval);
             socket.off('new_pickup_broadcast');
             socket.off('rider_pool_update');
-            disconnectSocket();
+            // socket handled by singleton
         };
     }, [riderId, fetchData, fetchNotifications]);
     
@@ -298,7 +298,15 @@ const RiderDashboard = () => {
                                         </button>
                                     ) : (
                                         <button className="px-5 py-2.5 bg-slate-950 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg shadow-black/10 flex items-center gap-2 transition-all active:scale-95">
-                                            Details <span className="material-symbols-outlined text-xs">arrow_forward_ios</span>
+                                            {task.status === 'Assigned' && 'Go to Pickup'}
+                                            {task.status === 'Picked Up' && 'Reach Shop'}
+                                            {task.status === 'In Progress' && 'Processing...'}
+                                            {task.status === 'Ready' && 'Out for Delivery'}
+                                            {task.status === 'Out for Delivery' && 'Verify Delivery'}
+                                            {task.status === 'Delivered' && 'Delivered'}
+                                            <span className="material-symbols-outlined text-xs">
+                                                {task.status === 'Delivered' ? 'verified' : 'arrow_forward_ios'}
+                                            </span>
                                         </button>
                                     )}
                                 </div>

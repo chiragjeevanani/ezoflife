@@ -1,16 +1,46 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { mediaApi } from '../../../lib/api';
+import toast from 'react-hot-toast';
 
 const AdvertiseWithUsPage = () => {
     const navigate = useNavigate();
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [mediaKit, setMediaKit] = useState(null);
+    const [isLoadingMedia, setIsLoadingMedia] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [formData, setFormData] = useState({ brandName: '', phone: '', budget: '', timeline: 'Launch Boost' });
+
+    useEffect(() => {
+        const fetchMedia = async () => {
+            try {
+                setIsLoadingMedia(true);
+                const latest = await mediaApi.getLatest();
+                if (latest) setMediaKit(latest);
+            } catch (err) {
+                console.error('Failed to load media kit:', err);
+            } finally {
+                setIsLoadingMedia(false);
+            }
+        };
+        fetchMedia();
+    }, []);
 
     const campaignTypes = useMemo(() => ['Launch Boost', 'Retainer', 'One-Off'], []);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitted(true);
+        try {
+            setSubmitting(true);
+            await mediaApi.submitInquiry(formData);
+            toast.success('Inquiry submitted!');
+            setIsSubmitted(true);
+        } catch (error) {
+            toast.error('Failed to submit. Try again.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const containerVariants = useMemo(() => ({
@@ -38,7 +68,7 @@ const AdvertiseWithUsPage = () => {
                         <span className="material-symbols-outlined text-xl">arrow_back</span>
                     </motion.button>
                     <div>
-                        <h1 className="text-2xl font-black tracking-tighter italic leading-none">Advertise</h1>
+                        <h1 className="text-2xl font-black tracking-tighter leading-none">Advertise</h1>
                         <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40 mt-1">Sponsorships & Media Kit</p>
                     </div>
                 </div>
@@ -55,9 +85,28 @@ const AdvertiseWithUsPage = () => {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl animate-pulse"></div>
                         <div className="relative z-10">
                             <span className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 block opacity-60">Reach 50k+ Active Users</span>
-                            <h2 className="text-4xl font-black tracking-tighter italic leading-none mb-6">Drive Impact with Spinzyt</h2>
-                            <button className="bg-white text-primary px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3">
-                                Download Media Kit
+                            <h2 className="text-4xl font-black tracking-tighter leading-none mb-6">Drive Impact with Spinzyt</h2>
+                            <button 
+                                onClick={() => {
+                                    if (mediaKit?.fileUrl) {
+                                        // Use noreferrer and noopener to bypass strict cross-origin isolation policies
+                                        const newWindow = window.open(mediaKit.fileUrl, '_blank', 'noreferrer,noopener');
+                                        if (!newWindow) {
+                                            // Fallback if popup is blocked
+                                            const link = document.createElement('a');
+                                            link.href = mediaKit.fileUrl;
+                                            link.target = '_blank';
+                                            link.rel = 'noopener noreferrer';
+                                            link.click();
+                                        }
+                                    } else {
+                                        toast.error('Media Kit is not available yet. Please contact support.');
+                                    }
+                                }}
+                                disabled={isLoadingMedia}
+                                className={`bg-white text-primary px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95 transition-all ${isLoadingMedia ? 'opacity-50' : 'opacity-100'}`}
+                            >
+                                {isLoadingMedia ? 'Syncing...' : 'Download Media Kit'}
                                 <span className="material-symbols-outlined text-sm">download</span>
                             </button>
                         </div>
@@ -79,29 +128,63 @@ const AdvertiseWithUsPage = () => {
                             className="bg-white p-10 rounded-[3rem] border border-outline-variant/10 shadow-lg space-y-10"
                         >
                             <header>
-                                <h3 className="text-2xl font-black tracking-tighter italic text-on-surface mb-2 leading-none">Campaign Inquiry</h3>
+                                <h3 className="text-2xl font-black tracking-tighter text-on-surface mb-2 leading-none">Campaign Inquiry</h3>
                                 <p className="text-[10px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest leading-none">Brief our advertising team.</p>
                             </header>
 
-                            <div className="space-y-6">
+                             <div className="space-y-6">
                                 <div>
                                     <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1">Brand Name</label>
                                     <div className="bg-surface-container-low rounded-3xl p-5 border border-slate-300 shadow-sm focus-within:bg-white transition-all">
-                                        <input required type="text" placeholder="e.g. Nike" className="w-full bg-transparent border-none focus:ring-0 p-0 text-md font-black placeholder:text-outline-variant/40" />
+                                        <input 
+                                            required 
+                                            type="text" 
+                                            placeholder="e.g. Nike" 
+                                            value={formData.brandName}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, brandName: e.target.value }))}
+                                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-md font-black placeholder:text-outline-variant/40" 
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1">Contact Number</label>
+                                    <div className="bg-surface-container-low rounded-3xl p-5 border border-slate-300 shadow-sm focus-within:bg-white transition-all">
+                                        <input 
+                                            required 
+                                            type="tel" 
+                                            placeholder="+91 99999 99999" 
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-md font-black placeholder:text-outline-variant/40" 
+                                        />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1">Monthly Budget (₹)</label>
                                     <div className="bg-surface-container-low rounded-3xl p-5 border border-slate-300 shadow-sm focus-within:bg-white transition-all flex items-center">
                                         <span className="text-on-surface font-black mr-2 opacity-50">₹</span>
-                                        <input required type="number" placeholder="50,000" className="w-full bg-transparent border-none focus:ring-0 p-0 text-md font-black placeholder:text-outline-variant/40" />
+                                        <input 
+                                            required 
+                                            type="number" 
+                                            placeholder="50,000" 
+                                            value={formData.budget}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
+                                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-md font-black placeholder:text-outline-variant/40" 
+                                        />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1">Campaign Timeline</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         {campaignTypes.map(type => (
-                                            <button type="button" key={type} className="px-5 py-4 border border-slate-300 rounded-2xl text-[10px] uppercase font-black tracking-widest hover:bg-primary/5 hover:border-primary/20 transition-all text-left">
+                                            <button 
+                                                type="button" 
+                                                key={type} 
+                                                onClick={() => setFormData(prev => ({ ...prev, timeline: type }))}
+                                                className={`px-5 py-4 border rounded-2xl text-[10px] uppercase font-black tracking-widest transition-all text-left ${
+                                                    formData.timeline === type ? 'bg-primary text-white border-primary' : 'bg-white border-slate-300 hover:bg-primary/5 hover:border-primary/20'
+                                                }`}
+                                            >
                                                 {type}
                                             </button>
                                         ))}
@@ -113,9 +196,10 @@ const AdvertiseWithUsPage = () => {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 type="submit"
-                                className="w-full py-5 bg-primary-gradient text-on-primary font-headline font-black rounded-2xl uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-primary/30"
+                                disabled={submitting}
+                                className={`w-full py-5 bg-primary-gradient text-on-primary font-black rounded-2xl uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-primary/30 ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                                Request Proposal
+                                {submitting ? 'Submitting...' : 'Request Proposal'}
                             </motion.button>
                         </motion.form>
                     ) : (
@@ -128,7 +212,7 @@ const AdvertiseWithUsPage = () => {
                             <div className="w-20 h-20 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-8 text-success border border-success/20">
                                 <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
                             </div>
-                            <h2 className="text-3xl font-black tracking-tighter mb-4 italic italic-primary leading-none">Campaign Slated</h2>
+                            <h2 className="text-3xl font-black tracking-tighter mb-4 leading-none">Campaign Slated</h2>
                             <p className="text-on-surface-variant text-sm font-bold opacity-60 leading-relaxed mb-10">Our advertising specialists will draft a tailored proposal and contact your team within 24 hours.</p>
                             <button 
                                 onClick={() => navigate('/user/home')}

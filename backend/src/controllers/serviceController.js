@@ -3,11 +3,22 @@ import Service from '../models/Service.js';
 // Get all services
 export const getAllServices = async (req, res) => {
     try {
-        const { approvedOnly } = req.query;
+        const { approvedOnly, vendorId } = req.query;
         let query = {};
         
         if (approvedOnly === 'true') {
             query.approvalStatus = 'Approved';
+        }
+
+        if (vendorId) {
+            // Get all Master services OR services belonging to this specific vendor
+            query = {
+                ...query,
+                $or: [
+                    { isMaster: true },
+                    { vendorId: vendorId }
+                ]
+            };
         }
 
         const services = await Service.find(query).sort({ createdAt: -1 });
@@ -27,7 +38,7 @@ export const createService = async (req, res) => {
         if (serviceData.vendorId) {
             serviceData.isMaster = false;
             serviceData.approvalStatus = 'Pending';
-            serviceData.status = 'Pending Approval';
+            serviceData.status = 'Inactive';
         } else {
             // Created by Admin
             serviceData.isMaster = true;

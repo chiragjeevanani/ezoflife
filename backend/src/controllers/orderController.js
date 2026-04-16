@@ -151,6 +151,8 @@ export const createOrder = async (req, res) => {
             dropAddress,
             dropLocation,
             totalAmount,
+            promoApplied: req.body.promoApplied || null,
+            discountAmount: req.body.discountAmount || 0,
             specialInstructions: specialInstructions || '',
             status: 'Pending'
         });
@@ -315,7 +317,15 @@ export const updateOrderStatus = async (req, res) => {
                     title: 'New Delivery Task',
                     message: `Pickup: ${order.vendor?.shopDetails?.address || 'Vendor'} | Drop: ${order.customer?.displayName}`,
                     type: 'pickup_available',
-                    orderId: id
+                    orderId: id,
+                    payload: {
+                        customer: order.customer?.displayName || 'Customer',
+                        from: order.vendor?.shopDetails?.address || order.vendor?.address || 'Vendor Shop',
+                        to: order.customer?.address || order.pickupAddress,
+                        dist: rider.distance,
+                        pay: (20 + (parseFloat(rider.distance) * 5)).toFixed(2),
+                        displayId: order.orderId
+                    }
                 }));
                 await Notification.insertMany(riderNotifs);
             }
@@ -432,7 +442,15 @@ export const vendorAcceptOrder = async (req, res) => {
                     title: 'New Pickup Task',
                     message: `Pickup: ${updatedOrder.pickupAddress} | Drop: ${vendor?.shopDetails?.address || 'Vendor'}`,
                     type: 'order_placed',
-                    orderId: id
+                    orderId: id,
+                    payload: {
+                        customer: updatedOrder.customer?.displayName || 'Customer',
+                        from: updatedOrder.pickupAddress,
+                        to: vendor?.shopDetails?.address || vendor?.address || 'Vendor Shop',
+                        dist: rider.distance,
+                        pay: earnings.toFixed(2),
+                        displayId: updatedOrder.orderId
+                    }
                 };
             });
             await Notification.insertMany(riderNotifs);
@@ -490,7 +508,11 @@ export const acceptOrder = async (req, res) => {
         .populate('rider', 'displayName phone location')
         .populate('vendor', 'shopDetails address location');
 
+        // Remove active task notifications for this order so it doesn't show as a broadcast anymore
+        await Notification.deleteMany({ orderId: id, role: 'rider' });
+
         // Socket.io: Notify Customer room
+        const io = getIO();
         io.to(`order_${id}`).emit('order_status_update', updatedOrder);
         io.emit('rider_pool_update', { orderId: id, action: 'removed' });
 
@@ -558,12 +580,17 @@ export const verifyPickupOtp = async (req, res) => {
         order.status = 'Picked Up';
         await order.save();
         
+        // Remove active task notifications for this order
+        await Notification.deleteMany({ orderId: id, role: 'rider' });
+
         const populatedOrder = await Order.findById(id)
             .populate('customer', 'displayName phone address email')
             .populate('vendor', 'shopDetails address location')
             .populate('rider', 'displayName phone location');
 
         const io = getIO();
+        // Notify others to remove this from their screen
+        io.emit('rider_pool_update', { orderId: id, action: 'removed' });
         io.to(`order_${id}`).emit('order_status_update', populatedOrder);
 
         res.status(200).json({ message: 'Pickup verified and completed!', order: populatedOrder });
@@ -586,6 +613,9 @@ export const verifyDeliveryOtp = async (req, res) => {
 
         order.status = 'Delivered';
         await order.save();
+
+        // Cleanup notifications
+        await Notification.deleteMany({ orderId: id, role: 'rider' });
         
         const populatedOrder = await Order.findById(id)
             .populate('customer', 'displayName phone address email')
@@ -593,10 +623,79 @@ export const verifyDeliveryOtp = async (req, res) => {
             .populate('rider', 'displayName phone location');
 
         const io = getIO();
+        // Cleanup for all riders
+        io.emit('rider_pool_update', { orderId: id, action: 'removed' });
         io.to(`order_${id}`).emit('order_status_update', populatedOrder);
 
         res.status(200).json({ message: 'Delivery completed successfully!', order: populatedOrder });
     } catch (err) {
         res.status(500).json({ message: 'Verification error', error: err.message });
+    }
+};
+
+export const deleteOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findByIdAndDelete(id);
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+        res.status(200).json({ message: 'Order deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error deleting order', error: err.message });
+    }
+};
+export const createWalkInOrder = async (req, res) => {
+    try {
+        const { customerPhone, items, totalAmount, vendorId } = req.body;
+
+        if (!customerPhone || !items || !vendorId) {
+            return res.status(400).json({ message: 'Missing required fields for walk-in order' });
+        }
+
+        // 1. Find or create a shadow user for this walk-in customer
+        let customer = await User.findOne({ phone: new RegExp(customerPhone.slice(-10) + '$') });
+        
+        if (!customer) {
+            customer = new User({
+                displayName: `Walk-In (${customerPhone.slice(-4)})`,
+                phone: customerPhone,
+                role: 'User',
+                status: 'approved'
+            });
+            await customer.save();
+        }
+
+        // 2. Create the order
+        const newOrder = new Order({
+            customer: customer._id,
+            vendor: vendorId,
+            items: items.map(item => ({
+                serviceId: item.serviceId || 'walkin',
+                name: item.name || item.title,
+                quantity: item.quantity || 1,
+                price: item.price,
+                unit: 'pc'
+            })),
+            status: 'In Progress', // Direct to progress
+            paymentStatus: 'Paid', // Assuming cash/direct payment for walk-in
+            totalAmount,
+            pickupAddress: 'Store Walk-In',
+            dropAddress: 'Store Pickup',
+            pickupLocation: { lat: 0, lng: 0 },
+            dropLocation: { lat: 0, lng: 0 }
+        });
+
+        await newOrder.save();
+        
+        // Notify the generated customer shadow account (optional)
+        const io = getIO();
+        io.to(`user_${customer._id}`).emit('new_order_available', {
+            orderId: newOrder._id,
+            displayId: newOrder.orderId
+        });
+
+        res.status(201).json(newOrder);
+    } catch (err) {
+        console.error('Walk-In Creation Error:', err);
+        res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 };

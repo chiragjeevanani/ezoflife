@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { materialApi } from '../../../lib/api';
+import { materialApi, laborApi } from '../../../lib/api';
+import toast from 'react-hot-toast';
 
 const B2BFulfillmentPage = () => {
     const navigate = useNavigate();
@@ -10,6 +11,7 @@ const B2BFulfillmentPage = () => {
     const [isRequesting, setIsRequesting] = useState(false);
 
     const [liveSupplies, setLiveSupplies] = useState([]);
+    const [liveLabor, setLiveLabor] = useState([]);
 
     const supplies = useMemo(() => liveSupplies.map(m => ({
         id: m._id,
@@ -20,10 +22,19 @@ const B2BFulfillmentPage = () => {
 
     const fetchMaterials = async () => {
         try {
-            const data = await materialApi.getAll();
-            setLiveSupplies(data);
+            const [materialsData, laborData] = await Promise.all([
+                materialApi.getAll(),
+                laborApi.getAll()
+            ]);
+            setLiveSupplies(materialsData);
+            setLiveLabor(laborData.map(l => ({
+                id: l._id,
+                title: l.name,
+                rate: l.rate,
+                icon: l.icon || 'person'
+            })));
         } catch (error) {
-            console.error('Fetch Materials Error:', error);
+            console.error('Fetch Data Error:', error);
         }
     };
 
@@ -31,10 +42,7 @@ const B2BFulfillmentPage = () => {
         fetchMaterials();
     }, []);
 
-    const labor = useMemo(() => [
-        { id: 'iron', title: 'Steam Specialist', rate: '₹600/shift', icon: 'iron' },
-        { id: 'del', title: 'Delivery Partner', rate: '₹45/drop', icon: 'local_shipping' }
-    ], []);
+    const labor = liveLabor;
 
     const total = cart.reduce((sum, item) => sum + (item.price || 0), 0);
 
@@ -58,7 +66,7 @@ const B2BFulfillmentPage = () => {
                         <span className="material-symbols-outlined text-xl">arrow_back</span>
                     </motion.button>
                     <div>
-                        <h1 className="text-2xl font-black tracking-tighter italic leading-none">Fulfillment</h1>
+                        <h1 className="text-2xl font-black tracking-tighter leading-none">Fulfillment</h1>
                         <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40 mt-1">Industrial Logistics Hub</p>
                     </div>
                 </div>
@@ -114,7 +122,7 @@ const B2BFulfillmentPage = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-sm font-black text-on-surface leading-none mb-1">{item.title}</h3>
-                                        <p className="text-[11px] font-black text-primary tracking-tight leading-none italic opacity-80">{item.price ? `₹${item.price}` : item.rate}</p>
+                                        <p className="text-[11px] font-black text-primary tracking-tight leading-none opacity-80">{item.price ? `₹${item.price}` : item.rate}</p>
                                     </div>
                                 </div>
                                 <motion.button
@@ -142,7 +150,33 @@ const B2BFulfillmentPage = () => {
                         </div>
                         <motion.button
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => { setIsRequesting(true); setTimeout(() => { setCart([]); setIsRequesting(false); navigate('/vendor/dashboard'); }, 2000); }}
+                            disabled={isRequesting}
+                            onClick={async () => { 
+                                try {
+                                    setIsRequesting(true);
+                                    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
+                                    
+                                    const requisitionData = {
+                                        vendorId: vendorData._id || vendorData.id || 'v1',
+                                        vendorName: vendorData.displayName || 'Spinzyt Partner',
+                                        items: cart.map(item => ({
+                                            specialistId: item.id,
+                                            name: item.title,
+                                            rate: item.rate || `₹${item.price}`
+                                        })),
+                                        totalAmount: total
+                                    };
+
+                                    await laborApi.createRequisition(requisitionData);
+                                    toast.success('Labor Request Placed! Admin notified.');
+                                    setCart([]);
+                                    setTimeout(() => navigate('/vendor/dashboard'), 1500);
+                                } catch (error) {
+                                    toast.error('Failed to place request');
+                                } finally {
+                                    setIsRequesting(false);
+                                }
+                            }}
                             className="flex-[2] py-5 bg-primary text-on-primary rounded-[2rem] font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
                         >
                             {isRequesting ? (

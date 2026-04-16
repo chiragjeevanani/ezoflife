@@ -268,7 +268,16 @@ const OrdersHistoryPage = () => {
                           <span className="material-symbols-outlined text-[14px]">download</span>
                           Invoice
                         </motion.button>
-
+                        {order.status === 'Delivered' && (
+                          <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate(`/user/feedback?orderId=${order._id}&vendorId=${order.vendor?._id || order.vendor}`)}
+                            className="bg-primary/20 text-primary px-5 py-3.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">star</span>
+                            Rate
+                          </motion.button>
+                        )}
                       </div>
                     </motion.div>
                   ))

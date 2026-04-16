@@ -102,7 +102,7 @@ export default function Services() {
 
   const handleApprove = async (id) => {
     try {
-        await serviceApi.update(id, { approvalStatus: 'Approved', status: 'Active' });
+        await serviceApi.update(id, { approvalStatus: 'Approved', status: 'Inactive' });
         await fetchServices();
         alert('Service approved successfully!');
     } catch (error) {

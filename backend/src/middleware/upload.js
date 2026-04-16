@@ -16,6 +16,7 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'ezoflife/vendor_documents',
     allowed_formats: ['jpg', 'png', 'jpeg', 'pdf'],
+    resource_type: 'raw', // Treat PDFs as raw files to avoid image security ACLs
     public_id: (req, file) => `${Date.now()}-${file.originalname.split('.')[0]}`
   }
 });

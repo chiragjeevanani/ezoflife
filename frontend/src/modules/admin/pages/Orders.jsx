@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, Search, Download, Filter, FileText, PlusCircle, ExternalLink, User, Store, Calendar, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Search, Download, Filter, FileText, PlusCircle, ExternalLink, User, Store, Calendar, ArrowRight, Eye, Edit3, Trash2 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { mockAdminData } from '../data/mockData';
 import PageHeader from '../components/common/PageHeader';
 import DataGrid from '../components/tables/DataGrid';
@@ -17,6 +19,7 @@ export default function Orders() {
 
   const fetchAllOrders = async () => {
     try {
+      setLoading(true);
       const res = await orderApi.getAllOrders();
       setAllOrders(res);
     } catch (err) {
@@ -24,6 +27,73 @@ export default function Orders() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteOrder = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    try {
+      await orderApi.deleteOrder(id);
+      setAllOrders(prev => prev.filter(order => order._id !== id));
+      alert('Order deleted successfully');
+    } catch (err) {
+      console.error('Delete order error:', err);
+      alert('Error deleting order');
+    }
+  };
+
+  const handleUpdateStatus = async (id, currentStatus) => {
+      const nextStatuses = ['Pending', 'Assigned', 'In Progress', 'Ready', 'Delivered', 'Cancelled'];
+      const newStatus = window.prompt(`Update status for order ${id}. Choices: ${nextStatuses.join(', ')}`, currentStatus);
+      
+      if (newStatus && nextStatuses.includes(newStatus)) {
+          try {
+              await orderApi.updateOrderStatus(id, newStatus);
+              setAllOrders(prev => prev.map(order => 
+                  order._id === id ? { ...order, status: newStatus } : order
+              ));
+              alert('Status updated');
+          } catch (err) {
+              console.error('Update status error:', err);
+              alert('Error updating status');
+          }
+      }
+  };
+
+  const handleExportPDF = () => {
+    console.log('Exporting PDF for:', activeTab);
+    const doc = new jsPDF();
+    
+    // Add Branding / Header
+    doc.setFontSize(20);
+    doc.text('EZOFLIFE - ORDER REPORT', 14, 22);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+    doc.text(`Category: ${activeTab} Orders`, 14, 35);
+    
+    // Prepare Table Data
+    const tableColumn = ["Order ID", "Customer", "Vendor", "Amount", "Status", "Date"];
+    const tableRows = filteredOrders.map(order => [
+      order.orderId || order._id.slice(-6).toUpperCase(),
+      order.customer?.displayName || 'Unknown',
+      order.vendor?.shopDetails?.shopName || 'N/A',
+      `Rs. ${order.totalAmount}`,
+      order.status,
+      new Date(order.createdAt).toLocaleDateString()
+    ]);
+    
+    // Generate Table
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 45,
+      styles: { fontSize: 8, font: 'helvetica' },
+      headStyles: { fillColor: [15, 23, 42], textColor: 255 }, // Slate-900
+      alternateRowStyles: { fillColor: [248, 250, 252] } // Slate-50
+    });
+    
+    doc.save(`EzofLife_Orders_${activeTab}_${new Date().getTime()}.pdf`);
+    console.log('PDF Download Started');
   };
 
   useEffect(() => {
@@ -85,6 +155,36 @@ export default function Orders() {
       header: 'Date', 
       key: 'createdAt', 
       render: (val) => <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest tabular-nums opacity-60 flex items-center gap-2"><ArrowRight size={10} className="text-slate-200" /> {new Date(val).toLocaleDateString()}</span> 
+    },
+    {
+      header: 'Actions',
+      key: '_id',
+      align: 'right',
+      render: (val, row) => (
+        <div className="flex items-center justify-end gap-2">
+          <button 
+            onClick={() => navigate(`/admin/orders/${val}`)}
+            className="p-1.5 hover:bg-slate-100 rounded-sm text-slate-400 hover:text-blue-600 transition-all"
+            title="View Details"
+          >
+            <Eye size={14} />
+          </button>
+          <button 
+            onClick={() => handleUpdateStatus(val, row.status)}
+            className="p-1.5 hover:bg-slate-100 rounded-sm text-slate-400 hover:text-amber-600 transition-all"
+            title="Update Status"
+          >
+            <Edit3 size={14} />
+          </button>
+          <button 
+            onClick={() => handleDeleteOrder(val)}
+            className="p-1.5 hover:bg-slate-100 rounded-sm text-slate-400 hover:text-red-600 transition-all"
+            title="Delete Order"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      )
     }
   ], []);
 
@@ -93,7 +193,7 @@ export default function Orders() {
       <PageHeader 
         title="Orders" 
         actions={[
-          { label: 'Export Order List', icon: FileText, variant: 'secondary' },
+          { label: 'Export Order List', icon: FileText, variant: 'secondary', onClick: handleExportPDF },
           { label: 'Create Manual Order', icon: PlusCircle, variant: 'primary' }
         ]}
       />

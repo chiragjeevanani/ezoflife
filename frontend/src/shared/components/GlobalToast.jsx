@@ -4,24 +4,62 @@ import useNotificationStore from '../stores/notificationStore';
 
 /**
  * Global Toast Manager (Phase 4 Requirement)
- * Provides tactile, ephemeral feedback for all 12 BRD-defined triggers.
+ * Provides tactile, ephemeral feedback for all triggers.
+ * PERSISTENT & SMART FIX: 
+ * 1. Uses localStorage to track processed IDs.
+ * 2. ONLY toasts notifications created in the last 15 seconds.
+ * 3. STRICT CHECK: If rawDate is missing or invalid, do not toast (prevents stale DB data from toasting).
  */
 const GlobalToast = () => {
     const notifications = useNotificationStore(state => state.notifications);
     const [activeToast, setActiveToast] = useState(null);
+    
+    const [lastShownId, setLastShownId] = useState(() => {
+        return localStorage.getItem('last_processed_toast_id') || null;
+    });
 
     useEffect(() => {
         if (notifications.length > 0) {
             const latest = notifications[0];
-            setActiveToast(latest);
             
-            const timer = setTimeout(() => {
-                setActiveToast(null);
-            }, 5000);
+            // 1. Check if ID is different from what we last showed
+            const isNewId = latest.id !== lastShownId;
+            
+            // 2. Freshness Check (STRICT)
+            // If rawDate is missing or ancient, it's likely a bulk DB fetch on refresh.
+            if (!latest.rawDate) {
+                // If it's a new ID but has no date, just mark it as seen and skip toast
+                if (isNewId) {
+                    setLastShownId(latest.id);
+                    localStorage.setItem('last_processed_toast_id', latest.id);
+                }
+                return;
+            }
 
-            return () => clearTimeout(timer);
+            const createdTime = new Date(latest.rawDate).getTime();
+            const now = Date.now();
+            const ageInSeconds = (now - createdTime) / 1000;
+            const isRecent = ageInSeconds < 15; // Only toast if within last 15 seconds
+
+            console.log(`[Toast Debug] ID: ${latest.id}, Age: ${ageInSeconds.toFixed(1)}s, New: ${isNewId}, Recent: ${isRecent}`);
+
+            if (isNewId && isRecent) {
+                setActiveToast(latest);
+                setLastShownId(latest.id);
+                localStorage.setItem('last_processed_toast_id', latest.id);
+                
+                const timer = setTimeout(() => {
+                    setActiveToast(null);
+                }, 5000);
+
+                return () => clearTimeout(timer);
+            } else if (isNewId) {
+                // Mark as seen so it doesn't trigger again, even if not recent
+                setLastShownId(latest.id);
+                localStorage.setItem('last_processed_toast_id', latest.id);
+            }
         }
-    }, [notifications]);
+    }, [notifications, lastShownId]);
 
     return (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[90%] md:max-w-md pointer-events-none">

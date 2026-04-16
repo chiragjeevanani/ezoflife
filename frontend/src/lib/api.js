@@ -229,6 +229,19 @@ export const orderApi = {
             throw error;
         }
     },
+    createWalkInOrder: async (orderData) => {
+        try {
+            const response = await fetch(`${BASE_URL}/orders/walk-in`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Create Walk-In Error:', error);
+            throw error;
+        }
+    },
     getMyOrders: async (customerId) => {
         try {
             const response = await fetch(`${BASE_URL}/orders/my?customerId=${customerId}`);
@@ -261,12 +274,24 @@ export const orderApi = {
         }
     },
     getAllOrders: async () => {
-        // Mock Admin Data
-        return [
-            { _id: '1', orderId: 'AD-MOCK-1', status: 'Assigned', totalAmount: 450, createdAt: new Date().toISOString(), customer: { displayName: 'John Doe' }, vendor: { shopDetails: { name: 'Main Laundry' } } },
-            { _id: '2', orderId: 'AD-MOCK-2', status: 'In Progress', totalAmount: 1200, createdAt: new Date().toISOString(), customer: { displayName: 'Jane Smith' }, vendor: { shopDetails: { name: 'Central Dry Clean' } } },
-            { _id: '3', orderId: 'AD-MOCK-3', status: 'Delivered', totalAmount: 300, createdAt: new Date().toISOString(), customer: { displayName: 'Bob Wilson' }, vendor: { shopDetails: { name: 'Quick Iron' } } }
-        ];
+        try {
+            const response = await fetch(`${BASE_URL}/orders/all`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get All Orders Error:', error);
+            throw error;
+        }
+    },
+    deleteOrder: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/orders/${id}`, {
+                method: 'DELETE'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete Order Error:', error);
+            throw error;
+        }
     },
     getRiderTasks: async (riderId) => {
         try {
@@ -309,6 +334,10 @@ export const orderApi = {
     getById: async (id) => {
         try {
             const response = await fetch(`${BASE_URL}/orders/${id}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to fetch order');
+            }
             return await response.json();
         } catch (error) {
             console.error('Get Order ID Error:', error);
@@ -567,6 +596,409 @@ export const ticketApi = {
             return await response.json();
         } catch (error) {
             console.error('Update Ticket Status Error:', error);
+            throw error;
+        }
+    }
+};
+
+export const faqApi = {
+    getAll: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/faqs`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get FAQs Error:', error);
+            throw error;
+        }
+    },
+    create: async (faqData) => {
+        try {
+            const response = await fetch(`${BASE_URL}/faqs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(faqData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Create FAQ Error:', error);
+            throw error;
+        }
+    },
+    delete: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/faqs/${id}`, {
+                method: 'DELETE'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete FAQ Error:', error);
+            throw error;
+        }
+    }
+};
+
+export const feedbackApi = {
+    submit: async (feedbackData) => {
+        try {
+            const response = await fetch(`${BASE_URL}/feedback/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(feedbackData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Submit Feedback Error:', error);
+            throw error;
+        }
+    },
+    getAll: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/feedback/all`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Feedbacks Error:', error);
+            throw error;
+        }
+    },
+    getByVendorId: async (vendorId) => {
+        try {
+            const response = await fetch(`${BASE_URL}/feedback/vendor/${vendorId}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Vendor Feedbacks Error:', error);
+            throw error;
+        }
+    },
+    delete: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/feedback/${id}`, {
+                method: 'DELETE'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete Feedback Error:', error);
+            throw error;
+        }
+    }
+};
+
+export const mediaApi = {
+    upload: async (formData) => {
+        try {
+            const response = await fetch(`${BASE_URL}/media/upload`, {
+                method: 'POST',
+                body: formData
+                // Note: Don't set Content-Type header manually for FormData, 
+                // fetch will set it with the correct boundary automatically.
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Media Upload Error:', error);
+            throw error;
+        }
+    },
+    getHistory: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/media/history`);
+            if (!response.ok) {
+                console.error(`HTTP error! status: ${response.status} at /media/history`);
+                return [];
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Get Media History Error:', error);
+            throw error;
+        }
+    },
+    getLatest: async () => {
+        try {
+            // Add timestamp to bypass potential browser caching of old Cloudinary links
+            const response = await fetch(`${BASE_URL}/media/latest?t=${Date.now()}`);
+            if (!response.ok) {
+                console.error(`HTTP error! status: ${response.status} at /media/latest`);
+                return null;
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Get Latest Media Error:', error);
+            throw error;
+        }
+    },
+    submitInquiry: async (data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/media/inquiry`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Submit Inquiry Error:', error);
+            throw error;
+        }
+    },
+    getAllInquiries: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/media/inquiries`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get All Inquiries Error:', error);
+            throw error;
+        }
+    },
+};
+
+export const partnershipApi = {
+    submit: async (data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/partnerships/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Partnership Submit Error:', error);
+            throw error;
+        }
+    },
+    getAll: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/partnerships/all`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Partnerships Error:', error);
+            throw error;
+        }
+    }
+};
+
+export const laborApi = {
+    add: async (data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/labor/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Add Labor Error:', error);
+            throw error;
+        }
+    },
+    getAll: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/labor/all`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Labor Error:', error);
+            throw error;
+        }
+    },
+    delete: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/labor/${id}`, {
+                method: 'DELETE'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete Labor Error:', error);
+            throw error;
+        }
+    },
+    // Requisitions
+    createRequisition: async (data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/labor/place-request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Create Requisition Error:', error);
+            throw error;
+        }
+    },
+    getAllRequisitions: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/labor/active-requests`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Requests Error:', error);
+            throw error;
+        }
+    },
+    assignRequisition: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/labor/place-request/${id}/assign`, {
+                method: 'PATCH'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Assign Requisition Error:', error);
+            throw error;
+        }
+    }
+};
+
+export const promotionApi = {
+    create: async (data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/promotions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Create Promo Error:', error);
+            throw error;
+        }
+    },
+    getVendorPromos: async (vendorId) => {
+        try {
+            const response = await fetch(`${BASE_URL}/promotions/vendor?vendorId=${vendorId}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Vendor Promos Error:', error);
+            throw error;
+        }
+    },
+    getApplicablePromos: async (vendorId) => {
+        try {
+            const response = await fetch(`${BASE_URL}/promotions/applicable?vendorId=${vendorId}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Applicable Promos Error:', error);
+            throw error;
+        }
+    },
+    toggleStatus: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/promotions/${id}/toggle`, { method: 'PATCH' });
+            return await response.json();
+        } catch (error) {
+            console.error('Toggle Promo Error:', error);
+            throw error;
+        }
+    },
+    delete: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/promotions/${id}`, { method: 'DELETE' });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete Promo Error:', error);
+            throw error;
+        }
+    }
+};
+
+export const jobApi = {
+    create: async (data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Create Job Error:', error);
+            throw error;
+        }
+    },
+    getVendorJobs: async (vendorId) => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/vendor?vendorId=${vendorId}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Vendor Jobs Error:', error);
+            throw error;
+        }
+    },
+    getAdminAll: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/admin/all`);
+            return await response.json();
+        } catch (error) {
+            console.error('Admin Jobs Error:', error);
+            throw error;
+        }
+    },
+    getApproved: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/approved`);
+            return await response.json();
+        } catch (error) {
+            console.error('Approved Jobs Error:', error);
+            throw error;
+        }
+    },
+    updateStatus: async (id, status) => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Update Job Status Error:', error);
+            throw error;
+        }
+    },
+    delete: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/${id}`, { method: 'DELETE' });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete Job Error:', error);
+            throw error;
+        }
+    },
+    apply: async (data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/apply`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Job Apply Error:', error);
+            throw error;
+        }
+    },
+    getAdminApplications: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/admin/applications`);
+            return await response.json();
+        } catch (error) {
+            console.error('Admin Applications Error:', error);
+            throw error;
+        }
+    },
+    updateApplicationStatus: async (id, status) => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/applications/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Update Application Status Error:', error);
+            throw error;
+        }
+    },
+    deleteApplication: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/applications/${id}`, { method: 'DELETE' });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete Application Error:', error);
             throw error;
         }
     }

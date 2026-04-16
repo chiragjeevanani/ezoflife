@@ -1,10 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Bell, Menu, User, Calendar, Home, ChevronRight, Globe, LifeBuoy } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { notificationApi } from '../../../../lib/api';
+import toast from 'react-hot-toast';
+import socket from '../../../../lib/socket';
 
 export default function TopBar() {
     const location = useLocation();
+    const navigate = useNavigate();
     const pathParts = location.pathname.split('/').filter(p => p !== '');
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const fetchNotifications = async () => {
+        try {
+            const data = await notificationApi.getNotifications('66112c3f8e4b8a2e5c8b4568', 'admin');
+            if (Array.isArray(data)) {
+                setUnreadCount(data.filter(n => !n.isRead).length);
+            }
+        } catch (error) {
+            console.error('Fetch Notif Error:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+        
+        // Listen for real-time notifications
+        socket.on('new_notification', (data) => {
+            console.log('⚡ Real-time notification received:', data);
+            if (data.role === 'admin') {
+                setUnreadCount(prev => prev + 1);
+                toast.success('New Labor Requisition!', {
+                    icon: '🔔',
+                    style: {
+                        borderRadius: '16px',
+                        background: '#0f172a',
+                        color: '#fff',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase'
+                    }
+                });
+            }
+        });
+
+        return () => {
+            socket.off('new_notification');
+        };
+    }, []);
 
     return (
         <header className="h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-40 transition-all duration-300">
@@ -13,17 +56,17 @@ export default function TopBar() {
                 <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 tracking-[0.2em] border-r border-slate-100 pr-5">
                     <Home size={12} className="text-slate-900" />
                     <ChevronRight size={10} />
-                    <span className="text-slate-900 uppercase">SPINZYT ADMIN</span>
+                    <span className="text-slate-900 uppercase tracking-tighter">SPINZYT ADMIN</span>
                     {pathParts.slice(1).map((part, i) => (
                         <React.Fragment key={part}>
                             <ChevronRight size={10} />
-                            <span className="text-slate-400 uppercase transition-colors hover:text-slate-900 cursor-pointer">
+                            <span className="text-slate-500 uppercase transition-colors hover:text-slate-900 cursor-pointer text-[9px] font-black">
                                 {part.replace('-', ' ')}
                             </span>
                         </React.Fragment>
                     ))}
                 </div>
-                <h1 className="text-[13px] font-bold text-slate-900 uppercase tracking-tight tabular-nums leading-none">
+                <h1 className="text-[12px] font-black text-slate-900 uppercase tracking-tight tabular-nums leading-none">
                     {pathParts[pathParts.length - 1]?.replace('-', ' ') || 'Insights Dashboard'}
                 </h1>
             </div>
@@ -42,9 +85,17 @@ export default function TopBar() {
 
                 <div className="flex items-center gap-2">
                     <div className="h-6 w-px bg-slate-200 mx-2" />
-                    <button className="w-9 h-9 flex items-center justify-center rounded-sm bg-slate-50 text-slate-400 hover:text-slate-900 transition-all relative border border-slate-100 group">
-                        <Bell size={16} className="group-hover:animate-shake" />
-                        <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full border border-white" />
+                    <button 
+                        onClick={() => navigate('/admin/notifications')}
+                        className="w-9 h-9 flex items-center justify-center rounded-sm bg-slate-50 text-slate-400 hover:text-slate-900 transition-all relative border border-slate-100 group shadow-sm hover:shadow-md"
+                    >
+                        <Bell size={16} className={unreadCount > 0 ? "animate-bounce text-slate-900" : "group-hover:animate-shake"} />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-2 right-2 flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 border border-white"></span>
+                            </span>
+                        )}
                     </button>
                     
                     <button className="w-9 h-9 flex items-center justify-center rounded-sm bg-slate-50 text-slate-400 hover:text-slate-900 transition-all relative border border-slate-100 group">

@@ -33,7 +33,7 @@ const MoreMenuPage = () => {
         { icon: "account_balance_wallet", title: "My Wallet", desc: "Credits & History", path: "/user/profile/wallet" },
         { icon: "help_center", title: "Help Center", desc: "Guides & Tutorials", path: "/user/support" },
         { icon: "quiz", title: "FAQs", desc: "Instant Answers", path: "/user/faq" },
-        { icon: "rate_review", title: "Drop Feedback", desc: "Improve the experience", path: "/user/review" }
+        { icon: "rate_review", title: "Drop Feedback", desc: "Improve the experience", path: "/user/feedback" }
       ]
     },
     {

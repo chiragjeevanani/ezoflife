@@ -180,7 +180,7 @@ const OrderDetails = () => {
                             <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-on-surface-variant opacity-60">Order Items</h3>
                         </div>
                         <div className="p-5 space-y-4">
-                            {order.items.map((item, i) => (
+                            {order.items?.map((item, i) => (
                                 <div key={i} className="flex justify-between items-center group">
                                     <div className="grow">
                                         <p className="font-bold text-on-surface leading-tight">{item.name}</p>

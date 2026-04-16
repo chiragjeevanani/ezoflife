@@ -26,7 +26,11 @@ import {
     Home,
     Bike,
     ShieldAlert,
-    Layers
+    Layers,
+    MessageSquare,
+    Handshake,
+    Bell,
+    Briefcase
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -42,6 +46,11 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
                 { icon: ShoppingBag, label: 'Orders', path: '/admin/orders' },
                 { icon: Bike, label: 'Fleet Management', path: '/admin/riders' },
                 { icon: HelpCircle, label: 'Help Desk', path: '/admin/help-desk' },
+                { icon: MessageSquare, label: 'FAQ Manager', path: '/admin/faqs' },
+                { icon: UserCircle, label: 'User Feedback', path: '/admin/feedback' },
+                { icon: Bell, label: 'Notifications', path: '/admin/notifications' },
+                { icon: Monitor, label: 'Media Kit', path: '/admin/media' },
+                { icon: Handshake, label: 'Partnerships', path: '/admin/partnerships' },
             ]
         },
         {
@@ -62,6 +71,8 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
             group: 'Core Assets', items: [
                 { icon: Package, label: 'Services', path: '/admin/services' },
                 { icon: Layers, label: 'Material Catalog', path: '/admin/materials' },
+                { icon: UserCircle, label: 'Labor Manager', path: '/admin/labor' },
+                { icon: Briefcase, label: 'Career Center', path: '/admin/careers' },
                 { icon: ShieldAlert, label: 'Dispute Center', path: '/admin/dispute-center' },
             ]
         },

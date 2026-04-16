@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { orderApi } from '../../../lib/api';
-import { socket, connectSocket, disconnectSocket } from '../../../lib/socket';
+import socket from '../../../lib/socket';
 
 const OrderTrackingPage = () => {
   const { id } = useParams();
@@ -31,9 +31,6 @@ const OrderTrackingPage = () => {
     fetchOrder();
 
     // Socket.io Real-time Setup
-    const customerId = localStorage.getItem('userId');
-    connectSocket(customerId);
-    
     // Join a specific room for this order
     socket.emit('join_room', `order_${id}`);
 
@@ -46,7 +43,6 @@ const OrderTrackingPage = () => {
 
     return () => {
       socket.off('order_status_update', handleStatusUpdate);
-      disconnectSocket();
     };
   }, [id]);
 

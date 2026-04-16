@@ -19,7 +19,14 @@ const useNotificationStore = create((set, get) => ({
                 orderId: n.orderId,
                 read: n.isRead,
                 timestamp: new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                persona: n.role
+                rawDate: n.createdAt,
+                persona: n.role,
+                customer: n.payload?.customer,
+                from: n.payload?.from,
+                to: n.payload?.to,
+                dist: n.payload?.dist,
+                pay: n.payload?.pay,
+                displayId: n.payload?.displayId
             }));
             
             set({ 
@@ -70,6 +77,7 @@ const useNotificationStore = create((set, get) => ({
             message,
             read: false,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            rawDate: new Date().toISOString(),
             persona: role,
             ...extraData
         };

@@ -86,6 +86,15 @@ const orderSchema = new mongoose.Schema({
     deliveryOtp: {
         type: String,
         default: null
+    },
+    promoApplied: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Promotion',
+        default: null
+    },
+    discountAmount: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 

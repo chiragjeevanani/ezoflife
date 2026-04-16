@@ -12,13 +12,16 @@ import {
     getOrderById,
     vendorAcceptOrder,
     getPoolOrders,
-    verifyDeliveryOtp
+    verifyDeliveryOtp,
+    deleteOrder,
+    createWalkInOrder
 } from '../controllers/orderController.js';
 
 const router = express.Router();
 
 // Create new order
 router.post('/', createOrder);
+router.post('/walk-in', createWalkInOrder);
 
 // Get my orders (Customer)
 router.get('/my', getMyOrders);
@@ -40,6 +43,7 @@ router.get('/rider-stats/:riderId', getRiderStats);
 
 // Admin: Get all orders
 router.get('/all', getAllOrders);
+router.delete('/:id', deleteOrder);
 
 // Specific order by ID (Must be at the bottom)
 router.get('/:id', getOrderById);

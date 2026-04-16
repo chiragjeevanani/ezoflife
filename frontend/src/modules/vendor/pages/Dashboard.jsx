@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import VendorHeader from '../components/VendorHeader';
 import { orderApi } from '../../../lib/api';
 import useNotificationStore from '../../../shared/stores/notificationStore';
-import { socket, connectSocket, disconnectSocket } from '../../../lib/socket';
+import socket from '../../../lib/socket';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -12,7 +12,6 @@ const Dashboard = () => {
     const [isOnline, setIsOnline] = useState(true);
     const [allOrders, setAllOrders] = useState([]);
     const [poolOrders, setPoolOrders] = useState([]);
-    const [incomingRequest, setIncomingRequest] = useState(null);
     const [loading, setLoading] = useState(true);
     const [acceptingId, setAcceptingId] = useState(null);
     const { fetchNotifications, addNotification } = useNotificationStore();
@@ -56,7 +55,7 @@ const Dashboard = () => {
         if (!vendorId) return;
 
         fetchAllData();
-        connectSocket(vendorId);
+        // Socket will connect automatically
 
         socket.on('pool_update', (data) => {
             if (data.action === 'removed') {
@@ -71,7 +70,7 @@ const Dashboard = () => {
         return () => {
             clearInterval(interval);
             socket.off('pool_update');
-            disconnectSocket();
+            // socket handled by singleton
         };
     }, [vendorId]);
 
@@ -83,10 +82,23 @@ const Dashboard = () => {
         };
     }, [allOrders]);
 
+    const dailyEarnings = useMemo(() => {
+        const today = new Date().setHours(0, 0, 0, 0);
+        return allOrders
+            .filter(o => new Date(o.createdAt).getTime() >= today && o.status === 'Delivered')
+            .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+    }, [allOrders]);
+
     const dashboardStats = useMemo(() => [
-        { label: 'Earnings Today', value: '₹0', change: 'Keep it up!', trend: 'up', variant: 'surface' },
+        { 
+            label: 'Earnings Today', 
+            value: `₹${dailyEarnings.toLocaleString()}`, 
+            change: dailyEarnings > 0 ? 'Trending Up' : 'No sales yet', 
+            trend: 'up', 
+            variant: 'surface' 
+        },
         { label: 'Process Queue', value: categorizedOrders['In Progress'].length.toString().padStart(2, '0'), subValue: `${categorizedOrders['Ready'].length} Ready for Delivery`, variant: 'primary' }
-    ], [categorizedOrders]);
+    ], [categorizedOrders, dailyEarnings]);
 
     const [selectedOrderForReady, setSelectedOrderForReady] = useState(null);
 
@@ -147,7 +159,7 @@ const Dashboard = () => {
                                 <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary mb-4">
                                     <span className="material-symbols-outlined text-[24px]">task_alt</span>
                                 </div>
-                                <h3 className="text-2xl font-black text-on-surface tracking-tighter italic">Ready for Handover?</h3>
+                                <h3 className="text-2xl font-black text-on-surface tracking-tighter">Ready for Handover?</h3>
                                 <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest leading-loose">
                                     Confirming order <span className="text-primary">#{selectedOrderForReady.id}</span> will notify the next available rider for immediate pickup.
                                 </p>
@@ -307,6 +319,16 @@ const Dashboard = () => {
                                 <span className="material-symbols-outlined text-xl">inventory_2</span>
                             </div>
                             <span className="text-[8px] font-black uppercase tracking-widest leading-none text-center">Supply</span>
+                        </motion.button>
+                        <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate('/vendor/jobs')}
+                            className="bg-white p-4 rounded-3xl border border-slate-300 shadow-sm flex flex-col items-center gap-2 hover:border-primary/30 transition-all"
+                        >
+                            <div className="w-10 h-10 rounded-2xl bg-amber-500/5 flex items-center justify-center text-amber-500">
+                                <span className="material-symbols-outlined text-xl">work</span>
+                            </div>
+                            <span className="text-[8px] font-black uppercase tracking-widest leading-none text-center">Jobs</span>
                         </motion.button>
                     </div>
                 </section>

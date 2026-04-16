@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import VendorBottomNav from '../components/VendorBottomNav';
-import { socket, connectSocket, disconnectSocket } from '../../../lib/socket';
+import socket from '../../../lib/socket';
 import { orderApi } from '../../../lib/api';
 import useNotificationStore from '../../../shared/stores/notificationStore';
+import useVendorOrderStore from '../../../shared/stores/vendorOrderStore';
 
 const VendorLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [incomingRequest, setIncomingRequest] = useState(null);
+  const { incomingRequest, setIncomingRequest, clearIncomingRequest } = useVendorOrderStore();
   const [acceptingId, setAcceptingId] = useState(null);
   const { addNotification } = useNotificationStore();
 
@@ -40,30 +41,35 @@ const VendorLayout = () => {
       }
     };
 
+    const handleNewNotification = (data) => {
+        console.log('⚡ Vendor Socket: New notification received', data);
+        if (data.role === 'vendor' || data.recipient === vendorId) {
+            addNotification(
+                data.notification.type || 'info',
+                data.notification.title,
+                data.notification.message,
+                'vendor',
+                { id: data.notification._id }
+            );
+        }
+    };
+
     const joinRooms = () => {
-      connectSocket(vendorId);
+      // Socket will connect automatically
       socket.emit('join_room', 'vendors_pool');
+      if (vendorId) {
+          socket.emit('join_room', `user_${vendorId}`);
+      }
     };
 
     joinRooms();
 
-    const showConnectToast = () => {
-      if (!hasShowedToast.current) {
-        addNotification('order_available', '⚡ Order Engine Live', 'Real-time requests are now active.', 'vendor');
-        hasShowedToast.current = true;
-      }
-    };
-
-    if (socket.connected) {
-      showConnectToast();
-    }
-
-    socket.on('connect', showConnectToast);
     socket.on('new_order_available', handleNewOrder);
+    socket.on('new_notification', handleNewNotification);
 
     return () => {
-      socket.off('connect', showConnectToast);
       socket.off('new_order_available', handleNewOrder);
+      socket.off('new_notification', handleNewNotification);
     };
   }, [vendorId]);
 
@@ -71,7 +77,7 @@ const VendorLayout = () => {
     try {
       setAcceptingId(orderId);
       await orderApi.vendorAcceptOrder(orderId, vendorId);
-      setIncomingRequest(null);
+      clearIncomingRequest();
       // Directly navigate to the order details page where address/phone are shown
       navigate(`/vendor/order/${orderId}`);
     } catch (err) {
@@ -113,7 +119,7 @@ const VendorLayout = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-[#0a0f18]/90 backdrop-blur-xl"
-              onClick={() => setIncomingRequest(null)}
+              onClick={() => clearIncomingRequest()}
             />
             <motion.div
               initial={{ scale: 0.85, opacity: 0, y: 100 }}
@@ -131,7 +137,7 @@ const VendorLayout = () => {
                     <span className="material-symbols-outlined text-4xl animate-pulse">notifications_active</span>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">New Request</h3>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">New Request</h3>
                     <p className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase mt-1 text-[#73e0c9]">Immediate Acceptance</p>
                   </div>
                 </div>
@@ -171,7 +177,7 @@ const VendorLayout = () => {
                       <span className="material-symbols-outlined text-sm text-amber-500">sticky_note_2</span>
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Special Instruction</p>
                     </div>
-                    <p className="text-sm font-semibold text-slate-700 leading-relaxed italic">
+                    <p className="text-sm font-semibold text-slate-700 leading-relaxed">
                       {incomingRequest.specialInstructions || '"No special notes from customer"'}
                     </p>
                   </div>
@@ -188,7 +194,7 @@ const VendorLayout = () => {
                     <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
                   </button>
                   <button
-                    onClick={() => setIncomingRequest(null)}
+                    onClick={() => clearIncomingRequest()}
                     className="w-full py-4 rounded-[1.5rem] bg-slate-100 text-slate-400 font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
                   >
                     Not Now

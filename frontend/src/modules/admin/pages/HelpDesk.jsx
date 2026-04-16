@@ -87,14 +87,16 @@ export default function HelpDesk() {
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-64px)] bg-slate-50/50 pb-20">
-      <PageHeader 
-        title="Help Desk" 
-        actions={[
-          { label: 'Refresh Feed', icon: Clock, variant: 'secondary', onClick: fetchAllTickets },
-          { label: 'Compose Broadcast', icon: MessageSquare, variant: 'primary' }
-        ]}
-      />
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-50/50 overflow-hidden">
+      <div className="flex-shrink-0">
+        <PageHeader 
+          title="Help Desk" 
+          actions={[
+            { label: 'Refresh Feed', icon: Clock, variant: 'secondary', onClick: fetchAllTickets },
+            { label: 'Compose Broadcast', icon: MessageSquare, variant: 'primary' }
+          ]}
+        />
+      </div>
 
       <div className="flex flex-1 overflow-hidden divide-x divide-slate-200 bg-white border-t border-slate-200">
         
@@ -223,22 +225,22 @@ export default function HelpDesk() {
               </div>
 
               {/* Input Area */}
-              <div className="p-8 bg-white border-t border-slate-100">
+              <div className="p-6 bg-white border-t border-slate-100">
                  <div className="relative">
                     <textarea 
                       placeholder="ENTER PROTOCOL RESPONSE..." 
-                      className="w-full h-24 p-6 bg-slate-50 border border-slate-200 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none focus:bg-white focus:border-slate-900 transition-all resize-none"
+                      className="w-full h-20 p-5 bg-slate-50 border border-slate-200 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none focus:bg-white focus:border-slate-900 transition-all resize-none"
                       value={adminMessage}
                       onChange={(e) => setAdminMessage(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendAdminReply()}
                     />
-                    <div className="absolute bottom-4 right-4 flex gap-2">
+                    <div className="absolute bottom-3 right-3 flex gap-2">
                        <button 
                         onClick={handleSendAdminReply}
                         disabled={isSending || !adminMessage.trim()}
-                        className="px-6 py-2 bg-slate-900 text-white rounded-[1px] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/20 flex items-center gap-2 disabled:opacity-50"
+                        className="px-5 py-1.5 bg-slate-900 text-white rounded-[1px] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/20 flex items-center gap-2 disabled:opacity-50 transition-all"
                        >
-                          {isSending ? 'Committing...' : 'Commit Msg'} <Send size={12} />
+                          {isSending ? 'Committing...' : 'Commit Msg'} <Send size={11} />
                        </button>
                     </div>
                  </div>

@@ -219,7 +219,7 @@ const TaskDetails = () => {
                                 </div>
                                 
                                 <div className="divide-y divide-slate-50">
-                                    {task.items.map((item, idx) => {
+                                    {task.items?.map((item, idx) => {
                                         const itemId = item._id || idx;
                                         const isKg = item.unit === 'kg';
                                         const targetCount = isKg ? item.clothCount : item.quantity;

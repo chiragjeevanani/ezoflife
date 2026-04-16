@@ -1,10 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { partnershipApi } from '../../../lib/api';
+import toast from 'react-hot-toast';
 
 const PartnershipInquiryPage = () => {
     const navigate = useNavigate();
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [formData, setFormData] = useState({
+        companyName: '',
+        email: '',
+        partnershipType: 'Logistics',
+        proposal: ''
+    });
 
     const partnershipTypes = useMemo(() => ['Logistics', 'Supplies', 'Marketing', 'Technology'], []);
 
@@ -21,9 +30,18 @@ const PartnershipInquiryPage = () => {
         visible: { y: 0, opacity: 1, transition: { duration: 0.4 } }
     }), []);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitted(true);
+        try {
+            setSubmitting(true);
+            await partnershipApi.submit(formData);
+            toast.success('Proposal submitted successfully!');
+            setIsSubmitted(true);
+        } catch (error) {
+            toast.error('Failed to submit proposal.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -38,7 +56,7 @@ const PartnershipInquiryPage = () => {
                         <span className="material-symbols-outlined text-xl">arrow_back</span>
                     </motion.button>
                     <div>
-                        <h1 className="text-2xl font-black tracking-tighter italic leading-none">Partnerships</h1>
+                        <h1 className="text-2xl font-black tracking-tighter leading-none">Partnerships</h1>
                         <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40 mt-1">Industrial & B2B Inquiries</p>
                     </div>
                 </div>
@@ -65,20 +83,41 @@ const PartnershipInquiryPage = () => {
                                 <div>
                                     <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1">Company / Individual Name</label>
                                     <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                                        <input required type="text" placeholder="e.g. Acme Logistics" className="w-full bg-transparent border-none focus:ring-0 p-0 text-md font-black placeholder:text-outline-variant/40" />
+                                        <input 
+                                            required 
+                                            type="text" 
+                                            placeholder="e.g. Acme Logistics" 
+                                            value={formData.companyName}
+                                            onChange={(e) => setFormData(p => ({ ...p, companyName: e.target.value }))}
+                                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-md font-black placeholder:text-outline-variant/40" 
+                                        />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1">Contact Email</label>
                                     <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                                        <input required type="email" placeholder="partnership@company.com" className="w-full bg-transparent border-none focus:ring-0 p-0 text-md font-black placeholder:text-outline-variant/40" />
+                                        <input 
+                                            required 
+                                            type="email" 
+                                            placeholder="partnership@company.com" 
+                                            value={formData.email}
+                                            onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))}
+                                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-md font-black placeholder:text-outline-variant/40" 
+                                        />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1">Partnership Type</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         {partnershipTypes.map(type => (
-                                            <button type="button" key={type} className="px-5 py-4 border border-slate-300 rounded-2xl text-[10px] uppercase font-black tracking-widest hover:bg-primary/5 hover:border-primary/20 transition-all">
+                                            <button 
+                                                type="button" 
+                                                key={type} 
+                                                onClick={() => setFormData(p => ({ ...p, partnershipType: type }))}
+                                                className={`px-5 py-4 border rounded-2xl text-[10px] uppercase font-black tracking-widest transition-all ${
+                                                    formData.partnershipType === type ? 'bg-primary text-white border-primary' : 'bg-white border-slate-300 hover:bg-primary/5 hover:border-primary/20'
+                                                }`}
+                                            >
                                                 {type}
                                             </button>
                                         ))}
@@ -87,7 +126,14 @@ const PartnershipInquiryPage = () => {
                                 <div>
                                     <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1">Brief Proposal</label>
                                     <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                                        <textarea rows={4} placeholder="How can we grow together?" className="w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-bold placeholder:text-outline-variant/40 resize-none" />
+                                        <textarea 
+                                            required
+                                            rows={4} 
+                                            placeholder="How can we grow together?" 
+                                            value={formData.proposal}
+                                            onChange={(e) => setFormData(p => ({ ...p, proposal: e.target.value }))}
+                                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-bold placeholder:text-outline-variant/40 resize-none" 
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -96,9 +142,10 @@ const PartnershipInquiryPage = () => {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 type="submit"
-                                className="w-full py-5.5 bg-primary-gradient text-on-primary font-headline font-black rounded-2xl uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/30"
+                                disabled={submitting}
+                                className={`w-full py-5.5 bg-primary-gradient text-on-primary font-headline font-black rounded-2xl uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/30 ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                                Submit Inquiry
+                                {submitting ? 'Submitting...' : 'Submit Inquiry'}
                             </motion.button>
                         </motion.form>
                     ) : (
@@ -111,7 +158,7 @@ const PartnershipInquiryPage = () => {
                             <div className="w-20 h-20 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-8 text-success border border-success/20">
                                 <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
                             </div>
-                            <h2 className="text-3xl font-black tracking-tighter mb-4 italic italic-primary">Inquiry Received</h2>
+                            <h2 className="text-3xl font-black tracking-tighter mb-4">Inquiry Received</h2>
                             <p className="text-on-surface-variant text-sm font-bold opacity-60 leading-relaxed mb-10">Our B2B team will review your proposal and reach out within 48 business hours.</p>
                             <button 
                                 onClick={() => navigate('/user/home')}

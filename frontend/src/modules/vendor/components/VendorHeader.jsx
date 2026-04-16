@@ -28,7 +28,7 @@ const VendorHeader = ({ title = "Spinzyt", showBack = false }) => {
                     </div>
                 )}
                 <div className="flex flex-col">
-                    <h1 className="text-[14px] font-black tracking-tight text-on-surface leading-none mb-1 uppercase italic">{vendorName}</h1>
+                    <h1 className="text-[14px] font-black tracking-tight text-on-surface leading-none mb-1 uppercase">{vendorName}</h1>
                     <p className="text-[10px] font-bold tracking-widest text-primary flex items-center gap-1 leading-none">
                         <span className="material-symbols-outlined text-[12px]">smartphone</span>
                         +91 {vendorPhone}

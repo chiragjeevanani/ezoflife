@@ -1,37 +1,102 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { promotionApi } from '../../../lib/api';
 
 const PromotionManagerPage = () => {
     const navigate = useNavigate();
     const [isCreating, setIsCreating] = useState(false);
-    
-    const initialPromos = useMemo(() => [
-        { id: 1, title: 'Happy Hour - Flat ₹100 Off', code: 'HAPPY100', type: 'Flat', usage: 42, limit: 100, status: 'Active', color: 'primary', mov: 500, expiry: 'Oct 30' },
-        { id: 2, title: 'Bulk Dry Cleaning - 20% Off', code: 'BULK20', type: 'Perc', usage: 128, limit: 200, status: 'Active', color: 'tertiary', mov: 1200, expiry: 'Nov 15' },
-        { id: 3, title: 'First Visit Special', code: 'WELCOME', type: 'Flat', usage: 0, limit: 500, status: 'Scheduled', color: 'secondary', mov: 0, expiry: 'Dec 01' }
-    ], []);
-
-    const promoStats = useMemo(() => [
-        { label: 'Redemptions', value: '170+', icon: 'trending_up', color: 'emerald-400', variant: 'dark' },
-        { label: 'Total Value', value: '₹4.2k', icon: 'payments', color: 'primary', variant: 'light' }
-    ], []);
-
-    const [promos, setPromos] = useState(initialPromos);
+    const [loading, setLoading] = useState(true);
+    const [promos, setPromos] = useState([]);
     const [editingPromo, setEditingPromo] = useState(null);
 
-    const handleTogglePause = (id) => {
-        setPromos(promos.map(p => 
-            p.id === id 
-                ? { ...p, status: p.status === 'Active' ? 'Paused' : 'Active' } 
-                : p
-        ));
+    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
+    const vendorId = vendorData?._id || vendorData?.id;
+
+    const [formData, setFormData] = useState({
+        title: '',
+        code: '',
+        discountType: 'Flat',
+        discountValue: 0,
+        minOrderValue: 0,
+        usageLimit: 100,
+        expiryDate: ''
+    });
+
+    useEffect(() => {
+        if (vendorId) {
+            fetchPromos();
+        }
+    }, [vendorId]);
+
+    const fetchPromos = async () => {
+        try {
+            setLoading(true);
+            const data = await promotionApi.getVendorPromos(vendorId);
+            setPromos(data);
+        } catch (err) {
+            console.error('Fetch promos error:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const openEdit = (promo) => {
-        setEditingPromo(promo);
-        setIsCreating(true);
+    const handleCreateOrUpdate = async () => {
+        try {
+            if (!formData.title || !formData.code || !formData.discountValue || !formData.expiryDate) {
+                alert('Please fill all mandatory fields');
+                return;
+            }
+
+            const payload = {
+                ...formData,
+                vendorId,
+                expiryDate: new Date(formData.expiryDate)
+            };
+
+            await promotionApi.create(payload);
+            setIsCreating(false);
+            setFormData({
+                title: '',
+                code: '',
+                discountType: 'Flat',
+                discountValue: 0,
+                minOrderValue: 0,
+                usageLimit: 100,
+                expiryDate: ''
+            });
+            fetchPromos();
+        } catch (err) {
+            alert('Error saving promotion: ' + err.message);
+        }
     };
+
+    const handleToggleStatus = async (id) => {
+        try {
+            await promotionApi.toggleStatus(id);
+            fetchPromos();
+        } catch (err) {
+            console.error('Toggle error:', err);
+        }
+    };
+
+    const promoStats = useMemo(() => {
+        if (!Array.isArray(promos)) return [
+            { label: 'Redemptions', value: '0+', icon: 'trending_up', color: 'emerald-400', variant: 'dark' },
+            { label: 'Est. Value', value: '₹0k', icon: 'payments', color: 'primary', variant: 'light' }
+        ];
+
+        const totalUsage = promos.reduce((sum, p) => sum + (p.currentUsage || 0), 0);
+        const totalValue = promos.reduce((sum, p) => {
+            if (p.discountType === 'Flat') return sum + (p.discountValue * (p.currentUsage || 0));
+            return sum + (p.currentUsage * 50); 
+        }, 0);
+
+        return [
+            { label: 'Redemptions', value: `${totalUsage}+`, icon: 'trending_up', color: 'emerald-400', variant: 'dark' },
+            { label: 'Est. Value', value: `₹${(totalValue / 1000).toFixed(1)}k`, icon: 'payments', color: 'primary', variant: 'light' }
+        ];
+    }, [promos]);
 
     return (
         <div className="bg-background text-on-surface min-h-[100dvh] pb-32 flex flex-col overflow-x-hidden font-body">
@@ -81,9 +146,20 @@ const PromotionManagerPage = () => {
                     </div>
                     
                     <div className="space-y-4">
-                        {promos.map(promo => (
+                        {loading && (
+                            <div className="py-20 text-center text-[10px] font-black uppercase tracking-widest opacity-40 animate-pulse">Synchronizing Data...</div>
+                        )}
+                        {!loading && promos.length === 0 && (
+                            <div className="py-20 text-center space-y-4">
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-200">
+                                    <span className="material-symbols-outlined text-4xl">loyalty</span>
+                                </div>
+                                <p className="text-[10px] font-black uppercase tracking-widest opacity-40 text-slate-400">No Active Campaigns</p>
+                            </div>
+                        )}
+                        {!loading && Array.isArray(promos) && promos.map(promo => (
                             <motion.div
-                                key={promo.id}
+                                key={promo._id}
                                 whileHover={{ scale: 1.01 }}
                                 className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden group"
                             >
@@ -93,9 +169,12 @@ const PromotionManagerPage = () => {
                                             <div className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest ${promo.status === 'Active' ? 'bg-primary/5 text-primary border border-primary/10' : 'bg-slate-50 text-slate-400 border border-slate-200'}`}>
                                                 {promo.status}
                                             </div>
-                                            {promo.mov > 0 && (
+                                            <div className="px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                                {promo.discountType === 'Flat' ? `₹${promo.discountValue} OFF` : `${promo.discountValue}% OFF`}
+                                            </div>
+                                            {promo.minOrderValue > 0 && (
                                                 <div className="px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest bg-amber-50 text-amber-600 border border-amber-100">
-                                                    MOV: ₹{promo.mov}
+                                                    MOV: ₹{promo.minOrderValue}
                                                 </div>
                                             )}
                                         </div>
@@ -104,18 +183,18 @@ const PromotionManagerPage = () => {
                                             <div className="bg-slate-900 px-3 py-1 rounded-xl shadow-lg border border-white/10">
                                                 <p className="text-[10px] font-black text-white font-mono tracking-widest uppercase">{promo.code}</p>
                                             </div>
-                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">Expires {promo.expiry}</span>
+                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">Expires {new Date(promo.expiryDate).toLocaleDateString()}</span>
                                         </div>
                                     </div>
                                     <div className="text-right flex flex-col items-end">
                                         <div className="w-12 h-12 rounded-full border-2 border-slate-100 flex items-center justify-center relative mb-2">
-                                            <span className="text-[9px] font-black text-primary tabular-nums">{Math.round((promo.usage / promo.limit) * 100)}%</span>
+                                            <span className="text-[9px] font-black text-primary tabular-nums">{Math.round((promo.currentUsage / promo.usageLimit) * 100)}%</span>
                                             <svg className="absolute inset-0 w-full h-full -rotate-90">
                                                 <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-50" />
-                                                <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="132" strokeDashoffset={132 - (132 * promo.usage / promo.limit)} className="text-primary transition-all duration-1000" />
+                                                <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="132" strokeDashoffset={132 - (132 * (promo.currentUsage || 0) / promo.usageLimit)} className="text-primary transition-all duration-1000" />
                                             </svg>
                                         </div>
-                                        <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">{promo.usage} / {promo.limit}</p>
+                                        <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">{promo.currentUsage} / {promo.usageLimit}</p>
                                     </div>
                                 </div>
 
@@ -123,7 +202,7 @@ const PromotionManagerPage = () => {
                                 <div className="h-1 bg-slate-50 rounded-full overflow-hidden mb-6">
                                     <motion.div 
                                         initial={{ width: 0 }}
-                                        animate={{ width: `${(promo.usage / promo.limit) * 100}%` }}
+                                        animate={{ width: `${((promo.currentUsage || 0) / promo.usageLimit) * 100}%` }}
                                         className={`h-full ${promo.status === 'Active' ? 'bg-primary' : 'bg-slate-300'}`}
                                     />
                                 </div>
@@ -131,8 +210,8 @@ const PromotionManagerPage = () => {
                                 <div className="flex gap-3">
                                     <motion.button 
                                         whileTap={{ scale: 0.95 }}
-                                        onClick={() => handleTogglePause(promo.id)}
-                                        className={`flex-[2] py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                                        onClick={() => handleToggleStatus(promo._id)}
+                                        className={`flex-1 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${
                                             promo.status === 'Active' ? 'bg-slate-50 text-slate-900 border border-slate-200' : 'bg-primary/5 text-primary border border-primary/10'
                                         }`}
                                     >
@@ -141,13 +220,6 @@ const PromotionManagerPage = () => {
                                             {promo.status === 'Active' ? 'Pause Campaign' : 'Resume Campaign'}
                                         </div>
                                     </motion.button>
-                                    <motion.button 
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => openEdit(promo)}
-                                        className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/10 border border-white/5"
-                                    >
-                                        Edit
-                                    </motion.button>
                                 </div>
                             </motion.div>
                         ))}
@@ -155,7 +227,7 @@ const PromotionManagerPage = () => {
                 </section>
             </main>
 
-            {/* Modal Logic (Phase 2 Requirement) */}
+            {/* Modal Logic */}
             <AnimatePresence>
                 {isCreating && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
@@ -170,36 +242,91 @@ const PromotionManagerPage = () => {
                             initial={{ y: 40, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: 40, opacity: 0 }}
-                            className="bg-white w-full max-w-sm rounded-[3rem] p-10 relative z-10 shadow-2xl border border-white/20"
+                            className="bg-white w-full max-w-sm rounded-[3rem] p-10 relative z-10 shadow-2xl border border-white/20 max-h-[90vh] overflow-y-auto"
                         >
-                            <h3 className="text-3xl font-black tracking-tighter leading-none mb-2">
-                                {editingPromo ? 'Edit Protocol' : 'Deploy Coupon'}
+                            <h3 className="text-3xl font-black tracking-tighter leading-none mb-2 text-slate-900">
+                                Deploy Coupon
                             </h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-10">Campaign Logic Configuration</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Campaign Logic Configuration</p>
                             
                             <div className="space-y-5">
                                 <div className="space-y-1.5 px-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-black ml-1">Internal Title</p>
-                                    <input type="text" defaultValue={editingPromo?.title || ''} placeholder="HAPPY DIWALI" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all font-body uppercase tracking-tight" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">Internal Title</p>
+                                    <input 
+                                        type="text" 
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                        placeholder="DIWALI DHAMAKA" 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all font-body uppercase tracking-tight" 
+                                    />
                                 </div>
                                 <div className="space-y-1.5 px-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-black ml-1">Discount Code</p>
-                                    <input type="text" defaultValue={editingPromo?.code || ''} placeholder="CODE50" className="w-full bg-slate-100 border border-slate-200 text-primary rounded-2xl px-5 py-4 text-[11px] font-black font-mono tracking-[0.3em] outline-none placeholder:text-slate-400 focus:bg-white focus:border-primary transition-all uppercase" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">Discount Code</p>
+                                    <input 
+                                        type="text" 
+                                        value={formData.code}
+                                        onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
+                                        placeholder="FESTIVE50" 
+                                        className="w-full bg-slate-100 border border-slate-200 text-primary rounded-2xl px-5 py-4 text-[11px] font-black font-mono tracking-[0.3em] outline-none placeholder:text-slate-400 focus:bg-white focus:border-primary transition-all uppercase" 
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                     <div className="space-y-1.5 px-1">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">Type</p>
+                                        <select 
+                                            value={formData.discountType}
+                                            onChange={(e) => setFormData({...formData, discountType: e.target.value})}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-black text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all cursor-pointer"
+                                        >
+                                            <option value="Flat">Flat ₹</option>
+                                            <option value="Percentage">Perc %</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5 px-1">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">Value</p>
+                                        <input 
+                                            type="number" 
+                                            value={formData.discountValue}
+                                            onChange={(e) => setFormData({...formData, discountValue: Number(e.target.value)})}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-black text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all tabular-nums" 
+                                        />
+                                    </div>
                                 </div>
                                 
                                 <div className="grid grid-cols-2 gap-4">
                                      <div className="space-y-1.5 px-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-black ml-1">Min. Order</p>
-                                        <input type="number" defaultValue={editingPromo?.mov || 0} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-black text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all tabular-nums" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">Min. Order</p>
+                                        <input 
+                                            type="number" 
+                                            value={formData.minOrderValue}
+                                            onChange={(e) => setFormData({...formData, minOrderValue: Number(e.target.value)})}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-black text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all tabular-nums" 
+                                        />
                                     </div>
                                     <div className="space-y-1.5 px-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-black ml-1">Usage Limit</p>
-                                        <input type="number" defaultValue={editingPromo?.limit || 500} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-black text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all tabular-nums" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">Usage Limit</p>
+                                        <input 
+                                            type="number" 
+                                            value={formData.usageLimit}
+                                            onChange={(e) => setFormData({...formData, usageLimit: Number(e.target.value)})}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-black text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all tabular-nums" 
+                                        />
                                     </div>
                                 </div>
 
-                                <button onClick={() => { setIsCreating(false); setEditingPromo(null); }} className="w-full mt-6 py-5 bg-primary text-on-primary rounded-[1.8rem] text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 active:scale-95 transition-all">
-                                    {editingPromo ? 'Save Configuration' : 'Activate Campaign'}
+                                <div className="space-y-1.5 px-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">Expiry Date</p>
+                                    <input 
+                                        type="date" 
+                                        value={formData.expiryDate}
+                                        onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-black text-slate-900 outline-none focus:bg-white focus:border-primary/20 transition-all" 
+                                    />
+                                </div>
+
+                                <button onClick={handleCreateOrUpdate} className="w-full mt-6 py-5 bg-primary text-on-primary rounded-[1.8rem] text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 active:scale-95 transition-all">
+                                    Activate Campaign
                                     <span className="material-symbols-outlined text-sm">rocket_launch</span>
                                 </button>
 
@@ -215,7 +342,4 @@ const PromotionManagerPage = () => {
     );
 };
 
-
 export default PromotionManagerPage;
-
-

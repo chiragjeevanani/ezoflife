@@ -9,6 +9,7 @@ const AddServicePage = () => {
     const [serviceName, setServiceName] = useState('');
     const [price, setPrice] = useState('');
     const [unit, setUnit] = useState('Per Kg');
+    const [tier, setTier] = useState('Essential'); // 'Essential' or 'Heritage'
     const [loading, setLoading] = useState(false);
 
     const icons = useMemo(() => [
@@ -31,7 +32,8 @@ const AddServicePage = () => {
                 name: serviceName,
                 basePrice: Number(price),
                 unit: unit,
-                category: 'Premium', // Default for vendor services for now
+                category: 'Premium', 
+                tier: tier,
                 icon: selectedIcon,
                 vendorId: vendorId
             });
@@ -57,6 +59,25 @@ const AddServicePage = () => {
             <main className="max-w-xl mx-auto px-6 pt-8 space-y-8">
                 <section className="bg-white p-8 rounded-[2.5rem] border border-outline-variant/10 shadow-sm space-y-8">
                     <div className="space-y-6">
+                        {/* Tier Selection */}
+                        <div className="space-y-4">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface ml-1">SERVICE TIER</p>
+                            <div className="flex bg-surface-container p-1 rounded-2xl gap-1">
+                                <button 
+                                    onClick={() => setTier('Essential')}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${tier === 'Essential' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-on-surface-variant/40'}`}
+                                >
+                                    Essential
+                                </button>
+                                <button 
+                                    onClick={() => setTier('Heritage')}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${tier === 'Heritage' ? 'bg-[#996515] text-white shadow-lg shadow-[#996515]/20' : 'text-on-surface-variant/40'}`}
+                                >
+                                    Heritage
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Icon Selection */}
                         <div className="space-y-4">
                             <p className="text-[10px] font-black uppercase tracking-widest text-on-surface ml-1">SELECT ICON</p>

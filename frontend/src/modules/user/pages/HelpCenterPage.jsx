@@ -1,16 +1,26 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { faqApi } from '../../../lib/api';
 
 const HelpCenterPage = () => {
   const navigate = useNavigate();
+  const [faqs, setFaqs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const faqs = useMemo(() => [
-    { q: 'How do I track my order?', a: 'You can track your order in real-time from the "Orders" section in your profile or by clicking "Track Order" on the home page after placing one.' },
-    { q: 'What is the turnaround time?', a: 'Standard orders typically take 24-48 hours. Express orders are handled with priority and usually returned within 24 hours.' },
-    { q: 'How do I pay for my order?', a: 'We accept various payment methods including UPI (Google Pay, PhonePe), Credit/Debit cards, and Cash on Delivery.' },
-    { q: 'Can I cancel my order?', a: 'Orders can be cancelled free of charge before the rider is assigned for pickup. Check your order tracking for the current status.' }
-  ], []);
+  useEffect(() => {
+    const fetchFaqs = async () => {
+      try {
+        const data = await faqApi.getAll();
+        setFaqs(data);
+      } catch (error) {
+        console.error('Fetch FAQs Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFaqs();
+  }, []);
 
   const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
@@ -48,14 +58,10 @@ const HelpCenterPage = () => {
           <div className="flex gap-4 mt-6">
             <button 
               onClick={() => navigate('/user/support/tickets')}
-              className="flex-1 bg-primary text-on-primary py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+              className="w-full bg-primary text-on-primary py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
             >
               <span className="material-symbols-outlined text-sm">chat_bubble</span>
               Live Chat
-            </button>
-            <button className="flex-1 bg-white text-primary border border-primary/20 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm">
-              <span className="material-symbols-outlined text-sm">call</span>
-              Call Support
             </button>
           </div>
         </motion.section>
@@ -64,21 +70,26 @@ const HelpCenterPage = () => {
         <section className="space-y-6">
           <motion.h3 variants={itemVariants} className="font-headline font-black text-[10px] uppercase tracking-[0.3em] text-on-surface ml-2">Frequently Asked</motion.h3>
           <div className="space-y-4">
-            {faqs.map((faq, i) => (
+            {loading ? (
+              <div className="py-12 text-center opacity-30 italic text-sm">Loading FAQs...</div>
+            ) : faqs.map((faq, i) => (
               <motion.div 
-                key={i}
+                key={faq._id || i}
                 variants={itemVariants}
                 className="bg-white rounded-[2rem] p-6 border border-outline-variant/10 shadow-sm"
               >
                 <h4 className="font-black text-sm text-on-surface tracking-tight mb-3 flex items-start gap-3">
                   <span className="text-primary mt-0.5 font-black text-xs">Q.</span>
-                  {faq.q}
+                  {faq.question}
                 </h4>
                 <p className="text-[11px] font-bold text-on-surface-variant leading-relaxed ml-6">
-                  {faq.a}
+                  {faq.answer}
                 </p>
               </motion.div>
             ))}
+            {!loading && faqs.length === 0 && (
+                <div className="py-12 text-center opacity-30 italic text-sm font-black uppercase tracking-widest">No questions yet.</div>
+            )}
           </div>
         </section>
 

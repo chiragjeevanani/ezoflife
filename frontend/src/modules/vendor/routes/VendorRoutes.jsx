@@ -25,6 +25,8 @@ import VendorOrderHistory from '../pages/VendorOrderHistory';
 import WalkInOrderPage from '../pages/WalkInOrderPage';
 import PromotionManagerPage from '../pages/PromotionManagerPage';
 import B2BFulfillmentPage from '../pages/B2BFulfillmentPage';
+import VendorReviews from '../pages/VendorReviews';
+import JobManagerPage from '../pages/JobManagerPage';
 
 // Profile sub-pages
 import EditProfile from '../pages/EditProfile';
@@ -64,6 +66,8 @@ const VendorRoutes = () => {
         <Route path="/walk-in" element={<WalkInOrderPage />} />
         <Route path="/promotions" element={<PromotionManagerPage />} />
         <Route path="/fulfillment" element={<B2BFulfillmentPage />} />
+        <Route path="/reviews" element={<VendorReviews />} />
+        <Route path="/jobs" element={<JobManagerPage />} />
         
         {/* Profile Sub-pages */}
         <Route path="/edit-profile" element={<EditProfile />} />

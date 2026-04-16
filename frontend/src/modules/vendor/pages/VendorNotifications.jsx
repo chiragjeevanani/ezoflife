@@ -7,7 +7,16 @@ import useNotificationStore from '../../../shared/stores/notificationStore';
 
 const VendorNotifications = () => {
     const navigate = useNavigate();
-    const { notifications, markAllAsRead } = useNotificationStore();
+    const { notifications, fetchNotifications, markAllAsRead } = useNotificationStore();
+
+    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
+    const vendorId = vendorData?._id || vendorData?.id;
+
+    React.useEffect(() => {
+        if (vendorId) {
+            fetchNotifications(vendorId, 'vendor');
+        }
+    }, [vendorId]);
     
     // Filter notifications for the 'vendor' persona
     const vendorNotifications = useMemo(() => 

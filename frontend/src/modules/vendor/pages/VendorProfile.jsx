@@ -16,6 +16,7 @@ const VendorProfile = () => {
         { icon: 'location_on', label: 'Shop Address', onClick: () => navigate('/vendor/register', { state: { isEditing: true } }) },
         { icon: 'account_balance', label: 'Bank & Payouts', path: '/vendor/payouts' },
         { icon: 'receipt_long', label: 'Order History', path: '/vendor/order-history' },
+        { icon: 'star', label: 'My Reviews', path: '/vendor/reviews' },
         { icon: 'tune', label: 'Services & Pricing', path: '/vendor/services' },
         { icon: 'notifications', label: 'Notifications', path: '/vendor/notifications' },
         { icon: 'help_outline', label: 'Help & Support', path: '/vendor/support' },

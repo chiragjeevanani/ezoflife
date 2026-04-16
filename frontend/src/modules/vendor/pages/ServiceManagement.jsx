@@ -14,17 +14,30 @@ const ServiceManagement = () => {
     const fetchConfig = async () => {
         try {
             setLoading(true);
-            const masterRes = await serviceApi.getAll();
+            const masterRes = await serviceApi.getAll({ vendorId });
             const profileRes = await authApi.getProfile(vendorId);
             
             // Merge profile services with master if available, otherwise just use master
             const vendorServices = profileRes.shopDetails?.services || [];
             
             const merged = masterRes.map(ms => {
-                const vs = vendorServices.find(v => v._id === ms._id || v.id === ms.id);
+                const msId = String(ms._id || ms.id || '');
+                const vs = vendorServices.find(v => String(v._id || v.id || '') === msId);
+                
+                const isGloballyActive = ms.status === 'Active';
+
+                // If it's NOT a master service, it belongs to this vendor (filtered by backend)
+                // Source of truth for vendor-owned services is the global status
+                let activeState = false;
+                if (ms.isMaster === false) {
+                    activeState = isGloballyActive;
+                } else {
+                    activeState = vs ? vs.active : false;
+                }
+
                 return {
                     ...ms,
-                    active: vs ? vs.active : true,
+                    active: activeState,
                     basePrice: vs ? vs.basePrice : ms.basePrice
                 };
             });
@@ -45,10 +58,28 @@ const ServiceManagement = () => {
         }
     }, [vendorId]);
 
-    const toggleService = (idx) => {
+    const toggleService = async (idx) => {
         const newServices = [...services];
-        newServices[idx].active = !newServices[idx].active;
+        const target = newServices[idx];
+        const newStatus = !target.active;
+        
+        console.log(`--- Toggling Service: ${target.name} to ${newStatus ? 'Active' : 'Inactive'} ---`);
+        target.active = newStatus;
         setServices(newServices);
+
+        // Immediate API Sync for better reliability
+        const sId = target._id || target.id;
+        try {
+            if (target.vendorId || target.isMaster === false) {
+                console.log(`Sending immediate sync for ${target.name}...`);
+                await serviceApi.update(sId, { 
+                    status: newStatus ? 'Active' : 'Inactive'
+                });
+                console.log(`Sync successful for ${target.name}`);
+            }
+        } catch (err) {
+            console.error(`Failed to sync ${target.name}:`, err);
+        }
     };
 
     const updatePrice = (idx, price) => {
@@ -58,20 +89,53 @@ const ServiceManagement = () => {
     };
 
     const handleUpdate = async () => {
+        console.log('--- Handle Update Triggered ---');
+        if (!vendorId) {
+            alert('Error: Vendor ID not found. Please log in again.');
+            return;
+        }
+
         try {
-            const user = JSON.parse(localStorage.getItem('vendorData'));
+            setLoading(true);
             const profile = await authApi.getProfile(vendorId);
             
+            // 1. Update Profile (Save local preferences)
             const updatedShopDetails = {
-                ...profile.shopDetails,
+                ...(profile.shopDetails || {}),
                 services: services
             };
-
             await authApi.updateProfile(vendorId, { shopDetails: updatedShopDetails });
+            console.log('Profile updated successfully');
+
+            // 2. Sync to Global Services collection
+            // We sync ANY service that has been modified or belongs to a vendor
+            const syncPromises = services.map(service => {
+                const sId = service._id || service.id;
+                console.log(`Checking sync for service: ${service.name} (isMaster: ${service.isMaster})`);
+                
+                // Allow syncing for anything that is not a strictly global master without vendorId
+                // OR if it's explicitly a vendor-added service
+                if (service.vendorId || service.isMaster === false) {
+                    return serviceApi.update(sId, { 
+                        status: service.active ? 'Active' : 'Inactive',
+                        basePrice: Number(service.basePrice)
+                    });
+                }
+                return null;
+            }).filter(p => p !== null);
+
+            if (syncPromises.length > 0) {
+                console.log(`Sending ${syncPromises.length} sync requests...`);
+                await Promise.all(syncPromises);
+            }
+
             alert('Services updated successfully!');
+            fetchConfig();
         } catch (error) {
-            console.error('Error updating services:', error);
-            alert('Failed to update services');
+            console.error('Update Services Error:', error);
+            alert('Failed to update services: ' + (error.message || 'Unknown error'));
+        } finally {
+            setLoading(false);
         }
     };
 

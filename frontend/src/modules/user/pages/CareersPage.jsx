@@ -1,29 +1,66 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { jobApi } from '../../../lib/api';
 
 const CareersPage = () => {
     const navigate = useNavigate();
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [isApplied, setIsApplied] = useState(false);
+    const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [isApplying, setIsApplying] = useState(null); // Will store the job being applied to
+    const [applyForm, setApplyForm] = useState({
+        applicantName: '',
+        applicantEmail: '',
+        applicantPhone: '',
+        resumeLink: '',
+        coverLetter: ''
+    });
 
-    const MOCK_JOBS = useMemo(() => [
-        { id: 1, title: 'Expert Pressman Required', category: 'Skilled Labor (Vendor)', location: 'Brooklyn, NY', desc: 'Seeking experienced steam iron specialist for high-volume boutique care.', type: 'Full-time' },
-        { id: 2, title: 'Operations Manager', category: 'Spinzyt Internal', location: 'Manhattan, NY', desc: 'Oversee logistics and vendor management for the regional hub.', type: 'Corporate' },
-        { id: 3, title: 'Wet Cleaner & Spotter', category: 'Skilled Labor (Vendor)', location: 'Queens, NY', desc: 'Must handle silk and delicate fabrics. Knowledge of stain removal is a plus.', type: 'Shift-based' },
-        { id: 4, title: 'Rider Partner', category: 'Spinzyt Internal', location: 'Bronx, NY', desc: 'Hyperlocal delivery partner for our high-speed flow network.', type: 'Flexible' },
-    ], []);
+    useEffect(() => {
+        fetchJobs();
+    }, []);
+
+    const fetchJobs = async () => {
+        try {
+            const data = await jobApi.getApproved();
+            setJobs(data);
+        } catch (error) {
+            console.error('Fetch jobs error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleApply = async (e) => {
+        e.preventDefault();
+        try {
+            const applicationData = {
+                ...applyForm,
+                jobId: isApplying._id
+            };
+            await jobApi.apply(applicationData);
+            setIsApplied(true);
+            setIsApplying(null);
+            setApplyForm({ applicantName: '', applicantEmail: '', applicantPhone: '', resumeLink: '', coverLetter: '' });
+            setTimeout(() => setIsApplied(false), 3000);
+        } catch (error) {
+            alert('Application failed, please try again.');
+        }
+    };
 
     const categories = useMemo(() => ['All', 'Spinzyt Internal', 'Skilled Labor (Vendor)'], []);
     
-    const filteredJobs = useMemo(() => 
-        MOCK_JOBS.filter(job => 
-            (selectedCategory === 'All' || job.category === selectedCategory) &&
+    const filteredJobs = useMemo(() => {
+        if (!Array.isArray(jobs)) return [];
+        return jobs.filter(job => {
+            const category = job.creatorRole === 'Admin' ? 'Spinzyt Internal' : 'Skilled Labor (Vendor)';
+            return (selectedCategory === 'All' || category === selectedCategory) &&
             (job.title.toLowerCase().includes(searchQuery.toLowerCase()) || job.location.toLowerCase().includes(searchQuery.toLowerCase()))
-        ), 
-        [MOCK_JOBS, selectedCategory, searchQuery]
-    );
+        });
+    }, [jobs, selectedCategory, searchQuery]);
 
     const containerVariants = useMemo(() => ({
         hidden: { opacity: 0 },
@@ -90,53 +127,155 @@ const CareersPage = () => {
                 </motion.div>
 
                 {/* Job List */}
-                <motion.div 
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="space-y-4"
-                >
-                    {filteredJobs.length > 0 ? (
-                        filteredJobs.map(job => (
-                            <motion.div 
-                                key={job.id}
-                                variants={itemVariants}
-                                whileHover={{ scale: 1.01 }}
-                                className="bg-white rounded-[2rem] p-6 border border-outline-variant/5 shadow-sm space-y-4"
-                            >
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                        <h3 className="font-black text-lg tracking-tight text-on-surface mb-1">{job.title}</h3>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary">{job.category}</span>
-                                            <span className="w-1 h-1 rounded-full bg-outline-variant/30"></span>
-                                            <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{job.type}</span>
+                {loading ? (
+                    <div className="py-20 flex flex-col items-center justify-center text-on-surface-variant opacity-40">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                        <p className="text-[10px] font-black uppercase tracking-widest">Prospecting Opportunities...</p>
+                    </div>
+                ) : (
+                    <motion.div 
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="space-y-4"
+                    >
+                        {filteredJobs.length > 0 ? (
+                            filteredJobs.map(job => (
+                                <motion.div 
+                                    key={job._id}
+                                    variants={itemVariants}
+                                    whileHover={{ scale: 1.01 }}
+                                    className="bg-white rounded-[2rem] p-6 border border-outline-variant/5 shadow-sm space-y-4"
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <h3 className="font-black text-lg tracking-tight text-on-surface mb-1">{job.title}</h3>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary">{job.creatorRole === 'Admin' ? 'Spinzyt Internal' : 'Skilled Labor (Vendor)'}</span>
+                                                <span className="w-1 h-1 rounded-full bg-outline-variant/30"></span>
+                                                <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{job.type}</span>
+                                            </div>
+                                        </div>
+                                        <div className="bg-surface-container-low px-3 py-1.5 rounded-xl border border-outline-variant/10 flex items-center gap-1.5 shrink-0">
+                                            <span className="material-symbols-outlined text-[12px] text-primary">location_on</span>
+                                            <span className="text-[9px] font-black uppercase tracking-widest">{job.location}</span>
                                         </div>
                                     </div>
-                                    <div className="bg-surface-container-low px-3 py-1.5 rounded-xl border border-outline-variant/10 flex items-center gap-1.5 shrink-0">
-                                        <span className="material-symbols-outlined text-[12px] text-primary">location_on</span>
-                                        <span className="text-[9px] font-black uppercase tracking-widest">{job.location}</span>
+                                    <p className="text-xs text-on-surface-variant font-medium leading-relaxed italic opacity-80 line-clamp-2">
+                                        "{job.description}"
+                                    </p>
+                                    <button 
+                                        onClick={() => setIsApplying(job)}
+                                        className="w-full py-4 bg-surface-container-high rounded-2xl text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all border border-primary/10"
+                                    >
+                                        Apply Now
+                                    </button>
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="py-20 text-center opacity-40">
+                                <span className="material-symbols-outlined text-5xl mb-4">person_search</span>
+                                <p className="text-xs font-bold uppercase tracking-widest">No matching roles found.</p>
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+            </main>
+
+            {/* Apply Modal */}
+            <AnimatePresence>
+                {isApplying && (
+                    <div className="fixed inset-0 z-[120] flex items-end justify-center">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsApplying(null)}
+                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                        />
+                        <motion.div 
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            exit={{ y: "100%" }}
+                            className="bg-white w-full max-w-xl rounded-t-[3rem] p-8 pb-32 relative z-10 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar"
+                        >
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900 tracking-tighter uppercase leading-none">Job Application</h3>
+                                    <p className="text-[10px] font-bold text-primary uppercase mt-1">Applying for {isApplying.title}</p>
+                                </div>
+                                <button onClick={() => setIsApplying(null)} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleApply} className="space-y-5">
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">Full Name</label>
+                                        <input 
+                                            required
+                                            value={applyForm.applicantName}
+                                            onChange={e => setApplyForm({...applyForm, applicantName: e.target.value})}
+                                            className="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-transparent focus:bg-white focus:border-primary/20 transition-all"
+                                            placeholder="John Doe"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">Email Address</label>
+                                            <input 
+                                                required
+                                                type="email"
+                                                value={applyForm.applicantEmail}
+                                                onChange={e => setApplyForm({...applyForm, applicantEmail: e.target.value})}
+                                                className="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-transparent focus:bg-white focus:border-primary/20 transition-all"
+                                                placeholder="john@example.com"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">Phone Number</label>
+                                            <input 
+                                                required
+                                                value={applyForm.applicantPhone}
+                                                onChange={e => setApplyForm({...applyForm, applicantPhone: e.target.value})}
+                                                className="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-transparent focus:bg-white focus:border-primary/20 transition-all"
+                                                placeholder="+91 0000000000"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">Resume/Portfolio Link</label>
+                                        <input 
+                                            required
+                                            value={applyForm.resumeLink}
+                                            onChange={e => setApplyForm({...applyForm, resumeLink: e.target.value})}
+                                            className="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-transparent focus:bg-white focus:border-primary/20 transition-all"
+                                            placeholder="Drive or Dropbox Link"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">Brief Cover Note</label>
+                                        <textarea 
+                                            value={applyForm.coverLetter}
+                                            onChange={e => setApplyForm({...applyForm, coverLetter: e.target.value})}
+                                            className="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-transparent focus:bg-white focus:border-primary/20 transition-all min-h-[100px]"
+                                            placeholder="Tell us why you're a good fit..."
+                                        />
                                     </div>
                                 </div>
-                                <p className="text-xs text-on-surface-variant font-medium leading-relaxed italic opacity-80 line-clamp-2">
-                                    "{job.desc}"
-                                </p>
+
                                 <button 
-                                    onClick={() => { setIsApplied(true); setTimeout(() => setIsApplied(false), 3000); }}
-                                    className="w-full py-4 bg-surface-container-high rounded-2xl text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all border border-primary/10"
+                                    type="submit"
+                                    className="w-full py-5 bg-primary text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-primary/20 active:scale-95 transition-all mt-2"
                                 >
-                                    Instant Application
+                                    Submit Application
                                 </button>
-                            </motion.div>
-                        ))
-                    ) : (
-                        <div className="py-20 text-center opacity-40">
-                            <span className="material-symbols-outlined text-5xl mb-4">person_search</span>
-                            <p className="text-xs font-bold uppercase tracking-widest">No matching roles found.</p>
-                        </div>
-                    )}
-                </motion.div>
-            </main>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Success Toast */}
             <AnimatePresence>
