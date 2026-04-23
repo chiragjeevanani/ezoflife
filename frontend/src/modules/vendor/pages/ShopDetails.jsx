@@ -70,12 +70,23 @@ const ShopDetails = () => {
         setSelectedServices(prev => {
             const exists = prev.find(s => s.id === service._id);
             if (exists) return prev.filter(s => s.id !== service._id);
-            return [...prev, { id: service._id, vendorRate: service.basePrice, name: service.name, icon: service.icon }];
+            return [...prev, { 
+                id: service._id, 
+                vendorRate: service.basePrice, 
+                name: service.name, 
+                icon: service.icon,
+                normalTime: '2-3 Days',
+                expressTime: '24 Hours'
+            }];
         });
     };
 
     const updateVendorRate = (id, rate) => {
         setSelectedServices(prev => prev.map(s => s.id === id ? { ...s, vendorRate: parseFloat(rate) || 0, status: 'pending' } : s));
+    };
+
+    const updateServiceTime = (id, field, value) => {
+        setSelectedServices(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
     };
 
     useEffect(() => {
@@ -98,6 +109,8 @@ const ShopDetails = () => {
                             setSelectedServices(profile.shopDetails.services.map(s => ({
                                 id: s.id,
                                 vendorRate: s.vendorRate,
+                                normalTime: s.normalTime || '2-3 Days',
+                                expressTime: s.expressTime || '24 Hours',
                                 name: s.name,
                                 icon: s.icon,
                                 status: s.status || 'pending',
@@ -535,20 +548,53 @@ const ShopDetails = () => {
 
                                             {selected && (
                                                 <motion.div 
-                                                    initial={{ opacity: 0, x: 10 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    className="flex flex-col items-end gap-1"
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    className="flex-1 space-y-3"
                                                 >
-                                                    <label className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">Your Price</label>
-                                                    <div className={`flex items-center bg-white border rounded-xl px-3 py-1.5 focus-within:ring-2 ring-primary/10 ${selected.status === 'rejected' ? 'border-rose-200' : 'border-primary/20'}`}>
-                                                        <span className="text-xs font-black text-primary/40 mr-1">₹</span>
-                                                        <input 
-                                                            type="number"
-                                                            value={selected.vendorRate}
-                                                            onChange={(e) => updateVendorRate(service._id, e.target.value)}
-                                                            className="w-16 bg-transparent border-none focus:ring-0 p-0 text-xs font-black text-primary placeholder:text-primary/20"
-                                                            placeholder="0"
-                                                        />
+                                                    <div className="grid grid-cols-3 gap-3">
+                                                       {/* Price */}
+                                                       <div className="space-y-1">
+                                                           <label className="text-[8px] font-black text-primary uppercase tracking-widest pl-1">Rate (₹)</label>
+                                                           <div className={`flex items-center bg-white border rounded-xl px-2 py-1.5 focus-within:ring-2 ring-primary/10 ${selected.status === 'rejected' ? 'border-rose-200' : 'border-primary/20'}`}>
+                                                               <span className="text-[10px] font-black text-primary/40 mr-1">₹</span>
+                                                               <input 
+                                                                   type="number"
+                                                                   value={selected.vendorRate}
+                                                                   onChange={(e) => updateVendorRate(service._id, e.target.value)}
+                                                                   className="w-full bg-transparent border-none focus:ring-0 p-0 text-[11px] font-black text-slate-800 placeholder:text-slate-300"
+                                                                   placeholder="0"
+                                                               />
+                                                           </div>
+                                                       </div>
+
+                                                       {/* Normal Time */}
+                                                       <div className="space-y-1">
+                                                           <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest pl-1">Normal</label>
+                                                           <div className="flex items-center bg-white border border-slate-100 rounded-xl px-2 py-1.5 focus-within:ring-2 ring-primary/10">
+                                                               <input 
+                                                                   type="text"
+                                                                   value={selected.normalTime}
+                                                                   onChange={(e) => updateServiceTime(service._id, 'normalTime', e.target.value)}
+                                                                   className="w-full bg-transparent border-none focus:ring-0 p-0 text-[11px] font-bold text-slate-600 placeholder:text-slate-300"
+                                                                   placeholder="e.g. 2 Days"
+                                                               />
+                                                           </div>
+                                                       </div>
+
+                                                       {/* Express Time */}
+                                                       <div className="space-y-1">
+                                                           <label className="text-[8px] font-black text-amber-500 uppercase tracking-widest pl-1">Express</label>
+                                                           <div className="flex items-center bg-amber-50/30 border border-amber-100 rounded-xl px-2 py-1.5 focus-within:ring-2 ring-amber-500/10">
+                                                               <input 
+                                                                   type="text"
+                                                                   value={selected.expressTime}
+                                                                   onChange={(e) => updateServiceTime(service._id, 'expressTime', e.target.value)}
+                                                                   className="w-full bg-transparent border-none focus:ring-0 p-0 text-[11px] font-bold text-amber-600 placeholder:text-amber-500/20"
+                                                                   placeholder="e.g. 24h"
+                                                               />
+                                                           </div>
+                                                       </div>
                                                     </div>
                                                 </motion.div>
                                             )}

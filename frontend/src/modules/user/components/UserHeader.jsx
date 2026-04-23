@@ -9,6 +9,15 @@ const UserHeader = () => {
   
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   
+  const handleProfileClick = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/user/auth');
+    } else {
+      navigate('/user/profile');
+    }
+  };
+
   return (
     <motion.header 
       initial={{ y: -50, opacity: 0 }}
@@ -17,7 +26,7 @@ const UserHeader = () => {
     >
       <div className="flex items-center gap-3">
         <motion.div 
-          onClick={() => navigate('/user/profile')}
+          onClick={handleProfileClick}
           whileHover={{ scale: 1.1 }}
           className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden border border-primary/10 cursor-pointer"
         >
@@ -28,8 +37,7 @@ const UserHeader = () => {
           />
         </motion.div>
         <div className="flex flex-col cursor-pointer" onClick={() => navigate('/user/home')}>
-          <span className="font-headline font-bold text-lg text-primary tracking-tight leading-none">Spinzyt</span>
-          <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-extrabold">Premium</span>
+          <span className="font-headline font-bold text-lg text-primary tracking-tight leading-none uppercase">SPINZYT</span>
         </div>
       </div>
       <motion.button 

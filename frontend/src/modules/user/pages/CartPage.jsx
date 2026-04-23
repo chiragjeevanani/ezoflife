@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MASTER_SERVICES } from '../../../shared/data/sharedData';
 import { orderApi, serviceApi, authApi, promotionApi } from '../../../lib/api';
+import { shippingConfigApi } from '../../../lib/shippingApi';
 import { GoogleMap, useLoadScript, Marker, Autocomplete } from '@react-google-maps/api';
 
 const libraries = ['places'];
@@ -82,6 +83,26 @@ const CartPage = () => {
     }
   }, [quantities]);
   
+  const [expressChargeConfig, setExpressChargeConfig] = useState(0);
+  const [normalLogisticsConfig, setNormalLogisticsConfig] = useState(0); // Default to 0 to detect fetch
+  
+  useEffect(() => {
+    const fetchConfig = async () => {
+        try {
+            const configs = await shippingConfigApi.getConfig();
+            
+            const surcharge = configs.find(c => c.key === 'express_surcharge');
+            if (surcharge) setExpressChargeConfig(Number(surcharge.value));
+
+            const normalFee = configs.find(c => c.key === 'normal_logistics_fee');
+            if (normalFee) setNormalLogisticsConfig(Number(normalFee.value));
+        } catch (err) {
+            console.error('Error fetching delivery config:', err);
+        }
+    };
+    fetchConfig();
+  }, []);
+
   const [isExpress, setIsExpress] = useState(false);
   const [garmentPhotos, setGarmentPhotos] = useState([]);
   const fileInputRef = useRef(null);
@@ -300,9 +321,9 @@ const CartPage = () => {
     return acc + (getItemPrice(item) * (quantities[item._id || item.id] || 0));
   }, 0), [cartItems, quantities, billingUnits]);
 
-  const logisticsFee = 50.00;
-  const surcharge = useMemo(() => isExpress ? 1.5 : 1.0, [isExpress]);
-  const grandTotal = useMemo(() => (subtotal + logisticsFee) * surcharge, [subtotal, logisticsFee, surcharge]);
+  const logisticsFee = normalLogisticsConfig;
+  const currentExpressFee = isExpress ? expressChargeConfig : 0;
+  const grandTotal = useMemo(() => (subtotal + logisticsFee + currentExpressFee), [subtotal, logisticsFee, currentExpressFee]);
   
   const discount = useMemo(() => {
       if (!isPromoApplied || !appliedPromoData) return 0;
@@ -357,6 +378,8 @@ const CartPage = () => {
         dropAddress: isSameAddress ? (selectedPickupAddress?.address || '') : (selectedDropAddress?.address || ''),
         dropLocation: isSameAddress ? (selectedPickupAddress?.location || defaultCenter) : (selectedDropAddress?.location || defaultCenter),
         totalAmount: finalTotal,
+        deliveryMode: isExpress ? 'Express' : 'Normal',
+        deliveryCharge: logisticsFee + currentExpressFee,
         promoApplied: isPromoApplied ? appliedPromoData?._id : null,
         discountAmount: discount,
         specialInstructions
@@ -407,6 +430,15 @@ const CartPage = () => {
                       <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm"><span className="material-symbols-outlined text-3xl">{item.icon || 'local_laundry_service'}</span></div>
                       <div>
                         <h3 className="font-headline font-black text-[15px] md:text-lg text-on-surface leading-tight text-slate-900">{item.name}</h3>
+                        
+                        {/* Delivery Time Badge */}
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <span className="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${isExpress ? 'text-amber-600' : 'text-slate-500'}`}>
+                                {isExpress ? (item.expressTime || '24h Delivery') : (item.normalTime || '2-3 Days')}
+                            </span>
+                        </div>
+
                         <div className="mt-3 flex flex-wrap items-center gap-4">
                           <div className="flex items-center bg-surface-container-low rounded-2xl p-1 w-fit border border-outline-variant/5">
                             <button onClick={() => updateQuantity(item._id || item.id, -1)} className="w-8 h-8 flex items-center justify-center text-primary bg-white rounded-xl shadow-xs"><span className="material-symbols-outlined text-sm font-bold">remove</span></button>
@@ -440,12 +472,37 @@ const CartPage = () => {
 
             <div className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-8">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-headline font-black text-2xl flex items-center gap-3 text-slate-900"><span className="material-symbols-outlined text-primary text-3xl">schedule</span>Timing</h3>
-                    <div className="flex bg-surface-container-low p-1 rounded-2xl">
-                        <button onClick={() => setIsExpress(false)} className={`px-4 py-2 rounded-xl text-[9px] font-black ${!isExpress ? 'bg-white text-primary' : 'text-slate-400'}`}>Standard</button>
-                        <button onClick={() => setIsExpress(true)} className={`px-4 py-2 rounded-xl text-[9px] font-black ${isExpress ? 'bg-primary text-white' : 'text-slate-400'}`}>Express</button>
+                    <h3 className="font-headline font-black text-2xl flex items-center gap-3 text-slate-900"><span className="material-symbols-outlined text-primary text-3xl">schedule</span>Fulfillment</h3>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                    <div 
+                      onClick={() => setIsExpress(false)}
+                      className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all ${!isExpress ? 'bg-primary border-primary text-white shadow-lg' : 'bg-slate-50 border-transparent text-slate-900 hover:bg-slate-100'}`}
+                    >
+                        <div className="flex justify-between items-start mb-4">
+                            <span className="material-symbols-outlined">local_shipping</span>
+                            {!isExpress && <span className="material-symbols-outlined">check_circle</span>}
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Standard</p>
+                        <p className="text-sm font-black">Normal Speed</p>
+                        <p className="text-[10px] font-bold mt-2 opacity-60">₹{normalLogisticsConfig} Delivery</p>
+                    </div>
+
+                    <div 
+                      onClick={() => setIsExpress(true)}
+                      className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all ${isExpress ? 'bg-amber-500 border-amber-500 text-white shadow-lg' : 'bg-slate-50 border-transparent text-slate-900 hover:bg-slate-100'}`}
+                    >
+                        <div className="flex justify-between items-start mb-4">
+                            <span className="material-symbols-outlined">zap</span>
+                            {isExpress && <span className="material-symbols-outlined">check_circle</span>}
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Express</p>
+                        <p className="text-sm font-black">24h Priority</p>
+                        <p className="text-[10px] font-bold mt-2 opacity-60">+ ₹{expressChargeConfig} Surcharge</p>
                     </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div onClick={() => { setActivePicking('pickup'); setShowPicker(true); }} className="bg-primary/5 p-6 rounded-[2rem] border-2 border-primary/20 cursor-pointer"><p className="text-[9px] font-black text-primary uppercase mb-1">Pickup</p><p className="text-lg font-black text-slate-900">{selectedPickup}</p></div>
                     <div onClick={() => { setActivePicking('delivery'); setShowPicker(true); }} className="bg-slate-50 p-6 rounded-[2rem] border-2 border-transparent cursor-pointer"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Delivery</p><p className="text-lg font-black text-slate-900">{selectedDelivery}</p></div>
@@ -515,11 +572,34 @@ const CartPage = () => {
             <div className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
               <h3 className="font-headline font-black text-2xl mb-8 text-white">Summary</h3>
               <div className="space-y-6">
-                <div className="flex justify-between text-sm"><span className="text-white/60 font-black">Subtotal</span><span className="font-black text-white">₹{subtotal.toFixed(2)}</span></div>
-                {isPromoApplied && <div className="flex justify-between text-sm text-emerald-400"><span className="font-black">Discount</span><span className="font-black">- ₹{discount.toFixed(2)}</span></div>}
+                <div className="flex justify-between text-sm"><span className="text-white/60 font-black">Cart Subtotal</span><span className="font-black text-white">₹{subtotal.toFixed(2)}</span></div>
+                
+                <div className="flex justify-between text-sm">
+                    <span className="text-white/60 font-black">Delivery (Normal)</span>
+                    <span className="font-black text-white">₹{normalLogisticsConfig.toFixed(2)}</span>
+                </div>
+
+                {isExpress && (
+                    <div className="flex justify-between text-sm text-amber-400">
+                        <span className="font-black">Express Fulfillment</span>
+                        <span className="font-black">+ ₹{expressChargeConfig.toFixed(2)}</span>
+                    </div>
+                )}
+                
                 <div className="h-px bg-white/10 my-6"></div>
+                
+                {isPromoApplied && (
+                    <div className="flex justify-between text-sm text-emerald-400 mb-6 font-black uppercase tracking-widest">
+                        <span>Reward Applied</span>
+                        <span>- ₹{discount.toFixed(2)}</span>
+                    </div>
+                )}
+
                 <div className="flex justify-between items-end">
-                    <div><p className="text-[10px] font-black text-white/40 mb-2">Total</p><p className="text-5xl font-black text-white tracking-tighter">₹{finalTotal.toFixed(2)}</p></div>
+                    <div>
+                        <p className="text-[10px] font-black text-white/40 mb-2 uppercase tracking-widest">Grand Total</p>
+                        <p className="text-5xl font-black text-white tracking-tighter">₹{finalTotal.toFixed(2)}</p>
+                    </div>
                 </div>
               </div>
               <button onClick={handlePlaceOrder} className="w-full mt-12 bg-primary text-on-primary font-headline font-black py-6 rounded-2xl text-lg uppercase shadow-2xl active:scale-95 transition-all">Launch Fresh Flow</button>

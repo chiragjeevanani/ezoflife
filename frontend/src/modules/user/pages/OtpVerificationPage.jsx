@@ -31,6 +31,11 @@ const OtpVerificationPage = () => {
     if (value && index < 5) {
       inputRefs.current[index + 1].focus();
     }
+
+    // Auto-verify if all digits are filled
+    if (newOtp.every(digit => digit !== '')) {
+      handleVerify(newOtp);
+    }
   };
 
   const handleKeyDown = (index, e) => {
@@ -39,11 +44,12 @@ const OtpVerificationPage = () => {
     }
   };
 
-  const handleVerify = async () => {
-    if (otp.every(digit => digit !== '')) {
+  const handleVerify = async (providedOtp) => {
+    const otpToVerify = providedOtp || otp;
+    if (otpToVerify.every(digit => digit !== '')) {
       setError('');
       try {
-        const fullOtp = otp.join('');
+        const fullOtp = otpToVerify.join('');
         const response = await authApi.verifyOtp(phone, fullOtp);
         
         if (response.token) {

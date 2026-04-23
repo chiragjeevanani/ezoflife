@@ -5,18 +5,18 @@ import { notificationApi } from '../../../../lib/api';
 import toast from 'react-hot-toast';
 import socket from '../../../../lib/socket';
 
-export default function TopBar() {
+export default function TopBar({ onMenuClick }) {
     const location = useLocation();
     const navigate = useNavigate();
     const pathParts = location.pathname.split('/').filter(p => p !== '');
     const [unreadCount, setUnreadCount] = useState(0);
 
+    const adminRaw = localStorage.getItem('adminData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+    const adminData = JSON.parse(adminRaw);
+    const adminId = adminData._id || adminData.id || adminData.user?._id || adminData.user?.id;
+
     const fetchNotifications = async () => {
         try {
-            const adminRaw = localStorage.getItem('adminData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
-            const adminData = JSON.parse(adminRaw);
-            const adminId = adminData._id || adminData.id || adminData.user?._id || adminData.user?.id;
-
             if (!adminId) return;
 
             const data = await notificationApi.getNotifications(adminId, 'admin');
@@ -32,11 +32,11 @@ export default function TopBar() {
         fetchNotifications();
         
         // Listen for real-time notifications
-        socket.on('new_notification', (data) => {
-            console.log('⚡ Real-time notification received:', data);
-            if (data.role === 'admin') {
+        const handleNewNotification = (data) => {
+            console.log('⚡ [ADMIN] Real-time notification received:', data);
+            if (data.role === 'admin' || data.recipient === adminId) {
                 setUnreadCount(prev => prev + 1);
-                toast.success('New Labor Requisition!', {
+                toast.success(data.notification.title || 'New Notification', {
                     icon: '🔔',
                     style: {
                         borderRadius: '16px',
@@ -48,18 +48,33 @@ export default function TopBar() {
                     }
                 });
             }
-        });
+        };
+
+        socket.on('new_notification', handleNewNotification);
+
+        // Join Admin Room
+        if (adminId) {
+            socket.emit('join_room', `user_${adminId}`);
+            socket.emit('join_room', 'admins_pool'); // Case-insensitive or common room
+        }
 
         return () => {
-            socket.off('new_notification');
+            socket.off('new_notification', handleNewNotification);
         };
-    }, []);
+    }, [adminId]);
 
     return (
         <header className="h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-40 transition-all duration-300">
             {/* Context Explorer (Breadcrumbs) */}
             <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 tracking-[0.2em] border-r border-slate-100 pr-5">
+                <button 
+                    onClick={onMenuClick}
+                    className="lg:hidden w-10 h-10 flex items-center justify-center rounded-sm text-slate-500 hover:bg-slate-50 transition-all"
+                >
+                    <Menu size={20} />
+                </button>
+
+                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 tracking-[0.2em] border-r border-slate-100 pr-5 hidden sm:flex">
                     <Home size={12} className="text-slate-900" />
                     <ChevronRight size={10} />
                     <span className="text-slate-900 uppercase tracking-tighter">SPINZYT ADMIN</span>

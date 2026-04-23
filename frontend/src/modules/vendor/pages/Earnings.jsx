@@ -13,8 +13,9 @@ const Earnings = () => {
     const [vendorData, setVendorData] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const localVendor = JSON.parse(localStorage.getItem('vendorData') || '{}');
-    const vendorId = localVendor?._id || localVendor?.id;
+    const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+    const localVendor = JSON.parse(vendorDataRaw);
+    const vendorId = localVendor?._id || localVendor?.id || localVendor?.user?._id || localVendor?.user?.id;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -141,7 +142,6 @@ const Earnings = () => {
             animate={{ opacity: 1 }}
             className="bg-background text-on-background min-h-screen pb-32 font-body"
         >
-            <VendorHeader title="Earnings" showBack={true} />
             
             <div className="flex justify-center mt-6">
                 <div className="flex bg-surface-container p-1 rounded-full border border-outline-variant/10">

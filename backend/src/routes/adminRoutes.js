@@ -15,12 +15,16 @@ import {
     approveSupplier,
     rejectSupplier,
     updateSupplier,
-    deleteSupplier
+    deleteSupplier,
+    getSystemConfig,
+    updateSystemConfig
 } from '../controllers/adminController.js';
 import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
+router.get('/config', getSystemConfig);
+router.post('/config', updateSystemConfig);
 router.get('/stats', getDashboardStats);
 router.get('/vendors', getAllVendors);
 router.post('/vendors/:id/documents', upload.single('file'), uploadVendorDocument);

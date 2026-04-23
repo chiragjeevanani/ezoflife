@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 
 const SupplierProfile = () => {
     const navigate = useNavigate();
-    const userRaw = localStorage.getItem('userData') || localStorage.getItem('user') || '{}';
+    const userRaw = localStorage.getItem('supplierData') || localStorage.getItem('userData') || localStorage.getItem('user') || '{}';
     const user = JSON.parse(userRaw);
 
     const handleOptionClick = (label) => {

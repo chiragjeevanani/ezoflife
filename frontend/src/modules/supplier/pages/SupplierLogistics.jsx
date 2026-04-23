@@ -11,7 +11,7 @@ const SupplierLogistics = () => {
     const [shipments, setShipments] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const vendorData = JSON.parse(localStorage.getItem('vendorData') || localStorage.getItem('user') || '{}');
+    const vendorData = JSON.parse(localStorage.getItem('supplierData') || localStorage.getItem('userData') || localStorage.getItem('user') || '{}');
     const supplierId = vendorData?._id || vendorData?.id;
 
     const fetchOrders = async () => {

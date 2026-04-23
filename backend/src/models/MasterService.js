@@ -20,6 +20,11 @@ const masterServiceSchema = new mongoose.Schema({
         type: String, 
         default: 'General' 
     },
+    targetAudience: {
+        type: String,
+        enum: ['individual', 'retail', 'both'],
+        default: 'both'
+    },
     description: {
         type: String,
         default: ''

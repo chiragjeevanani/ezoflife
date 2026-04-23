@@ -39,16 +39,9 @@ const VendorSplash = () => {
                     transition={{ delay: 0.3 }}
                     className="text-5xl font-headline font-black text-white tracking-tighter leading-none mb-3"
                 >
-                    Spinzyt
+                    SPINZYT
                 </motion.h1>
-                <motion.p 
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="text-white/70 font-bold uppercase tracking-[0.25em] text-[11px]"
-                >
-                    Vendor Partner Portal
-                </motion.p>
+
 
                 {/* Loading dots */}
                 <motion.div 

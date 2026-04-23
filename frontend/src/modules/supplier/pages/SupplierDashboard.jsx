@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { b2bOrderApi } from '../../../lib/api';
+import { b2bOrderApi, authApi } from '../../../lib/api';
 import toast from 'react-hot-toast';
 
 const SupplierDashboard = () => {
@@ -10,7 +10,7 @@ const SupplierDashboard = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const user = JSON.parse(localStorage.getItem('userData') || '{}');
+    const user = JSON.parse(localStorage.getItem('supplierData') || localStorage.getItem('userData') || localStorage.getItem('user') || '{}');
     const supplierId = user._id || user.id;
 
     const fetchOrders = async () => {
@@ -25,8 +25,7 @@ const SupplierDashboard = () => {
             setLoading(false);
         }
     };
-
-    useEffect(() => {
+    useEffect(() => {
         if (supplierId) {
             fetchOrders();
         }
@@ -34,11 +33,12 @@ const SupplierDashboard = () => {
 
     const handleStatusUpdate = async (orderId, newStatus) => {
         try {
-            await b2bOrderApi.updateStatus(orderId, newStatus);
+            await b2bOrderApi.updateStatus(orderId, { status: newStatus, supplierId });
             toast.success(`Order marked as ${newStatus}`);
             fetchOrders();
         } catch (error) {
-            toast.error('Failed to update status');
+            console.error('Update Status Error:', error);
+            toast.error(error.response?.data?.message || 'Failed to update status');
         }
     };
 
@@ -46,7 +46,6 @@ const SupplierDashboard = () => {
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
     }), []);
-
     const itemVariants = useMemo(() => ({
         hidden: { y: 20, opacity: 0 },
         visible: { y: 0, opacity: 1 }
@@ -210,24 +209,6 @@ const SupplierDashboard = () => {
                     )}
                 </AnimatePresence>
             </main>
-
-            {/* Logistics Pincode Guard fixed at bottom */}
-            <div className="fixed bottom-32 left-6 right-6 p-5 bg-slate-900 border border-white/5 rounded-[2.5rem] shadow-2xl z-20 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-10 -mt-10" />
-                <div className="flex items-center justify-between mb-4 px-1 relative z-10">
-                    <p className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Active Area Guard</p>
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">{user.supplierDetails?.pincode}</p>
-                </div>
-                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden relative z-10">
-                    <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: '100%' }}
-                        transition={{ duration: 1.5 }}
-                        className="h-full bg-primary rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"
-                    />
-                </div>
-                <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mt-4 text-center">Monitoring real-time orders in your zone</p>
-            </div>
         </div>
     );
 };

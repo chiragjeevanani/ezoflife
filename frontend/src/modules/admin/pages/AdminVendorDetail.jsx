@@ -176,7 +176,10 @@ export default function AdminVendorDetail() {
                       <td className="px-6 py-5">
                           <div className="flex flex-col">
                               <span className="text-sm font-black text-slate-900">₹{service.vendorRate}</span>
-                              <span className="text-[9px] font-bold text-slate-400 line-through tracking-wider">₹{service.adminRate}</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[8px] font-bold text-slate-400 uppercase">N: {service.normalTime || '-'}</span>
+                                  <span className="text-[8px] font-bold text-amber-500 uppercase">E: {service.expressTime || '-'}</span>
+                              </div>
                           </div>
                       </td>
                       <td className="px-6 py-5 text-center">

@@ -5,12 +5,16 @@ import VendorHeader from '../components/VendorHeader';
 
 const EditProfile = () => {
     const navigate = useNavigate();
+    const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+    const vendorData = JSON.parse(vendorDataRaw);
+    const vData = vendorData.user || vendorData;
+
     const initialFormData = useMemo(() => ({
-        shopName: 'Pristine Cleaners',
-        ownerName: 'Chirag Jeevanani',
-        email: 'chirag@example.com',
-        phone: '+91 98765 43210',
-    }), []);
+        shopName: vData.displayName || vData.shopName || 'Pristine Cleaners',
+        ownerName: vData.ownerName || vData.displayName || 'Vendor Partner',
+        email: vData.email || 'vendor@example.com',
+        phone: vData.phone ? `+91 ${vData.phone}` : '+91 98765 43210',
+    }), [vData]);
 
     const [formData, setFormData] = useState(initialFormData);
 

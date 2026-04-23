@@ -8,8 +8,9 @@ const ServiceManagement = () => {
     const navigate = useNavigate();
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
-    const vendorData = JSON.parse(localStorage.getItem('vendorData'));
-    const vendorId = vendorData?._id || vendorData?.id;
+    const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+    const vendorData = JSON.parse(vendorDataRaw);
+    const vendorId = vendorData?._id || vendorData?.id || vendorData?.user?._id || vendorData?.user?.id;
 
     const fetchConfig = async () => {
         try {
@@ -146,7 +147,6 @@ const ServiceManagement = () => {
             animate={{ opacity: 1 }}
             className="bg-background text-on-background min-h-screen pb-32 font-body"
         >
-            <VendorHeader title="Services" showBack={true} />
 
             <main className="max-w-xl mx-auto px-6 pt-8 space-y-8">
                 {/* Header Section */}

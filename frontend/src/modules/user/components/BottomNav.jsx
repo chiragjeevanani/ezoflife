@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -7,19 +7,58 @@ const BottomNav = () => {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  const navItems = [
-    { label: 'Home', icon: 'home', path: '/user/home' },
-    { label: 'Orders', icon: 'local_laundry_service', path: '/user/orders' },
-    { label: 'Profile', icon: 'person', path: '/user/profile' },
-    { label: 'More', icon: 'menu', path: '/user/more' }
-  ];
+  const userRole = useMemo(() => (localStorage.getItem('userRole') || 'customer').toLowerCase(), []);
+
+  const navItems = useMemo(() => {
+    switch (userRole) {
+      case 'vendor':
+        return [
+          { label: 'Dashboard', icon: 'dashboard', path: '/vendor/dashboard' },
+          { label: 'Workshop', icon: 'local_laundry_service', path: '/vendor/services' },
+          { label: 'Profile', icon: 'person', path: '/vendor/profile' },
+          { label: 'More', icon: 'menu', path: '/user/more' }
+        ];
+      case 'supplier':
+        return [
+          { label: 'Dashboard', icon: 'dashboard', path: '/supplier/dashboard' },
+          { label: 'Logistics', icon: 'inventory_2', path: '/user/materials' },
+          { label: 'Profile', icon: 'person', path: '/user/profile' },
+          { label: 'More', icon: 'menu', path: '/user/more' }
+        ];
+      case 'rider':
+        return [
+          { label: 'Deliveries', icon: 'delivery_dining', path: '/rider/dashboard' },
+          { label: 'History', icon: 'history', path: '/rider/history' },
+          { label: 'Profile', icon: 'person', path: '/user/profile' },
+          { label: 'More', icon: 'menu', path: '/user/more' }
+        ];
+      default: // customer
+        return [
+          { label: 'Home', icon: 'home', path: '/user/home' },
+          { label: 'Orders', icon: 'local_laundry_service', path: '/user/orders' },
+          { label: 'Profile', icon: 'person', path: '/user/profile' },
+          { label: 'More', icon: 'menu', path: '/user/more' }
+        ];
+    }
+  }, [userRole]);
+
+  const handleNavClick = (path) => {
+    // Public paths allowed without login
+    const publicPaths = ['/user/home', '/user/more', '/user/land'];
+    const token = localStorage.getItem('token');
+
+    if (!token && !publicPaths.includes(path)) {
+      navigate('/user/auth');
+      return;
+    }
+    navigate(path);
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-8 flex justify-center">
       <motion.div 
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        // Removed exit animation to avoid flashes during layout transitions
         className="bg-white/95 backdrop-blur-2xl px-3 py-2 rounded-full shadow-[0_32px_64px_rgba(0,0,0,0.12)] pointer-events-auto flex justify-around items-center w-[90%] max-w-md border border-black/5"
       >
         {navItems.map((item) => {
@@ -29,7 +68,7 @@ const BottomNav = () => {
               key={item.path}
               id={`nav-${item.label.toLowerCase()}`}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNavClick(item.path)}
               className={`relative flex flex-col items-center justify-center rounded-full px-5 py-2.5 transition-colors duration-300 ${
                 isActive ? 'text-on-primary' : 'text-on-surface-variant hover:bg-surface-container'
               }`}

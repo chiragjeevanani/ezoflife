@@ -84,14 +84,15 @@
 }
 
 html {
-  background-color: #F8FAFC; /* Matches light background */
+  background: linear-gradient(135deg, #F8FAFC 0%, #a1f0e2 100%);
+  background-attachment: fixed;
   scroll-behavior: smooth;
-  overscroll-behavior-y: none; /* Disables the native pull-to-refresh/bounce that reveals white space */
+  overscroll-behavior-y: none;
 }
 
 @layer base {
   body {
-    background: #F8FAFC;
+    background: linear-gradient(135deg, #F8FAFC 0%, #a1f0e2 100%);
     background-attachment: fixed;
     @apply text-on-surface antialiased font-body overflow-x-hidden w-full;
     min-height: 100dvh;

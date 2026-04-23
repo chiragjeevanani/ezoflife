@@ -40,12 +40,15 @@ import RegisterAsSupplierPage from '../pages/RegisterAsSupplierPage';
 
 
 import UserLayout from '../layouts/UserLayout';
+import LandingAdPage from '../pages/LandingAdPage';
 
 const UserRoutes = () => {
   return (
     <Routes>
+      <Route path="/" element={<SplashPage />} />
+      <Route path="/land" element={<LandingAdPage />} />
+      
       <Route element={<UserLayout />}>
-        <Route path="/" element={<SplashPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/otp" element={<OtpVerificationPage />} />
         <Route path="/home" element={<HomePage />} />
@@ -84,8 +87,8 @@ const UserRoutes = () => {
         <Route path="/feedback" element={<FeedbackForm />} />
       </Route>
 
-      {/* Fallback to splash */}
-      <Route path="*" element={<Navigate to="/user/" replace />} />
+      {/* Fallback to landing */}
+      <Route path="*" element={<Navigate to="/user/land" replace />} />
     </Routes>
   );
 };

@@ -47,7 +47,6 @@ const VendorOrderHistory = () => {
 
     return (
         <div className="bg-[#F8FAFC] text-[#1E293B] min-h-screen pb-32 font-sans">
-            <VendorHeader title="Order History" showBack={true} />
 
             <motion.main 
                 initial={{ opacity: 0 }} 

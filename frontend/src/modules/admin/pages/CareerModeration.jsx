@@ -6,8 +6,9 @@ const CareerModeration = () => {
     const [jobs, setJobs] = useState([]);
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('Pending');
     const [isCreating, setIsCreating] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editingJob, setEditingJob] = useState(null);
     const [viewMode, setViewMode] = useState('Jobs'); // 'Jobs' or 'Applications'
 
     // Form for Admin Direct Post
@@ -68,13 +69,16 @@ const CareerModeration = () => {
     const handleAdminCreate = async (e) => {
         e.preventDefault();
         try {
-            const adminData = JSON.parse(localStorage.getItem('adminUser') || '{}');
+            const adminRaw = localStorage.getItem('adminData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+            const adminData = JSON.parse(adminRaw);
+            
             const requirementsArray = form.requirements.split(',').map(r => r.trim()).filter(r => r !== '');
             const jobData = {
                 ...form,
                 requirements: requirementsArray,
-                createdBy: adminData._id || adminData.id || 'admin_id',
-                creatorRole: 'Admin'
+                createdBy: adminData._id || adminData.id || adminData.user?._id || adminData.user?.id || 'admin_id',
+                creatorRole: 'Admin',
+                status: 'Approved'
             };
             await jobApi.create(jobData);
             fetchJobs();
@@ -85,7 +89,38 @@ const CareerModeration = () => {
         }
     };
 
-    const filteredJobs = (Array.isArray(jobs) ? jobs : []).filter(j => j.status === filter);
+    const handleEdit = (job) => {
+        setEditingJob(job);
+        setForm({
+            title: job.title,
+            companyName: job.companyName,
+            description: job.description,
+            requirements: Array.isArray(job.requirements) ? job.requirements.join(', ') : job.requirements,
+            location: job.location,
+            type: job.type || 'Full-time',
+            salary: job.salary
+        });
+        setIsEditing(true);
+    };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        try {
+            const requirementsArray = typeof form.requirements === 'string' ? form.requirements.split(',').map(r => r.trim()).filter(r => r !== '') : form.requirements;
+            const updateData = {
+                ...form,
+                requirements: requirementsArray
+            };
+            await jobApi.update(editingJob._id, updateData);
+            fetchJobs();
+            setIsEditing(false);
+            setEditingJob(null);
+            setForm({ title: '', companyName: 'EzOfLife Corporate', description: '', requirements: '', location: 'Gurgaon (HQ)', type: 'Full-time', salary: 'As per Industry' });
+        } catch (error) {
+            alert('Update failed');
+        }
+    };
+
 
     return (
         <div className="p-4 sm:p-8 space-y-6 sm:space-y-8 min-h-screen bg-[#E0F7FA]/30">
@@ -117,37 +152,35 @@ const CareerModeration = () => {
 
             {viewMode === 'Jobs' ? (
                 <>
-                    <div className="flex bg-slate-100 p-1 rounded-2xl w-fit">
-                        {['Pending', 'Approved', 'Rejected'].map(status => (
-                            <button 
-                                key={status}
-                                onClick={() => setFilter(status)}
-                                className={`px-4 sm:px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === status ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
-                            >
-                                {status}
-                            </button>
-                        ))}
-                    </div>
 
                     {loading ? (
                         <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" /></div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <AnimatePresence>
-                                {filteredJobs.map(job => (
+                                {(Array.isArray(jobs) ? jobs : []).map(job => (
                                     <motion.div 
                                         key={job._id}
                                         layout
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        className="bg-white p-6 rounded-[2rem] border border-slate-100 border-b-4 border-b-slate-900 shadow-sm space-y-4"
+                                        className="bg-white p-6 rounded-[2rem] border border-slate-100 border-b-4 border-b-slate-900 shadow-sm space-y-4 group relative overflow-hidden"
                                     >
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{job.companyName}</p>
-                                                <h3 className="text-lg font-black text-slate-900 leading-tight">{job.title}</h3>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest ${job.creatorRole === 'Admin' ? 'bg-slate-900 text-white' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                                                        {job.creatorRole === 'Admin' ? 'Admin' : 'Vendor'}
+                                                    </span>
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">{job.companyName}</p>
+                                                </div>
+                                                <h3 className="text-lg font-black text-slate-900 leading-tight group-hover:text-primary transition-colors">{job.title}</h3>
                                             </div>
-                                            {job.creatorRole === 'Admin' && <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[8px] font-black uppercase border border-blue-100">Official</span>}
+                                            {job.creatorRole === 'Admin' && (
+                                                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
+                                                    <span className="material-symbols-outlined text-sm">verified</span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="space-y-3">
@@ -160,18 +193,10 @@ const CareerModeration = () => {
                                         </div>
 
                                         <div className="pt-4 border-t border-slate-50 flex gap-2">
-                                            {filter === 'Pending' && (
-                                                <>
-                                                    <button onClick={() => handleUpdateStatus(job._id, 'Approved')} className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest">Approve</button>
-                                                    <button onClick={() => handleUpdateStatus(job._id, 'Rejected')} className="px-4 py-3 bg-rose-50 text-rose-500 rounded-xl font-black text-[9px] uppercase tracking-widest">Reject</button>
-                                                </>
-                                            )}
-                                            {filter !== 'Pending' && (
-                                                <button onClick={() => handleUpdateStatus(job._id, 'Pending')} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-black text-[9px] uppercase tracking-widest">Move to Review</button>
-                                            )}
+                                            <button onClick={() => handleEdit(job)} className="flex-1 py-3 bg-blue-50 text-blue-600 rounded-xl font-black text-[9px] uppercase tracking-widest">Edit Details</button>
                                             <button 
                                                 onClick={async () => { if(confirm('Permanently delete?')) { await jobApi.delete(job._id); fetchJobs(); } }}
-                                                className="w-10 h-10 flex items-center justify-center bg-rose-50 text-rose-500 rounded-xl"
+                                                className="w-10 h-10 flex items-center justify-center bg-rose-50 text-rose-500 rounded-xl shrink-0"
                                             >
                                                 <span className="material-symbols-outlined text-sm">delete</span>
                                             </button>
@@ -203,16 +228,22 @@ const CareerModeration = () => {
                                     <div className="flex justify-between items-start">
                                         <div className="space-y-1">
                                             <h4 className="text-lg font-black text-slate-900 tracking-tight leading-none">{app.applicantName}</h4>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                Applied for <span className="text-primary">{app.jobId?.title}</span>
-                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                    Applied for <span className="text-primary">{app.jobId?.title}</span>
+                                                </p>
+                                                <span className={`px-2 py-0.5 rounded-md text-[7px] font-black uppercase tracking-tighter ${app.jobId?.creatorRole === 'Admin' ? 'bg-slate-900 text-white' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                                                    {app.jobId?.creatorRole === 'Admin' ? 'Admin' : 'Vendor'}
+                                                </span>
+                                            </div>
                                         </div>
                                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${
-                                            app.status === 'Shortlisted' ? 'bg-emerald-50 text-emerald-600' : 
+                                            app.status === 'Approved' ? 'bg-emerald-50 text-emerald-600' : 
+                                            app.status === 'Recommended' ? 'bg-indigo-50 text-indigo-600' : 
                                             app.status === 'Rejected' ? 'bg-rose-50 text-rose-600' : 
                                             'bg-slate-100 text-slate-500'
                                         }`}>
-                                            {app.status}
+                                            {app.status === 'Recommended' ? 'Pending Admin' : app.status}
                                         </span>
                                     </div>
 
@@ -227,35 +258,56 @@ const CareerModeration = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 pt-2">
-                                        <a 
-                                            href={app.resumeLink} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest text-center shadow-lg shadow-slate-900/10 hover:scale-[1.02] active:scale-95 transition-all"
-                                        >
-                                            View Resume
-                                        </a>
+                                    <div className="flex flex-col gap-3 pt-2">
                                         <div className="flex gap-2">
-                                            <button 
-                                                onClick={() => handleUpdateApplicationStatus(app._id, 'Shortlisted')}
-                                                className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                                            <a 
+                                                href={app.resumeLink} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest text-center shadow-lg shadow-slate-900/10 hover:scale-[1.02] active:scale-95 transition-all"
                                             >
-                                                <span className="material-symbols-outlined text-[18px]">check</span>
-                                            </button>
-                                            <button 
-                                                onClick={() => handleUpdateApplicationStatus(app._id, 'Rejected')}
-                                                className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
-                                            >
-                                                <span className="material-symbols-outlined text-[18px]">close</span>
-                                            </button>
-                                            <button 
-                                                onClick={async () => { if(confirm('Delete application?')) { await jobApi.deleteApplication(app._id); fetchApplications(); } }}
-                                                className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-slate-200"
-                                            >
-                                                <span className="material-symbols-outlined text-[18px]">delete</span>
-                                            </button>
+                                                View Resume
+                                            </a>
+                                            {app.status === 'Recommended' && (
+                                                <button 
+                                                    onClick={() => handleUpdateApplicationStatus(app._id, 'Approved')}
+                                                    className="flex-[2] py-3 bg-primary text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">verified</span>
+                                                    Approve Candidate
+                                                </button>
+                                            )}
                                         </div>
+                                        {app.status !== 'Approved' ? (
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    onClick={() => handleUpdateApplicationStatus(app._id, 'Approved')}
+                                                    className="flex-1 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                                                    title="Approve"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">check</span>
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleUpdateApplicationStatus(app._id, 'Rejected')}
+                                                    className="flex-1 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+                                                    title="Reject"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                                </button>
+                                                <button 
+                                                    onClick={async () => { if(confirm('Delete application?')) { await jobApi.deleteApplication(app._id); fetchApplications(); } }}
+                                                    className="flex-1 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-slate-200"
+                                                    title="Delete"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="py-3 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center gap-2 border border-emerald-100">
+                                                <span className="material-symbols-outlined text-sm">check_circle</span>
+                                                <span className="text-[9px] font-black uppercase tracking-widest">Hiring Confirmed</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </motion.div>
                             ))}
@@ -303,6 +355,52 @@ const CareerModeration = () => {
                                 <div className="flex gap-3 pt-4">
                                     <button type="button" onClick={() => setIsCreating(false)} className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-2xl font-black text-[10px] uppercase">Cancel</button>
                                     <button type="submit" className="flex-[2] py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl">Push Live</button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Edit Modal */}
+            <AnimatePresence>
+                {isEditing && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 sm:p-20">
+                        <div onClick={() => { setIsEditing(false); setEditingJob(null); }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white w-full max-w-2xl rounded-[3rem] p-10 relative z-10 shadow-2xl overflow-y-auto max-h-full no-scrollbar">
+                            <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase mb-6">Edit Job Posting</h2>
+                            <form onSubmit={handleUpdate} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Title</label>
+                                        <input required value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Company Name</label>
+                                        <input required value={form.companyName} onChange={e => setForm({...form, companyName: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Description</label>
+                                    <textarea required value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold min-h-[100px]" />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Location</label>
+                                        <input required value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Salary</label>
+                                        <input required value={form.salary} onChange={e => setForm({...form, salary: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Requirements (CSV)</label>
+                                    <input value={form.requirements} onChange={e => setForm({...form, requirements: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                </div>
+                                <div className="flex gap-3 pt-4">
+                                    <button type="button" onClick={() => { setIsEditing(false); setEditingJob(null); }} className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-2xl font-black text-[10px] uppercase">Cancel</button>
+                                    <button type="submit" className="flex-[2] py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl">Save Changes</button>
                                 </div>
                             </form>
                         </motion.div>

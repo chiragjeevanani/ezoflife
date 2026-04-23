@@ -13,20 +13,76 @@ const B2BOrderHistory = () => {
     const vendorData = JSON.parse(vendorDataRaw);
     const vendorId = vendorData._id || vendorData.id || vendorData.user?._id || vendorData.user?.id;
 
+    const fetchOrders = async () => {
+        try {
+            const data = await b2bOrderApi.getVendorOrders(vendorId);
+            setOrders(data);
+        } catch (err) {
+            console.error('Fetch B2B Orders Error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (!vendorId) return;
-        const fetchOrders = async () => {
-            try {
-                const data = await b2bOrderApi.getVendorOrders(vendorId);
-                setOrders(data);
-            } catch (err) {
-                console.error('Fetch B2B Orders Error:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchOrders();
     }, [vendorId]);
+
+    const loadRazorpay = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const handlePayment = async (order) => {
+        const res = await loadRazorpay();
+        if (!res) {
+            alert('Razorpay SDK failed to load. Check your internet connection.');
+            return;
+        }
+
+        try {
+            // Create Razorpay Order on server
+            const { rzpOrder } = await b2bOrderApi.initiateB2BPayment(order._id);
+            
+            const options = {
+                key: 'rzp_test_placeholder', // Should be from backend or env
+                amount: rzpOrder.amount,
+                currency: rzpOrder.currency,
+                name: 'EzOfLife B2B',
+                description: `Payment for Order ${order.b2bOrderId}`,
+                order_id: rzpOrder.id,
+                handler: async (response) => {
+                    try {
+                        const verifyData = {
+                            ...response,
+                            orderId: order._id
+                        };
+                        await b2bOrderApi.verifyB2BPayment(verifyData);
+                        alert('Payment Successful! Funds held in Escrow.');
+                        fetchOrders();
+                    } catch (err) {
+                        alert('Payment Verification Failed');
+                    }
+                },
+                prefill: {
+                    name: vendorData.displayName,
+                    contact: vendorData.phone
+                },
+                theme: { color: '#0F172A' }
+            };
+
+            const paymentObject = new window.Razorpay(options);
+            paymentObject.open();
+        } catch (error) {
+            alert('Failed to initiate payment');
+        }
+    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -44,7 +100,6 @@ const B2BOrderHistory = () => {
             animate={{ opacity: 1 }}
             className="bg-[#F8FAFC] min-h-screen pb-32 font-sans"
         >
-            <VendorHeader />
             
             <main className="max-w-xl mx-auto px-6 pt-8 space-y-8">
                 <header>
@@ -113,20 +168,40 @@ const B2BOrderHistory = () => {
                                             </div>
                                         </div>
 
-                                        {/* Timeline Footer */}
-                                        <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                                        {/* Timeline Footer & Actions */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-slate-50 gap-4">
                                             <div className="flex items-center gap-2">
                                                 <span className="material-symbols-outlined text-md text-slate-300">calendar_today</span>
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                                    Placed: {new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                    Placed: {new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                                 </p>
                                             </div>
-                                            <button 
-                                                onClick={() => navigate(`/vendor/fulfillment`)}
-                                                className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-primary-gradient hover:text-white transition-all shadow-sm group-hover:scale-110"
-                                            >
-                                                <span className="material-symbols-outlined text-sm">open_in_new</span>
-                                            </button>
+
+                                            <div className="flex items-center gap-2">
+                                                {order.status === 'Delivered' && order.paymentStatus === 'Pending' && (
+                                                    <button 
+                                                        onClick={() => handlePayment(order)}
+                                                        className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.15em] shadow-lg shadow-slate-900/10 flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">payments</span>
+                                                        Pay Now
+                                                    </button>
+                                                )}
+
+                                                {order.paymentStatus === 'Paid' && (
+                                                    <div className={`px-4 py-2 flex items-center gap-2 rounded-full text-[8px] font-black uppercase tracking-widest border ${order.escrowStatus === 'Held' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                                                        <span className="material-symbols-outlined text-sm">{order.escrowStatus === 'Held' ? 'lock_clock' : 'verified'}</span>
+                                                        {order.escrowStatus === 'Held' ? 'Escrow Held' : 'Settled'}
+                                                    </div>
+                                                )}
+
+                                                <button 
+                                                    onClick={() => navigate(`/vendor/fulfillment`)}
+                                                    className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-all shadow-sm"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">open_in_new</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>

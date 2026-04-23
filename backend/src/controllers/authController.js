@@ -7,7 +7,7 @@ const generateOTP = () => '123456';
 
 export const requestOtp = async (req, res) => {
     try {
-        const { phone, channel, mode } = req.body; 
+        const { phone, channel, mode, customerType } = req.body; 
         const requestedRole = req.body.role || 'Customer'; // Capitalized
 
         if (!phone) {
@@ -38,7 +38,11 @@ export const requestOtp = async (req, res) => {
 
         // If Signup and user not found, create as Customer by default
         if (!user) {
-            user = new User({ phone, role: 'Customer' });
+            user = new User({ 
+                phone, 
+                role: 'Customer',
+                customerType: customerType || 'individual'
+            });
         }
 
         user.otp = otp;
@@ -340,15 +344,35 @@ export const updateUserProfile = async (req, res) => {
         const { id } = req.params;
         const updates = req.body;
 
-        // Surgical update: only change fields that are sent in the request
-        const updatedUser = await User.findByIdAndUpdate(
-            id,
-            { $set: updates },
-            { new: true, runValidators: true }
-        );
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
 
-        if (!updatedUser) return res.status(404).json({ message: 'User not found' });
-        res.status(200).json(updatedUser);
+        // Surgical update: only change fields that are sent in the request
+        Object.keys(updates).forEach(key => {
+            user[key] = updates[key];
+        });
+
+        // ROLE-AWARE SYNC: If root address/pincode/city is updated, sync to specific details
+        if (updates.address || updates.pincode || updates.city) {
+            if (user.role === 'Vendor') {
+                user.shopDetails = {
+                    ...user.shopDetails,
+                    address: updates.address || user.shopDetails.address,
+                    pincode: updates.pincode || user.shopDetails.pincode,
+                    city: updates.city || user.shopDetails.city
+                };
+            } else if (user.role === 'Supplier') {
+                user.supplierDetails = {
+                    ...user.supplierDetails,
+                    address: updates.address || user.supplierDetails.address,
+                    pincode: updates.pincode || user.supplierDetails.pincode,
+                    city: updates.city || user.supplierDetails.city
+                };
+            }
+        }
+
+        await user.save();
+        res.status(200).json(user);
     } catch (err) {
         console.error('Update Profile Error:', err);
         res.status(500).json({ message: 'Error updating profile', error: err.message });

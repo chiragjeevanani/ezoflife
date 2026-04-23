@@ -2,14 +2,15 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import useNotificationStore from '../../../shared/stores/notificationStore';
 
-const VendorHeader = ({ title = "Spinzyt", showBack = false }) => {
+const VendorHeader = ({ title = "SPINZYT", showBack = false }) => {
     const navigate = useNavigate();
     const notifications = useNotificationStore((state) => state.notifications);
     const unreadCount = notifications.filter(n => n.persona === 'vendor' && !n.read).length;
 
-    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
-    const vendorName = vendorData.displayName || "Vendor Partner";
-    const vendorPhone = vendorData.phone || "98765 43210";
+    const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+    const vendorData = JSON.parse(vendorDataRaw);
+    const vendorName = vendorData.displayName || (vendorData.user && vendorData.user.displayName) || "Vendor Partner";
+    const vendorPhone = vendorData.phone || (vendorData.user && vendorData.user.phone) || "98765 43210";
 
     return (
         <header className="bg-surface/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-outline-variant/10 min-h-[72px]">
@@ -28,7 +29,9 @@ const VendorHeader = ({ title = "Spinzyt", showBack = false }) => {
                     </div>
                 )}
                 <div className="flex flex-col">
-                    <h1 className="text-[14px] font-black tracking-tight text-on-surface leading-none mb-1 uppercase">{vendorName}</h1>
+                    <h1 className="text-[14px] font-black tracking-tight text-on-surface leading-none mb-1 uppercase">
+                        {title !== "SPINZYT" ? title : vendorName}
+                    </h1>
                     <p className="text-[10px] font-bold tracking-widest text-primary flex items-center gap-1 leading-none">
                         <span className="material-symbols-outlined text-[12px]">smartphone</span>
                         +91 {vendorPhone}

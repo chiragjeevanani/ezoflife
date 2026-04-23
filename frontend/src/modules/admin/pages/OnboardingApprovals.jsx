@@ -18,13 +18,13 @@ export default function OnboardingApprovals() {
     setLoading(true);
     try {
       const pending = await adminApi.getPendingApprovals();
-      // Map DB fields to UI fields if needed
       const mapped = pending.map(v => ({
         id: v._id,
-        shop: v.shopDetails?.name || v.displayName || `Vendor ${v.phone.slice(-4)}`,
-        address: v.shopDetails?.address || 'No Address Provided',
-        date: new Date(v.createdAt).toLocaleDateString() || 'Recently',
-        docs: ['GST', 'Aadhar'], // Placeholder as docs aren't fully in DB yet
+        role: v.role,
+        shop: v.role === 'Supplier' ? (v.supplierDetails?.businessName || v.displayName) : (v.shopDetails?.name || v.displayName),
+        address: (v.role === 'Supplier' ? v.supplierDetails?.address : v.shopDetails?.address) || 'No Address Provided',
+        date: new Date(v.createdAt).toLocaleDateString(),
+        docs: v.role === 'Supplier' ? ['GST', 'Aadhar', 'Trade License'] : ['GST', 'Aadhar'],
         phone: v.phone
       }));
       setData(mapped);
@@ -35,16 +35,17 @@ export default function OnboardingApprovals() {
     }
   };
 
-  const handleAction = async (id, status) => {
+  const handleAction = async (id, status, role) => {
     setIsProcessing(id);
     try {
       if (status === 'approved') {
-        await adminApi.approveVendor(id);
+        role === 'Supplier' ? await adminApi.approveSupplier(id) : await adminApi.approveVendor(id);
       } else {
-        await adminApi.rejectVendor(id);
+        role === 'Supplier' ? await adminApi.rejectSupplier(id) : await adminApi.rejectVendor(id);
       }
       setData(v => v.filter(req => req.id !== id));
     } catch (err) {
+      console.error('Action Error:', err);
       alert('Action failed. Try again.');
     } finally {
       setIsProcessing(null);
@@ -100,8 +101,11 @@ export default function OnboardingApprovals() {
               <div className="p-5 space-y-6 flex-1">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-sm bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
+                    <div className="w-12 h-12 rounded-sm bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 relative">
                        <FileText size={20} />
+                       <span className={`absolute -top-1 -right-1 px-1 py-0.5 rounded-full text-[6px] font-black uppercase text-white ${req.role === 'Supplier' ? 'bg-blue-500' : 'bg-emerald-500'}`}>
+                         {req.role}
+                       </span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[9px] text-slate-300 font-bold uppercase tracking-[0.25em] mb-1.5 leading-none">Ref: {req.id}</span>
@@ -130,10 +134,10 @@ export default function OnboardingApprovals() {
               </div>
 
               <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex items-center gap-3">
-                 <button onClick={() => handleAction(req.id, 'rejected')} disabled={!!isProcessing} className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest bg-white border border-slate-200">Reject</button>
-                 <button onClick={() => handleAction(req.id, 'approved')} disabled={!!isProcessing} className="flex-[2] py-3 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                 <button onClick={() => handleAction(req.id, 'rejected', req.role)} disabled={!!isProcessing} className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest bg-white border border-slate-200">Reject</button>
+                 <button onClick={() => handleAction(req.id, 'approved', req.role)} disabled={!!isProcessing} className="flex-[2] py-3 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
                    {isProcessing === req.id ? <RotateCw size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
-                   {isProcessing === req.id ? 'Processing...' : 'Approve Vendor'}
+                   {isProcessing === req.id ? 'Processing...' : `Approve ${req.role}`}
                  </button>
               </div>
             </div>

@@ -148,6 +148,61 @@ export const authApi = {
     }
 };
 
+export const adApi = {
+    create: async (formData) => {
+        try {
+            const response = await fetch(`${BASE_URL}/ads`, {
+                method: 'POST',
+                body: formData
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Create Ad Error:', error);
+            throw error;
+        }
+    },
+    getActive: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/ads/active`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Active Ad Error:', error);
+            throw error;
+        }
+    },
+    getAll: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/ads/all`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get All Ads Error:', error);
+            throw error;
+        }
+    },
+    toggleStatus: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/ads/${id}/toggle`, {
+                method: 'PATCH'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Toggle Ad Error:', error);
+            throw error;
+        }
+    },
+    delete: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/ads/${id}`, {
+                method: 'DELETE'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete Ad Error:', error);
+            throw error;
+        }
+    }
+};
+
 export const b2bOrderApi = {
     placeOrder: async (data) => {
         try {
@@ -190,6 +245,52 @@ export const b2bOrderApi = {
             return await response.json();
         } catch (error) {
             console.error('Update B2B Status Error:', error);
+            throw error;
+        }
+    },
+    initiateB2BPayment: async (orderId) => {
+        try {
+            const response = await fetch(`${BASE_URL}/b2b-orders/initiate-payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Initiate B2B Payment Error:', error);
+            throw error;
+        }
+    },
+    verifyB2BPayment: async (paymentData) => {
+        try {
+            const response = await fetch(`${BASE_URL}/b2b-orders/verify-payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(paymentData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Verify B2B Payment Error:', error);
+            throw error;
+        }
+    },
+    getAdminEscrowOrders: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/b2b-orders/admin/escrow`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Admin Escrow Error:', error);
+            throw error;
+        }
+    },
+    releasePayment: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/b2b-orders/${id}/release`, {
+                method: 'PATCH'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Release Payment Error:', error);
             throw error;
         }
     }
@@ -844,8 +945,6 @@ export const mediaApi = {
             const response = await fetch(`${BASE_URL}/media/upload`, {
                 method: 'POST',
                 body: formData
-                // Note: Don't set Content-Type header manually for FormData, 
-                // fetch will set it with the correct boundary automatically.
             });
             return await response.json();
         } catch (error) {
@@ -856,10 +955,7 @@ export const mediaApi = {
     getHistory: async () => {
         try {
             const response = await fetch(`${BASE_URL}/media/history`);
-            if (!response.ok) {
-                console.error(`HTTP error! status: ${response.status} at /media/history`);
-                return [];
-            }
+            if (!response.ok) return [];
             return await response.json();
         } catch (error) {
             console.error('Get Media History Error:', error);
@@ -868,12 +964,8 @@ export const mediaApi = {
     },
     getLatest: async () => {
         try {
-            // Add timestamp to bypass potential browser caching of old Cloudinary links
             const response = await fetch(`${BASE_URL}/media/latest?t=${Date.now()}`);
-            if (!response.ok) {
-                console.error(`HTTP error! status: ${response.status} at /media/latest`);
-                return null;
-            }
+            if (!response.ok) return null;
             return await response.json();
         } catch (error) {
             console.error('Get Latest Media Error:', error);
@@ -901,7 +993,7 @@ export const mediaApi = {
             console.error('Get All Inquiries Error:', error);
             throw error;
         }
-    },
+    }
 };
 
 export const partnershipApi = {
@@ -963,7 +1055,6 @@ export const laborApi = {
             throw error;
         }
     },
-    // Requisitions
     createRequisition: async (data) => {
         try {
             const response = await fetch(`${BASE_URL}/labor/place-request`, {
@@ -1074,6 +1165,15 @@ export const jobApi = {
             throw error;
         }
     },
+    getVendorApplications: async (vendorId) => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/vendor/${vendorId}/applications`);
+            return await response.json();
+        } catch (error) {
+            console.error('Fetch Vendor Applications Error:', error);
+            throw error;
+        }
+    },
     getAdminAll: async () => {
         try {
             const response = await fetch(`${BASE_URL}/jobs/admin/all`);
@@ -1105,6 +1205,19 @@ export const jobApi = {
             throw error;
         }
     },
+    update: async (id, data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/jobs/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Update Job Error:', error);
+            throw error;
+        }
+    },
     delete: async (id) => {
         try {
             const response = await fetch(`${BASE_URL}/jobs/${id}`, { method: 'DELETE' });
@@ -1116,10 +1229,11 @@ export const jobApi = {
     },
     apply: async (data) => {
         try {
+            const isFormData = data instanceof FormData;
             const response = await fetch(`${BASE_URL}/jobs/apply`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+                body: isFormData ? data : JSON.stringify(data)
             });
             return await response.json();
         } catch (error) {

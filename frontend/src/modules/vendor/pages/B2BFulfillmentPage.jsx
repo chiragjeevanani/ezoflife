@@ -180,8 +180,9 @@ const B2BFulfillmentPage = () => {
                                     // Smart ID Extraction: Check root, then check nested .user object
                                     const vendorId = vendorData._id || vendorData.id || vendorData.user?._id || vendorData.user?.id;
                                     const pincode = vendorData.shopDetails?.pincode || vendorData.pincode || vendorData.user?.shopDetails?.pincode;
+                                    const city = vendorData.shopDetails?.city || vendorData.city || vendorData.user?.shopDetails?.city;
 
-                                    console.log('📦 [B2B_ORDER] Identity Context:', { vendorId, pincode });
+                                    console.log('📦 [B2B_ORDER] Identity Context:', { vendorId, pincode, city });
 
                                     if (!pincode || pincode === 'undefined') {
                                         console.warn('⚠️ [B2B_ORDER] Pincode Missing');
@@ -203,10 +204,11 @@ const B2BFulfillmentPage = () => {
                                             name: item.title,
                                             price: item.price,
                                             quantity: item.quantity || 1
-                                        })),
+                                         })),
                                         totalAmount: total,
-                                        shippingAddress: vendorData.address || vendorData.shopDetails?.address,
-                                        pincode: pincode
+                                        shippingAddress: vendorData.address || vendorData.shopDetails?.address || vendorData.user?.shopDetails?.address,
+                                        pincode: pincode,
+                                        city: city
                                     };
 
                                     console.log('📡 [B2B_ORDER] Sending Order Data:', orderData);
@@ -216,7 +218,7 @@ const B2BFulfillmentPage = () => {
                                     toast.dismiss(loadingToast);
 
                                     if (res.order) {
-                                        toast.success(`Success! Order routed to ${res.supplier.businessName}`);
+                                        toast.success('Success! Order broadcasted to regional suppliers.');
                                         setCart([]);
                                         setTimeout(() => navigate('/vendor/dashboard'), 2000);
                                     } else {

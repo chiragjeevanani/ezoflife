@@ -1,9 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authApi } from '../../../lib/api';
+import toast from 'react-hot-toast';
 
 const AddressesPage = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   
   const initialAddresses = useMemo(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -55,28 +58,49 @@ const AddressesPage = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSaveAddress = () => {
+  const handleSaveAddress = async () => {
     if (!formData.line1.trim() || !formData.pincode.trim()) return;
 
     const fullAddressString = `${formData.line1}${formData.line2 ? `, ${formData.line2}` : ''}${formData.floor ? `, Floor ${formData.floor}` : ''}${formData.landmark ? ` (Near ${formData.landmark})` : ''}, ${formData.city}, ${formData.state} - ${formData.pincode}`;
 
-    if (editingAddress) {
-      setAddresses(addresses.map(addr => 
-        addr.id === editingAddress.id 
-          ? { ...addr, type: newType, address: fullAddressString, raw: formData } 
-          : addr
-      ));
-    } else {
-      const newId = Math.max(...addresses.map(a => a.id), 0) + 1;
-      setAddresses([...addresses, { 
-        id: newId, 
+    try {
+      setIsLoading(true);
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user.id || user._id;
+
+      if (!userId) {
+        toast.error('Session expired. Please login again.');
+        return;
+      }
+
+      // We only support one primary address for now as per DB schema
+      const updatedUser = await authApi.updateProfile(userId, {
+        address: fullAddressString,
+        pincode: formData.pincode,
+        city: formData.city
+      });
+
+      // Update local storage
+      const mergedUser = { ...user, ...updatedUser };
+      localStorage.setItem('user', JSON.stringify(mergedUser));
+      
+      // Update UI list (simulating list behavior with the single primary address)
+      setAddresses([{ 
+        id: 1, 
         type: newType, 
         address: fullAddressString, 
         raw: formData,
-        isDefault: addresses.length === 0 
+        isDefault: true 
       }]);
+
+      toast.success('Official business address updated!');
+      closeModal();
+    } catch (err) {
+      console.error('Save Address Error:', err);
+      toast.error('Failed to save address to server');
+    } finally {
+      setIsLoading(false);
     }
-    closeModal();
   };
 
   const openAddModal = () => {

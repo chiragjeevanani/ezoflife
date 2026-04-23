@@ -9,8 +9,9 @@ const VendorNotifications = () => {
     const navigate = useNavigate();
     const { notifications, fetchNotifications, markAllAsRead } = useNotificationStore();
 
-    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
-    const vendorId = vendorData?._id || vendorData?.id;
+    const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+    const vendorData = JSON.parse(vendorDataRaw);
+    const vendorId = vendorData?._id || vendorData?.id || vendorData?.user?._id || vendorData?.user?.id;
 
     React.useEffect(() => {
         if (vendorId) {
@@ -36,7 +37,6 @@ const VendorNotifications = () => {
 
     return (
         <div className="bg-[#F8FAFC] text-[#1E293B] min-h-screen pb-32 font-sans">
-            <VendorHeader title="Notifications" showBack={true} />
 
             <motion.main 
                 initial={{ opacity: 0, y: 10 }}

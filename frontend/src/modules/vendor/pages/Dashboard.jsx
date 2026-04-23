@@ -153,7 +153,6 @@ const Dashboard = () => {
             animate={{ opacity: 1 }}
             className="bg-background text-on-background min-h-screen pb-32 font-body"
         >
-            <VendorHeader />
 
 
             {/* Confirmation Modal for Mark as Ready */}

@@ -24,13 +24,14 @@ const VendorProfile = () => {
         { icon: 'help_outline', label: 'Help & Support', path: '/vendor/support' },
     ], []);
 
-    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
-    const vendorName = vendorData.displayName || "Vendor Partner";
-    const vendorPhone = vendorData.phone || "98765 43210";
+    const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+    const vendorData = JSON.parse(vendorDataRaw);
+    const vendorId = vendorData?._id || vendorData?.id || vendorData?.user?._id || vendorData?.user?.id;
+    const vendorName = vendorData.displayName || (vendorData.user && vendorData.user.displayName) || "Vendor Partner";
+    const vendorPhone = vendorData.phone || (vendorData.user && vendorData.user.phone) || "98765 43210";
 
     return (
         <div className="bg-background text-on-background min-h-screen pb-32 font-body">
-            <VendorHeader />
 
             <motion.main 
                 initial={{ opacity: 0, y: 10 }}

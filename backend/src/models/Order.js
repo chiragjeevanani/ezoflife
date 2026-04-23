@@ -95,6 +95,15 @@ const orderSchema = new mongoose.Schema({
     discountAmount: {
         type: Number,
         default: 0
+    },
+    deliveryMode: {
+        type: String,
+        enum: ['Normal', 'Express'],
+        default: 'Normal'
+    },
+    deliveryCharge: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 

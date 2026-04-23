@@ -12,6 +12,7 @@ const AuthPage = () => {
   const [otpChannel, setOtpChannel] = useState('WhatsApp'); // 'WhatsApp' or 'SMS'
   const [agreedToTnC, setAgreedToTnC] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [isRetail, setIsRetail] = useState(false);
 
   const isLoginValid = loginPhone.length === 10 && /^\d+$/.test(loginPhone);
   const isSignupValid = signupPhone.length === 10 && /^\d+$/.test(signupPhone) && agreedToTnC;
@@ -45,6 +46,7 @@ const AuthPage = () => {
 
   const otpChannels = useMemo(() => [
     { id: 'WhatsApp', icon: 'chat', color: 'text-green-600' },
+    { id: 'Both', icon: 'all_inclusive', color: 'text-indigo-600' },
     { id: 'SMS', icon: 'sms', color: 'text-primary' }
   ], []);
 
@@ -60,8 +62,8 @@ const AuthPage = () => {
           transition={{ duration: 0.8 }}
           className="z-10 text-center px-8"
         >
-          <h1 className="font-headline font-black text-[2.5rem] md:text-[3.5rem] text-primary leading-none tracking-tight mb-2">Spinzyt</h1>
-          <p className="font-label text-on-surface-variant uppercase tracking-[0.2em] text-[10px] font-bold">The Pristine Flow</p>
+          <h1 className="font-headline font-black text-[2.5rem] md:text-[3.5rem] text-primary leading-none tracking-tight mb-2">SPINZYT</h1>
+
         </motion.div>
         <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-background to-transparent"></div>
       </div>
@@ -215,6 +217,24 @@ const AuthPage = () => {
                         )}
                       </motion.div>
 
+                      {/* Business/Retail Selection */}
+                      <motion.div 
+                        variants={itemVariants}
+                        onClick={() => setIsRetail(!isRetail)}
+                        className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer border transition-all ${isRetail ? 'bg-primary/5 border-primary shadow-sm' : 'bg-surface-container-low border-slate-300'}`}
+                      >
+                        <div className="flex flex-col">
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${isRetail ? 'text-primary' : 'text-on-surface-variant opacity-60'}`}>Business/Retail Mode</span>
+                          <span className="text-[9px] font-bold text-on-surface-variant opacity-40 uppercase">For Bulk & Professional Services</span>
+                        </div>
+                        <div className={`w-10 h-6 rounded-full p-1 transition-all ${isRetail ? 'bg-primary' : 'bg-slate-300'}`}>
+                           <motion.div 
+                             animate={{ x: isRetail ? 16 : 0 }}
+                             className="w-4 h-4 bg-white rounded-full shadow-sm"
+                           />
+                        </div>
+                      </motion.div>
+
                       {/* T&C Checkbox */}
                       <motion.div variants={itemVariants} className="flex items-start gap-3 px-1 py-1">
                         <button 
@@ -224,7 +244,7 @@ const AuthPage = () => {
                           {agreedToTnC && <span className="material-symbols-outlined text-[14px]">check</span>}
                         </button>
                         <p className="text-[10px] font-bold text-on-surface-variant leading-relaxed">
-                          I agree to the <span className="text-primary underline cursor-pointer">Terms & Conditions</span> and provide consent to receive updates.
+                          I agree to the <span className="text-primary underline cursor-pointer">Terms & Conditions</span> and provide consent.
                         </p>
                       </motion.div>
 
@@ -235,7 +255,9 @@ const AuthPage = () => {
                           if (isSignupValid) {
                             setApiError('');
                             try {
-                              const response = await authApi.requestOtp(signupPhone, otpChannel, 'signup');
+                              const response = await authApi.requestOtp(signupPhone, otpChannel, 'signup', { 
+                                customerType: isRetail ? 'retail' : 'individual' 
+                              });
                               if (response.message === 'OTP sent successfully') {
                                 navigate('/user/otp', { state: { phone: signupPhone, channel: otpChannel } });
                               } else {
@@ -264,7 +286,7 @@ const AuthPage = () => {
 
           {/* Footer micro-copy */}
           <motion.p className="mt-10 text-center text-[11px] text-on-surface-variant font-semibold tracking-wide px-4 opacity-50 underline underline-offset-4 cursor-pointer">
-            Trouble logging in? Get support from Spinzyt Team
+            Trouble logging in? Get support from SPINZYT Team
           </motion.p>
         </div>
       </main>

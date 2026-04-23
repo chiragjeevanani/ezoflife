@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    customerType: { 
+        type: String, 
+        enum: ['individual', 'retail'], 
+        default: 'individual' 
+    },
     address: {
         type: String,
         default: ''
@@ -45,6 +50,8 @@ const userSchema = new mongoose.Schema({
             name: { type: String },
             adminRate: { type: Number },
             vendorRate: { type: Number },
+            normalTime: { type: String, default: '' },
+            expressTime: { type: String, default: '' },
             icon: { type: String },
             status: { 
                 type: String, 

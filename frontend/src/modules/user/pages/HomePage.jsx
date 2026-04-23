@@ -24,8 +24,18 @@ const HomePage = () => {
     try {
       setLoading(true);
       const data = await serviceApi.getAll({ approvedOnly: true });
-      // Extra safety: Filter for 'Approved' status
-      setServices(data.filter(s => s.status === 'Active' && s.approvalStatus === 'Approved'));
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const customerType = userData.customerType || 'individual';
+      
+      // Filter for 'Approved' status AND customerType matching targetAudience
+      const filtered = data.filter(s => {
+        const isActive = s.status === 'Active' && s.approvalStatus === 'Approved';
+        const target = s.targetAudience || 'both';
+        const isMatch = target === 'both' || target === customerType;
+        return isActive && isMatch;
+      });
+      
+      setServices(filtered);
     } catch (error) {
       console.error('Error fetching services:', error);
     } finally {
@@ -131,6 +141,36 @@ const HomePage = () => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       navigate(`/user/search?q=${encodeURIComponent(searchQuery)}`);
     }
+  };
+
+  const handleServiceClick = (serviceId, service, i) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/user/auth');
+      return;
+    }
+
+    navigate('/user/service-info', { 
+      state: { 
+        selectedService: { 
+          id: serviceId, 
+          title: service.name, 
+          desc: service.description, 
+          image: service.image, 
+          color: isHeritage ? 'heritage' : (i % 3 === 0 ? 'primary' : i % 3 === 1 ? 'secondary' : 'tertiary'), 
+          price: `₹${service.basePrice}.00` 
+        } 
+      } 
+    });
+  };
+
+  const handleCartClick = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/user/auth');
+      return;
+    }
+    navigate('/user/cart');
   };
 
   const containerVariants = useMemo(() => ({
@@ -297,18 +337,7 @@ const HomePage = () => {
                         </div>
 
                         <div 
-                            onClick={() => navigate('/user/service-info', { 
-                            state: { 
-                                selectedService: { 
-                                id: serviceId, 
-                                title: service.name, 
-                                desc: service.description, 
-                                image: service.image, 
-                                color: isHeritage ? 'heritage' : (i % 3 === 0 ? 'primary' : i % 3 === 1 ? 'secondary' : 'tertiary'), 
-                                price: `₹${service.basePrice}.00` 
-                                } 
-                            } 
-                            })}
+                            onClick={() => handleServiceClick(serviceId, service, i)}
                             className={`w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-on-surface cursor-pointer group-hover:bg-opacity-100 transition-all duration-300 ${isHeritage ? 'group-hover:bg-[#996515]' : 'group-hover:bg-primary'} group-hover:text-white overflow-hidden`}
                         >
                             {service.image ? (
@@ -382,11 +411,7 @@ const HomePage = () => {
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/user/service-info', { 
-                  state: { 
-                    selectedService: { id: 'wash_express', title: 'Wash & Fold (Express)', desc: 'Priority turnaround', icon: 'bolt', color: 'primary', price: '₹199.00' } 
-                  } 
-                })}
+                onClick={() => handleServiceClick('wash_express', { name: 'Wash & Fold (Express)', basePrice: 199 }, 0)}
                 className={`${themeGradient} text-on-primary w-full py-4 rounded-2xl font-black text-sm tracking-widest uppercase shadow-lg shadow-primary/20`}
               >
                 Book Now
@@ -408,7 +433,7 @@ const HomePage = () => {
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/user/cart')}
+                onClick={handleCartClick}
                 className={`${themeGradient} w-full h-[64px] rounded-3xl p-1 flex items-center justify-between shadow-2xl shadow-primary/30 group overflow-hidden`}
               >
                 <div className="flex items-center gap-4 pl-6">

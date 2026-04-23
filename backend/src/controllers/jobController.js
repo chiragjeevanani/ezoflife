@@ -1,13 +1,13 @@
 import Job from '../models/Job.js';
+import mongoose from 'mongoose';
 
 export const createJob = async (req, res) => {
     try {
         const job = new Job(req.body);
-        // If an admin creates a job, it should be approved by default
-        if (req.body.creatorRole === 'Admin') {
-            job.status = 'Approved';
-            job.isDirectAdminPost = true;
-        }
+        // All jobs created by Admin or Vendor are Approved by default as per user request
+        job.status = 'Approved';
+        if (req.body.creatorRole === 'Admin') job.isDirectAdminPost = true;
+        
         await job.save();
         res.status(201).json(job);
     } catch (error) {
@@ -18,7 +18,13 @@ export const createJob = async (req, res) => {
 export const getVendorJobs = async (req, res) => {
     try {
         const { vendorId } = req.query;
-        const jobs = await Job.find({ createdBy: vendorId }).sort({ createdAt: -1 });
+        if (!vendorId) return res.status(400).json({ message: 'Vendor ID is required' });
+        
+        // Use ObjectId for precise matching
+        const jobs = await Job.find({ 
+            createdBy: new mongoose.Types.ObjectId(vendorId) 
+        }).sort({ createdAt: -1 });
+        
         res.json(jobs);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -58,6 +64,16 @@ export const deleteJob = async (req, res) => {
     try {
         await Job.findByIdAndDelete(req.params.id);
         res.json({ message: 'Job deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const updateJob = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const job = await Job.findByIdAndUpdate(id, req.body, { new: true });
+        res.json(job);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -29,6 +29,8 @@ import LaborManagement from '../pages/LaborManagement';
 import NotificationsPage from '../pages/NotificationsPage';
 import CareerModeration from '../pages/CareerModeration';
 import Suppliers from '../pages/Suppliers';
+import AdminAdvertisementPage from '../pages/AdminAdvertisementPage';
+import B2BEscrowManagement from '../pages/B2BEscrowManagement';
 
 import MasterServiceManagement from '../pages/MasterServiceManagement';
 
@@ -61,6 +63,7 @@ const AdminRoutes = () => {
           </AdminGuard>
         }
       >
+        <Route path="/ads" element={<AdminAdvertisementPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/orders" element={<Orders />} />
@@ -78,6 +81,7 @@ const AdminRoutes = () => {
         <Route path="/users" element={<Users />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/b2b-leads" element={<B2BLeads />} />
+        <Route path="/b2b-escrow" element={<B2BEscrowManagement />} />
         <Route path="/suppliers" element={<Suppliers />} />
         <Route path="/materials" element={<MaterialConfig />} />
         <Route path="/faqs" element={<FAQManagement />} />

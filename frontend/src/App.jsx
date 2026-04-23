@@ -32,11 +32,11 @@ function App() {
         {/* Admin Module Routes */}
         <Route path="/admin/*" element={<AdminRoutes />} />
         
-        {/* Root Redirect to user splash */}
-        <Route path="/" element={<Navigate to="/user" replace />} />
+        {/* Root Redirect to user landing ad */}
+        <Route path="/" element={<Navigate to="/user/land" replace />} />
         
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/user" replace />} />
+        <Route path="*" element={<Navigate to="/user/land" replace />} />
       </Routes>
     </BrowserRouter>
   )

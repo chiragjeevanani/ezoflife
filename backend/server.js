@@ -5,6 +5,13 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import http from 'http';
+import fs from 'fs';
+
+const logToFile = (msg) => {
+    try {
+        fs.appendFileSync('./REAL_USER_DEBUG.log', `${new Date().toISOString()} - ${msg}\n`);
+    } catch (e) {}
+};
 
 // Route imports
 import authRoutes from './src/routes/authRoutes.js';
@@ -22,6 +29,9 @@ import promotionRoutes from './src/routes/promotionRoutes.js';
 import jobRoutes from './src/routes/jobRoutes.js';
 import b2bOrderRoutes from './src/routes/b2bOrderRoutes.js';
 import masterServiceRoutes from './src/routes/masterServiceRoutes.js';
+import adRoutes from './src/routes/adRoutes.js';
+import SystemConfig from './src/models/SystemConfig.js';
+import { getSystemConfig, updateSystemConfig } from './src/controllers/adminController.js';
 import { addSpecialist, getAllSpecialists, deleteSpecialist, createRequisition, getAllRequisitions, assignRequisition } from './src/controllers/laborController.js';
 
 import { initSocket } from './src/socket.js';
@@ -48,7 +58,10 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.get('/api/admin/config', getSystemConfig);
+app.post('/api/admin/config', updateSystemConfig);
 app.use('/api/admin', adminRoutes);
+app.get('/api/admin-test-direct', (req, res) => res.json({ message: 'Admin Direct Route Active' }));
 app.use('/api/orders', orderRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/services', serviceRoutes);
@@ -65,6 +78,7 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/partnerships', partnershipRoutes);
 console.log('🛠️ [DEBUG] Loading B2B Order Routes...', typeof b2bOrderRoutes);
 app.use('/api/b2b-orders', b2bOrderRoutes);
+app.use('/api/ads', adRoutes);
 
 // Labor Routes
 app.post('/api/labor/add', addSpecialist);
@@ -220,5 +234,7 @@ app.get('/', (req, res) => {
 // Port
 const PORT = 5001;
 server.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+    const msg = `🚀 SERVER RESTARTED AT ${new Date().toISOString()} ON PORT ${PORT}`;
+    console.log(msg);
+    logToFile(msg);
 });

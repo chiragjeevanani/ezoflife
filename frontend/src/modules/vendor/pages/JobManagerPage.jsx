@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { jobApi } from '../../../lib/api';
+import { jobApi, UPLOADS_URL } from '../../../lib/api';
 import VendorHeader from '../components/VendorHeader';
 
 const JobManagerPage = () => {
     const navigate = useNavigate();
     const [jobs, setJobs] = useState([]);
+    const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
+    const [viewMode, setViewMode] = useState('Jobs'); // 'Jobs' or 'Applications'
     
     // Form State
     const [form, setForm] = useState({
@@ -20,12 +22,22 @@ const JobManagerPage = () => {
         salary: ''
     });
 
-    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
-    const vendorId = vendorData?._id || vendorData?.id;
+    const vendorData = JSON.parse(localStorage.getItem('vendorData') || localStorage.getItem('user') || '{}');
+    const vendorId = vendorData?._id || vendorData?.id || vendorData?.user?._id || vendorData?.user?.id;
 
     useEffect(() => {
-        fetchJobs();
-    }, []);
+        fetchData();
+    }, [viewMode]);
+
+    const fetchData = async () => {
+        setLoading(true);
+        if (viewMode === 'Jobs') {
+            await fetchJobs();
+        } else {
+            await fetchApplications();
+        }
+        setLoading(false);
+    };
 
     const fetchJobs = async () => {
         try {
@@ -33,8 +45,15 @@ const JobManagerPage = () => {
             setJobs(data);
         } catch (error) {
             console.error('Fetch jobs error:', error);
-        } finally {
-            setLoading(false);
+        }
+    };
+
+    const fetchApplications = async () => {
+        try {
+            const data = await jobApi.getVendorApplications(vendorId);
+            setApplications(data);
+        } catch (error) {
+            console.error('Fetch applications error:', error);
         }
     };
 
@@ -58,9 +77,19 @@ const JobManagerPage = () => {
         }
     };
 
+    const handleUpdateAppStatus = async (id, status) => {
+        try {
+            await jobApi.updateApplicationStatus(id, status);
+            fetchApplications();
+        } catch (error) {
+            alert('Status update failed');
+        }
+    };
+
     const getStatusStyle = (status) => {
         switch(status) {
             case 'Approved': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+            case 'Recommended': return 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20';
             case 'Pending': return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
             case 'Rejected': return 'bg-rose-500/10 text-rose-600 border-rose-500/20';
             default: return 'bg-slate-100 text-slate-500 border-slate-200';
@@ -69,87 +98,183 @@ const JobManagerPage = () => {
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-background min-h-screen pb-32">
-            <VendorHeader />
 
             <main className="max-w-xl mx-auto px-6 pt-8 space-y-8">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">Recruitment</h2>
-                        <p className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase mt-1">Manage Your Team Growth</p>
+                <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">Recruitment</h2>
+                            <p className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase mt-1">
+                                {viewMode === 'Jobs' ? 'Manage Your Team Growth' : 'Candidate Interests'}
+                            </p>
+                        </div>
+                        {viewMode === 'Jobs' && (
+                            <motion.button 
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setIsCreating(true)}
+                                className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20"
+                            >
+                                <span className="material-symbols-outlined">add</span>
+                            </motion.button>
+                        )}
                     </div>
-                    <motion.button 
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setIsCreating(true)}
-                        className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20"
-                    >
-                        <span className="material-symbols-outlined">add</span>
-                    </motion.button>
+
+                    {/* View Switcher */}
+                    <div className="bg-slate-100 p-1.5 rounded-2xl flex w-full">
+                        <button 
+                            onClick={() => setViewMode('Jobs')}
+                            className={`flex-1 py-3 items-center justify-center gap-2 flex rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'Jobs' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
+                        >
+                            <span className="material-symbols-outlined text-[16px]">work</span>
+                            Active Jobs
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('Applications')}
+                            className={`flex-1 py-3 items-center justify-center gap-2 flex rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'Applications' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
+                        >
+                            <span className="material-symbols-outlined text-[16px]">how_to_reg</span>
+                            Applications
+                            {applications.length > 0 && <span className="w-2 h-2 bg-red-500 rounded-full ml-1" />}
+                        </button>
+                    </div>
                 </div>
 
                 {loading ? (
                     <div className="py-20 flex flex-col items-center justify-center text-slate-300">
                         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                        <p className="text-[10px] font-black uppercase tracking-widest">Scanning Catalog...</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest tracking-tighter">Syncing Pipeline...</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <AnimatePresence>
-                            {(Array.isArray(jobs) ? jobs : []).map((job) => (
-                                <motion.div 
-                                    key={job._id}
-                                    layout
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-4"
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <h3 className="text-lg font-black text-slate-900 leading-none">{job.title}</h3>
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${getStatusStyle(job.status)}`}>
-                                                    {job.status}
-                                                </span>
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{job.type}</span>
+                        {viewMode === 'Jobs' ? (
+                            <AnimatePresence>
+                                {(Array.isArray(jobs) ? jobs : []).map((job) => (
+                                    <motion.div 
+                                        key={job._id}
+                                        layout
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-4"
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                                <h3 className="text-lg font-black text-slate-900 leading-none">{job.title}</h3>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${getStatusStyle(job.status)}`}>
+                                                        {job.status}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{job.type}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-2 text-slate-500">
-                                            <span className="material-symbols-outlined text-sm">location_on</span>
-                                            <span className="text-xs font-bold">{job.location}</span>
+                                        
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 text-slate-500">
+                                                <span className="material-symbols-outlined text-sm">location_on</span>
+                                                <span className="text-xs font-bold">{job.location}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-slate-500">
+                                                <span className="material-symbols-outlined text-sm">payments</span>
+                                                <span className="text-xs font-bold">{job.salary}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2 text-slate-500">
-                                            <span className="material-symbols-outlined text-sm">payments</span>
-                                            <span className="text-xs font-bold">{job.salary}</span>
+
+                                        <div className="pt-4 border-t border-slate-50 flex gap-2">
+                                            <button 
+                                                onClick={async () => {
+                                                    if(confirm('Delete this job?')) {
+                                                        await jobApi.delete(job._id);
+                                                        fetchJobs();
+                                                    }
+                                                }}
+                                                className="px-6 py-3 rounded-xl bg-rose-50 text-rose-500 font-black text-[9px] uppercase tracking-widest"
+                                            >
+                                                Remove
+                                            </button>
+                                            <button className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-900 font-black text-[9px] uppercase tracking-widest">
+                                                View Details
+                                            </button>
                                         </div>
-                                    </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        ) : (
+                            <AnimatePresence>
+                                {(Array.isArray(applications) ? applications : []).map((app) => (
+                                    <motion.div 
+                                        key={app._id}
+                                        layout
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-5"
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="text-lg font-black text-slate-900 tracking-tight leading-none mb-1">{app.applicantName}</h4>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                    Interested in <span className="text-primary">{app.jobId?.title || 'Unknown Role'}</span>
+                                                </p>
+                                            </div>
+                                            <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border ${getStatusStyle(app.status)}`}>
+                                                {app.status}
+                                            </span>
+                                        </div>
 
-                                    <div className="pt-4 border-t border-slate-50 flex gap-2">
-                                        <button 
-                                            onClick={async () => {
-                                                if(confirm('Delete this job?')) {
-                                                    await jobApi.delete(job._id);
-                                                    fetchJobs();
-                                                }
-                                            }}
-                                            className="px-6 py-3 rounded-xl bg-rose-50 text-rose-500 font-black text-[9px] uppercase tracking-widest"
-                                        >
-                                            Remove
-                                        </button>
-                                        <button className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-900 font-black text-[9px] uppercase tracking-widest">
-                                            View Details
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
+                                        <div className="bg-slate-50 p-4 rounded-3xl grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">Contact</p>
+                                                <p className="text-[11px] font-bold text-slate-700">{app.applicantPhone}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">Email</p>
+                                                <p className="text-[11px] font-bold text-slate-700 truncate">{app.applicantEmail}</p>
+                                            </div>
+                                        </div>
 
-                        {jobs.length === 0 && (
+                                        <div className="flex gap-2">
+                                            <a 
+                                                href={`${UPLOADS_URL}${app.resumeLink}`} 
+                                                target="_blank" 
+                                                rel="noreferrer"
+                                                className="flex-1 py-3.5 bg-slate-900 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest text-center shadow-lg shadow-slate-900/10"
+                                            >
+                                                View Resume
+                                            </a>
+                                            {app.status === 'Pending' || app.status === 'Reviewed' ? (
+                                                <button 
+                                                    onClick={() => handleUpdateAppStatus(app._id, 'Recommended')}
+                                                    className="flex-1 py-4 bg-slate-100 text-slate-900 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">verified_user</span>
+                                                    Recommend
+                                                </button>
+                                            ) : (
+                                                <div className={`flex-1 py-4 flex items-center justify-center gap-2 rounded-2xl border ${getStatusStyle(app.status)}`}>
+                                                    <span className="material-symbols-outlined text-sm">{app.status === 'Approved' ? 'verified' : 'hourglass_top'}</span>
+                                                    <span className="text-[9px] font-black uppercase tracking-widest">{app.status === 'Recommended' ? 'Awaiting Admin' : app.status}</span>
+                                                </div>
+                                            )}
+                                            {app.status !== 'Approved' && app.status !== 'Rejected' && (
+                                                <button 
+                                                    onClick={() => handleUpdateAppStatus(app._id, 'Rejected')}
+                                                    className="w-14 h-14 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+                                                >
+                                                    <span className="material-symbols-outlined text-[20px]">close</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        )}
+
+                        {((viewMode === 'Jobs' && jobs.length === 0) || (viewMode === 'Applications' && applications.length === 0)) && (
                             <div className="py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
-                                <span className="material-symbols-outlined text-5xl text-slate-200 mb-4 font-thin">work_outline</span>
+                                <span className="material-symbols-outlined text-5xl text-slate-200 mb-4 font-thin">
+                                    {viewMode === 'Jobs' ? 'work_outline' : 'groups'}
+                                </span>
                                 <p className="text-sm font-black text-slate-400 uppercase tracking-widest leading-relaxed">
-                                    No active listings.<br/>Grow your workforce today.
+                                    {viewMode === 'Jobs' ? "No active listings.\nGrow your workforce today." : "No candidates yet.\nYour next hire is coming soon."}
                                 </p>
                             </div>
                         )}

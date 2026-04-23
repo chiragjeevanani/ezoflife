@@ -135,7 +135,19 @@ export const getNearbyRiders = async (customerLat, customerLng, radiusKm = 4) =>
 
 export const createOrder = async (req, res) => {
     try {
-        const { items, pickupSlot, deliverySlot, pickupAddress, pickupLocation, dropAddress, dropLocation, totalAmount, specialInstructions } = req.body;
+        const { 
+            items, 
+            pickupSlot, 
+            deliverySlot, 
+            pickupAddress, 
+            pickupLocation, 
+            dropAddress, 
+            dropLocation, 
+            totalAmount, 
+            deliveryMode,
+            deliveryCharge,
+            specialInstructions 
+        } = req.body;
         const customerId = req.body.customerId; 
 
         if (!customerId) return res.status(400).json({ message: 'Customer ID required' });
@@ -153,6 +165,8 @@ export const createOrder = async (req, res) => {
             dropAddress,
             dropLocation,
             totalAmount,
+            deliveryMode: deliveryMode || 'Normal',
+            deliveryCharge: deliveryCharge || 0,
             promoApplied: req.body.promoApplied || null,
             discountAmount: req.body.discountAmount || 0,
             specialInstructions: specialInstructions || '',

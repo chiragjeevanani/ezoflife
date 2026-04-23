@@ -28,6 +28,7 @@ const MasterServiceManagement = () => {
         icon: 'local_laundry_service',
         basePrice: 0,
         category: 'General',
+        targetAudience: 'both',
         description: '',
         address: '',
         location: { lat: 0, lng: 0 }
@@ -56,6 +57,7 @@ const MasterServiceManagement = () => {
                 icon: service.icon,
                 basePrice: service.basePrice,
                 category: service.category,
+                targetAudience: service.targetAudience || 'both',
                 description: service.description || '',
                 address: service.address || '',
                 location: service.location || { lat: 0, lng: 0 }
@@ -186,7 +188,12 @@ const MasterServiceManagement = () => {
                             </div>
 
                             <div className="space-y-1 mb-4">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">{service.category}</span>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">{service.category}</span>
+                                    <span className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-tighter text-white ${service.targetAudience === 'retail' ? 'bg-indigo-500' : service.targetAudience === 'individual' ? 'bg-amber-500' : 'bg-slate-400'}`}>
+                                        {service.targetAudience || 'Both'}
+                                    </span>
+                                </div>
                                 <h3 className="text-xl font-black tracking-tight text-slate-900">{service.name}</h3>
                                 {service.address && (
                                     <p className="text-[9px] font-bold text-slate-400 flex items-center gap-1">
@@ -376,6 +383,21 @@ const MasterServiceManagement = () => {
                                         >
                                             {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                         </select>
+                                    </div>
+                                    <div className="space-y-2 col-span-2">
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Target Audience (Individual / Retail)</label>
+                                        <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+                                            {['individual', 'retail', 'both'].map(target => (
+                                                <button
+                                                    key={target}
+                                                    type="button"
+                                                    onClick={() => setFormData({...formData, targetAudience: target})}
+                                                    className={`flex-1 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${formData.targetAudience === target ? 'bg-white text-primary shadow-md' : 'text-slate-400 opacity-60 hover:opacity-100'}`}
+                                                >
+                                                    {target}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                     <div className="space-y-2 col-span-2">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Icon Representation</label>

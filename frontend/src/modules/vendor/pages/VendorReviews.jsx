@@ -9,8 +9,9 @@ const VendorReviews = () => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const vendorData = JSON.parse(localStorage.getItem('vendorData') || localStorage.getItem('userData') || '{}');
-    const vendorId = vendorData?._id || vendorData?.id || localStorage.getItem('userId');
+    const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+    const vendorData = JSON.parse(vendorDataRaw);
+    const vendorId = vendorData?._id || vendorData?.id || vendorData?.user?._id || vendorData?.user?.id || localStorage.getItem('userId');
 
     useEffect(() => {
         const fetchReviews = async () => {

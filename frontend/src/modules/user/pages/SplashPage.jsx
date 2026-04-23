@@ -47,7 +47,13 @@ const SplashPage = () => {
             navigate('/user/home', { replace: true });
         }
       } else {
-        navigate('/user/auth', { replace: true });
+        // If first time or not logged in, show Landing Ad screen
+        const hasSeenLanding = localStorage.getItem('hasSeenLanding');
+        if (hasSeenLanding) {
+            navigate('/user/home', { replace: true });
+        } else {
+            navigate('/user/land', { replace: true });
+        }
       }
     }, 3000);
 
@@ -55,7 +61,7 @@ const SplashPage = () => {
   }, [navigate]);
 
   const splashConfig = useMemo(() => ({
-    title: 'Spinzyt',
+    title: 'SPINZYT',
     subtitle: 'The Pristine Flow',
     description: 'Elevate your lifestyle with premium fabric care delivered to your doorstep.',
     launchText: 'Launching Experience',
@@ -102,7 +108,7 @@ const SplashPage = () => {
             
             <div className="text-center relative">
               <h1 className="text-4xl lg:text-6xl font-black text-black tracking-tighter leading-none mb-1 lg:mb-3">{splashConfig.title}</h1>
-              <p className="font-label text-black/60 tracking-[0.3em] text-[8px] lg:text-[10px] uppercase font-extrabold opacity-70">{splashConfig.subtitle}</p>
+
             </div>
 
             {/* Mobile Loading Label */}

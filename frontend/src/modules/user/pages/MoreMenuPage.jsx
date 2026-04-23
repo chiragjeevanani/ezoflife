@@ -152,7 +152,7 @@ const MoreMenuPage = () => {
           </div>
 
           <footer className="mt-12 px-4 text-center text-on-background">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1">Spinzyt Operations Control</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1">SPINZYT Operations Control</p>
             <p className="text-[9px] font-bold uppercase tracking-widest italic">v.2.4.0-Enterprise • Operational Core 2026</p>
           </footer>
         </motion.div>

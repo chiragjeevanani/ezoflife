@@ -3,7 +3,7 @@ import { Route, Routes, Navigate } from 'react-router-dom';
 import SupplierDashboard from '../pages/SupplierDashboard';
 import SupplierRateCard from '../pages/SupplierRateCard';
 import SupplierFulfillmentPage from '../pages/SupplierFulfillmentPage';
-import SupplierLayout from '../layouts/SupplierLayout';
+import UserLayout from '../../user/layouts/UserLayout';
 import SupplierLogistics from '../pages/SupplierLogistics';
 import SupplierWallet from '../pages/SupplierWallet';
 import SupplierProfile from '../pages/SupplierProfile';
@@ -11,7 +11,7 @@ import SupplierProfile from '../pages/SupplierProfile';
 const SupplierRoutes = () => {
   return (
     <Routes>
-      <Route element={<SupplierLayout />}>
+      <Route element={<UserLayout />}>
         {/* Main Hub */}
         <Route path="/dashboard" element={<SupplierDashboard />} />
         <Route path="/rates" element={<SupplierRateCard />} />

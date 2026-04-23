@@ -2,16 +2,17 @@ import User from '../models/User.js';
 import Job from '../models/Job.js';
 import Promotion from '../models/Promotion.js';
 import Order from '../models/Order.js';
+import SystemConfig from '../models/SystemConfig.js';
 
-// Get all vendors pending approval
+// Get all roles pending approval
 export const getPendingApprovals = async (req, res) => {
     try {
-        const pendingVendors = await User.find({ 
-            role: 'Vendor', 
+        const pendingUsers = await User.find({ 
+            role: { $in: ['Vendor', 'Supplier'] }, 
             status: 'pending'
         }).select('-otp -otpExpiry').lean();
         
-        res.status(200).json(pendingVendors);
+        res.status(200).json(pendingUsers);
     } catch (err) {
         console.error('Get Pending Approvals Error:', err);
         res.status(500).json({ message: 'Error fetching approvals' });
@@ -334,6 +335,47 @@ export const updateVendorServiceStatus = async (req, res) => {
     } catch (err) {
         console.error('Update Service Status Error:', err);
         res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// System Config Controllers
+export const getSystemConfig = async (req, res) => {
+    try {
+        let configs = await SystemConfig.find();
+        
+        // Auto-seed if empty
+        if (configs.length === 0) {
+            const defaultExpress = new SystemConfig({
+                key: 'express_surcharge',
+                value: 99,
+                description: 'Flat surcharge for Express Delivery mode'
+            });
+            const defaultNormal = new SystemConfig({
+                key: 'normal_logistics_fee',
+                value: 50,
+                description: 'Base logistics fee for Normal Delivery mode'
+            });
+            await Promise.all([defaultExpress.save(), defaultNormal.save()]);
+            configs = [defaultExpress, defaultNormal];
+        }
+        
+        res.status(200).json(configs);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching config' });
+    }
+};
+
+export const updateSystemConfig = async (req, res) => {
+    try {
+        const { key, value } = req.body;
+        const config = await SystemConfig.findOneAndUpdate(
+            { key },
+            { value },
+            { upsert: true, new: true }
+        );
+        res.status(200).json(config);
+    } catch (err) {
+        res.status(500).json({ message: 'Error updating config' });
     }
 };
 

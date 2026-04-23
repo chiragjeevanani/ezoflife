@@ -1,9 +1,74 @@
 import JobApplication from '../models/JobApplication.js';
+import Notification from '../models/Notification.js';
+import Job from '../models/Job.js';
+import User from '../models/User.js';
+import { getIO } from '../socket.js';
 
 export const submitApplication = async (req, res) => {
     try {
-        const application = new JobApplication(req.body);
+        const applicationData = { ...req.body };
+        
+        if (req.file) {
+            applicationData.resumeLink = `/uploads/${req.file.filename}`;
+        }
+        
+        const application = new JobApplication(applicationData);
         await application.save();
+        
+        // --- Create Notifications ---
+        const job = await Job.findById(application.jobId);
+        if (job) {
+            const io = getIO();
+            
+            // 1. Notify Job Creator (Vendor or Admin)
+            const creatorNotification = await Notification.create({
+                recipient: job.createdBy,
+                role: job.creatorRole === 'Admin' ? 'admin' : 'vendor',
+                title: 'New Job Application',
+                message: `You have a new application from ${application.applicantName} for the position of ${job.title}.`,
+                type: 'job_application',
+                payload: { applicationId: application._id, jobId: job._id }
+            });
+            
+            // Emit Socket for Creator
+            try {
+                io.emit('new_notification', {
+                    recipient: job.createdBy.toString(),
+                    role: job.creatorRole === 'Admin' ? 'admin' : 'vendor',
+                    notification: creatorNotification
+                });
+            } catch (err) { console.error('Socket Emit Error (Creator):', err); }
+            
+            // 2. Notify Global Admin (if creator was Vendor)
+            if (job.creatorRole === 'Vendor') {
+                const admin = await User.findOne({ 
+                    $or: [
+                        { role: 'Admin' },
+                        { phone: 'ADMIN_SYSTEM' }
+                    ]
+                });
+                if (admin && admin._id.toString() !== job.createdBy.toString()) {
+                    const adminNotification = await Notification.create({
+                        recipient: admin._id,
+                        role: 'admin',
+                        title: 'New Job Application (System-wide)',
+                        message: `Candidate ${application.applicantName} applied for ${job.title} at ${job.companyName}.`,
+                        type: 'job_application',
+                        payload: { applicationId: application._id, jobId: job._id }
+                    });
+                    
+                    // Emit Socket for Admin
+                    try {
+                        io.emit('new_notification', {
+                            recipient: admin._id.toString(),
+                            role: 'admin',
+                            notification: adminNotification
+                        });
+                    } catch (err) { console.error('Socket Emit Error (Admin):', err); }
+                }
+            }
+        }
+        
         res.status(201).json(application);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -23,6 +88,23 @@ export const getApplicationsForJob = async (req, res) => {
 export const getAllApplications = async (req, res) => {
     try {
         const applications = await JobApplication.find()
+            .populate('jobId', 'title companyName')
+            .sort({ createdAt: -1 });
+        res.json(applications);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getVendorApplications = async (req, res) => {
+    try {
+        const { vendorId } = req.params;
+        // Find all jobs created by this vendor
+        const jobs = await Job.find({ createdBy: vendorId }).select('_id');
+        const jobIds = jobs.map(j => j._id);
+        
+        // Find applications for these jobs
+        const applications = await JobApplication.find({ jobId: { $in: jobIds } })
             .populate('jobId', 'title companyName')
             .sort({ createdAt: -1 });
         res.json(applications);

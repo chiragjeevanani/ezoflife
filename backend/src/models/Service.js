@@ -51,6 +51,14 @@ const serviceSchema = new mongoose.Schema({
     description: {
         type: String,
         default: ''
+    },
+    normalTime: {
+        type: String,
+        default: ''
+    },
+    expressTime: {
+        type: String,
+        default: ''
     }
 
 }, { timestamps: true });

@@ -5,7 +5,6 @@ import { jobApi } from '../../../lib/api';
 
 const CareersPage = () => {
     const navigate = useNavigate();
-    const [selectedCategory, setSelectedCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [isApplied, setIsApplied] = useState(false);
     const [jobs, setJobs] = useState([]);
@@ -15,7 +14,7 @@ const CareersPage = () => {
         applicantName: '',
         applicantEmail: '',
         applicantPhone: '',
-        resumeLink: '',
+        resume: null, // Changed from resumeLink string to resume file object
         coverLetter: ''
     });
 
@@ -37,30 +36,35 @@ const CareersPage = () => {
     const handleApply = async (e) => {
         e.preventDefault();
         try {
-            const applicationData = {
-                ...applyForm,
-                jobId: isApplying._id
-            };
-            await jobApi.apply(applicationData);
-            setIsApplied(true);
+            const formData = new FormData();
+            formData.append('applicantName', applyForm.applicantName);
+            formData.append('applicantEmail', applyForm.applicantEmail);
+            formData.append('applicantPhone', applyForm.applicantPhone);
+            formData.append('coverLetter', applyForm.coverLetter);
+            formData.append('jobId', isApplying._id);
+            
+            if (applyForm.resume) {
+                formData.append('resume', applyForm.resume);
+            }
+
+            await jobApi.apply(formData);
+            setIsApplied(isApplying.creatorRole || 'Vendor');
             setIsApplying(null);
-            setApplyForm({ applicantName: '', applicantEmail: '', applicantPhone: '', resumeLink: '', coverLetter: '' });
+            setApplyForm({ applicantName: '', applicantEmail: '', applicantPhone: '', resume: null, coverLetter: '' });
             setTimeout(() => setIsApplied(false), 3000);
         } catch (error) {
             alert('Application failed, please try again.');
         }
     };
 
-    const categories = useMemo(() => ['All', 'Spinzyt Internal', 'Skilled Labor (Vendor)'], []);
     
     const filteredJobs = useMemo(() => {
         if (!Array.isArray(jobs)) return [];
-        return jobs.filter(job => {
-            const category = job.creatorRole === 'Admin' ? 'Spinzyt Internal' : 'Skilled Labor (Vendor)';
-            return (selectedCategory === 'All' || category === selectedCategory) &&
-            (job.title.toLowerCase().includes(searchQuery.toLowerCase()) || job.location.toLowerCase().includes(searchQuery.toLowerCase()))
-        });
-    }, [jobs, selectedCategory, searchQuery]);
+        return jobs.filter(job => 
+            job.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            job.location.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [jobs, searchQuery]);
 
     const containerVariants = useMemo(() => ({
         hidden: { opacity: 0 },
@@ -96,33 +100,17 @@ const CareersPage = () => {
             </header>
 
             <main className="px-6 max-w-2xl mx-auto">
-                {/* Search and Filters */}
+                {/* Search Orchestrator */}
                 <motion.div initial="hidden" animate="visible" variants={itemVariants} className="space-y-6 mb-10">
                     <div className="relative flex items-center bg-white rounded-3xl px-6 py-4 shadow-sm border border-outline-variant/10 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                         <span className="material-symbols-outlined text-outline-variant mr-3">search</span>
                         <input 
                             type="text" 
-                            placeholder="Filter by Skill or Location"
+                            placeholder="Search by Skill or Location"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="bg-transparent border-none focus:ring-0 p-0 text-sm font-semibold w-full placeholder:text-outline-variant/40"
                         />
-                    </div>
-
-                    <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
-                        {categories.map(cat => (
-                            <button 
-                                key={cat}
-                                onClick={() => setSelectedCategory(cat)}
-                                className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border shrink-0 ${
-                                    selectedCategory === cat 
-                                    ? 'bg-primary text-on-primary border-primary shadow-lg shadow-primary/10' 
-                                    : 'bg-white text-on-surface-variant border-outline-variant/10'
-                                }`}
-                            >
-                                {cat === 'Skilled Labor (Vendor)' ? 'Skilled Labor' : cat === 'Spinzyt Internal' ? 'Internal' : cat}
-                            </button>
-                        ))}
                     </div>
                 </motion.div>
 
@@ -151,7 +139,9 @@ const CareersPage = () => {
                                         <div className="flex-1">
                                             <h3 className="font-black text-lg tracking-tight text-on-surface mb-1">{job.title}</h3>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary">{job.creatorRole === 'Admin' ? 'Spinzyt Internal' : 'Skilled Labor (Vendor)'}</span>
+                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary">{job.companyName || (job.creatorRole === 'Admin' ? 'Spinzyt Internal' : 'Skilled Labor (Vendor)')}</span>
+                                                <span className="w-1 h-1 rounded-full bg-outline-variant/30"></span>
+                                                <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-widest">{job.creatorRole === 'Admin' ? 'Internal' : 'Vendor Post'}</span>
                                                 <span className="w-1 h-1 rounded-full bg-outline-variant/30"></span>
                                                 <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{job.type}</span>
                                             </div>
@@ -245,14 +235,33 @@ const CareersPage = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">Resume/Portfolio Link</label>
-                                        <input 
-                                            required
-                                            value={applyForm.resumeLink}
-                                            onChange={e => setApplyForm({...applyForm, resumeLink: e.target.value})}
-                                            className="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-transparent focus:bg-white focus:border-primary/20 transition-all"
-                                            placeholder="Drive or Dropbox Link"
-                                        />
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">Upload Resume (PDF/JPG)</label>
+                                        <div className="relative">
+                                            <input 
+                                                required
+                                                type="file"
+                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                onChange={e => setApplyForm({...applyForm, resume: e.target.files[0]})}
+                                                className="hidden"
+                                                id="resume-upload"
+                                            />
+                                            <label 
+                                                htmlFor="resume-upload"
+                                                className="w-full bg-slate-50 rounded-2xl p-5 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-primary/30 transition-all group"
+                                            >
+                                                {applyForm.resume ? (
+                                                    <div className="flex items-center gap-2 text-primary font-bold text-xs">
+                                                        <span className="material-symbols-outlined">description</span>
+                                                        {applyForm.resume.name}
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <span className="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors text-3xl mb-1">cloud_upload</span>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select File</span>
+                                                    </>
+                                                )}
+                                            </label>
+                                        </div>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">Brief Cover Note</label>
@@ -292,7 +301,7 @@ const CareersPage = () => {
                             </div>
                             <div>
                                 <p className="font-black text-[13px] leading-none mb-1">Application Sent</p>
-                                <p className="text-[10px] font-bold opacity-80">The vendor team has been notified.</p>
+                                <p className="text-[10px] font-bold opacity-80">The {isApplied === 'Admin' ? 'admin' : 'vendor'} team has been notified.</p>
                             </div>
                         </div>
                     </motion.div>

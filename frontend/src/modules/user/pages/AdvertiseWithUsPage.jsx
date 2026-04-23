@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { mediaApi } from '../../../lib/api';
@@ -7,25 +7,8 @@ import toast from 'react-hot-toast';
 const AdvertiseWithUsPage = () => {
     const navigate = useNavigate();
     const [isSubmitted, setIsSubmitted] = useState(false);
-    const [mediaKit, setMediaKit] = useState(null);
-    const [isLoadingMedia, setIsLoadingMedia] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({ brandName: '', phone: '', budget: '', timeline: 'Launch Boost' });
-
-    useEffect(() => {
-        const fetchMedia = async () => {
-            try {
-                setIsLoadingMedia(true);
-                const latest = await mediaApi.getLatest();
-                if (latest) setMediaKit(latest);
-            } catch (err) {
-                console.error('Failed to load media kit:', err);
-            } finally {
-                setIsLoadingMedia(false);
-            }
-        };
-        fetchMedia();
-    }, []);
 
     const campaignTypes = useMemo(() => ['Launch Boost', 'Retainer', 'One-Off'], []);
 
@@ -69,7 +52,7 @@ const AdvertiseWithUsPage = () => {
                     </motion.button>
                     <div>
                         <h1 className="text-2xl font-black tracking-tighter leading-none">Advertise</h1>
-                        <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40 mt-1">Sponsorships & Media Kit</p>
+                        <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40 mt-1">Sponsorships & Marketing</p>
                     </div>
                 </div>
             </header>
@@ -81,34 +64,12 @@ const AdvertiseWithUsPage = () => {
                 className="px-6 max-w-md mx-auto w-full flex-grow"
             >
                 <motion.section variants={itemVariants} className="mb-12">
-                    <div className="bg-primary p-12 rounded-[3.5rem] text-on-primary shadow-2xl shadow-primary/20 relative overflow-hidden flex flex-col justify-end min-h-[300px]">
+                    <div className="bg-primary p-12 rounded-[3.5rem] text-on-primary shadow-2xl shadow-primary/20 relative overflow-hidden flex flex-col justify-end min-h-[250px]">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl animate-pulse"></div>
                         <div className="relative z-10">
                             <span className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 block opacity-60">Reach 50k+ Active Users</span>
-                            <h2 className="text-4xl font-black tracking-tighter leading-none mb-6">Drive Impact with Spinzyt</h2>
-                            <button 
-                                onClick={() => {
-                                    if (mediaKit?.fileUrl) {
-                                        // Use noreferrer and noopener to bypass strict cross-origin isolation policies
-                                        const newWindow = window.open(mediaKit.fileUrl, '_blank', 'noreferrer,noopener');
-                                        if (!newWindow) {
-                                            // Fallback if popup is blocked
-                                            const link = document.createElement('a');
-                                            link.href = mediaKit.fileUrl;
-                                            link.target = '_blank';
-                                            link.rel = 'noopener noreferrer';
-                                            link.click();
-                                        }
-                                    } else {
-                                        toast.error('Media Kit is not available yet. Please contact support.');
-                                    }
-                                }}
-                                disabled={isLoadingMedia}
-                                className={`bg-white text-primary px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95 transition-all ${isLoadingMedia ? 'opacity-50' : 'opacity-100'}`}
-                            >
-                                {isLoadingMedia ? 'Syncing...' : 'Download Media Kit'}
-                                <span className="material-symbols-outlined text-sm">download</span>
-                            </button>
+                            <h2 className="text-4xl font-black tracking-tighter leading-none mb-2">Drive Impact with Spinzyt</h2>
+                            <p className="text-xs font-bold opacity-80 leading-relaxed max-w-[200px]">Strategic placements across our delivery and service terminal nodes.</p>
                         </div>
                         <div className="absolute -left-6 -top-6 opacity-10 rotate-[-15deg]">
                             <span className="material-symbols-outlined text-[200px]" style={{ fontVariationSettings: "'FILL' 1" }}>tv</span>
@@ -229,4 +190,3 @@ const AdvertiseWithUsPage = () => {
 };
 
 export default AdvertiseWithUsPage;
-

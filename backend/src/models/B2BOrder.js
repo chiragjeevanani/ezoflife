@@ -9,7 +9,7 @@ const b2bOrderSchema = new mongoose.Schema({
     supplier: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: false
     },
     items: [
         {
