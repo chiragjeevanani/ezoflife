@@ -158,6 +158,18 @@ const CartPage = () => {
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [mapLocation, setMapLocation] = useState(defaultCenter);
   const [mapAddress, setMapAddress] = useState('');
+  
+  // Detailed Address States
+  const [addrDetails, setAddrDetails] = useState({
+    type: 'HOME',
+    line1: '',
+    line2: '',
+    floor: '',
+    landmark: '',
+    pincode: '',
+    city: '',
+    state: ''
+  });
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -205,9 +217,26 @@ const CartPage = () => {
     const fetchProfile = async () => {
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
       const userId = userData._id || userData.id;
-      if (!userId) return;
+      
+      // Get detected location from localStorage (from HomePage)
+      const detectedAddr = localStorage.getItem('detected_address');
+      const detectedCoords = JSON.parse(localStorage.getItem('detected_coords') || 'null');
+
+      if (!userId) {
+          // If guest/not logged in but has detected location
+          if (detectedAddr) {
+              const addrObj = { id: 'detected', type: 'Current', address: detectedAddr, location: detectedCoords || defaultCenter };
+              setAddresses([addrObj]);
+              setSelectedPickupAddress(addrObj);
+              setSelectedDropAddress(addrObj);
+          }
+          return;
+      }
+
       try {
         const profile = await authApi.getProfile(userId);
+        let currentAddresses = [];
+
         if (profile.address) {
           const mainAddr = { 
             id: 'main', 
@@ -215,9 +244,19 @@ const CartPage = () => {
             address: profile.address, 
             location: profile.location || defaultCenter 
           };
-          setAddresses([mainAddr]);
-          setSelectedPickupAddress(mainAddr);
-          setSelectedDropAddress(mainAddr);
+          currentAddresses.push(mainAddr);
+        }
+
+        // If user has NO profile address but HAS a detected one, use detected
+        if (currentAddresses.length === 0 && detectedAddr) {
+            const addrObj = { id: 'detected', type: 'Current', address: detectedAddr, location: detectedCoords || defaultCenter };
+            currentAddresses.push(addrObj);
+        }
+
+        setAddresses(currentAddresses);
+        if (currentAddresses.length > 0) {
+            setSelectedPickupAddress(currentAddresses[0]);
+            setSelectedDropAddress(currentAddresses[0]);
         }
       } catch (error) {
         console.error('Error fetching profile for address:', error);
@@ -234,15 +273,26 @@ const CartPage = () => {
         return;
     }
 
+    // Combine into a full string for backward compatibility
+    const fullAddress = `${addrDetails.line1}, ${addrDetails.line2}${addrDetails.floor ? `, Floor: ${addrDetails.floor}` : ''}${addrDetails.landmark ? `, Near ${addrDetails.landmark}` : ''}, ${addrDetails.city}, ${addrDetails.state} - ${addrDetails.pincode}`;
+
     try {
-        const newAddr = { id: Date.now(), type: 'New Address', address: mapAddress, location: mapLocation };
+        const newAddr = { 
+            id: Date.now(), 
+            type: addrDetails.type, 
+            address: fullAddress, 
+            location: mapLocation,
+            details: addrDetails
+        };
+        
         await authApi.updateProfile(userId, { 
-            address: mapAddress,
+            address: fullAddress,
             location: mapLocation 
         });
 
         setAddresses(prev => [newAddr, ...prev]);
-        
+        localStorage.setItem('address_is_full', 'true');
+
         if (activeAddressType === 'pickup') {
             setSelectedPickupAddress(newAddr);
             if (isSameAddress) setSelectedDropAddress(newAddr);
@@ -531,8 +581,16 @@ const CartPage = () => {
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm"><span className="material-symbols-outlined">directions_run</span></div>
                                 <div className="flex-1 overflow-hidden">
-                                    <p className="text-[11px] font-black text-primary uppercase tracking-widest mb-0.5">Pickup From</p>
-                                    <p className="text-sm font-bold text-slate-900 truncate">{selectedPickupAddress?.address || 'Select Pickup Location'}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-[11px] font-black text-primary uppercase tracking-widest mb-0.5">Pickup From</p>
+                                        {localStorage.getItem('address_is_full') === 'false' && (
+                                            <span className="bg-rose-500 text-white text-[7px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">Incomplete</span>
+                                        )}
+                                    </div>
+                                    <p className={`text-sm font-bold truncate ${localStorage.getItem('address_is_full') === 'false' ? 'text-rose-600 italic' : 'text-slate-900'}`}>
+                                        {selectedPickupAddress?.address || 'Select Pickup Location'}
+                                        {localStorage.getItem('address_is_full') === 'false' && " (Add House No. / Street)"}
+                                    </p>
                                 </div>
                                 <span className="material-symbols-outlined text-primary/40">chevron_right</span>
                             </div>
@@ -638,9 +696,9 @@ const CartPage = () => {
                 <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-2xl rounded-t-[3rem] p-10 relative z-10 shadow-2xl max-h-[80vh] overflow-y-auto">
                     <h3 className="text-3xl font-black mb-8 text-slate-900">Locale</h3>
                     <div className="space-y-4">
-                        <button onClick={() => setShowMapPicker(true)} className="w-full p-8 border-2 border-dashed border-primary/30 rounded-[2.5rem] flex items-center justify-center gap-4 text-primary bg-primary/5">
-                            <span className="material-symbols-outlined text-3xl">map</span>
-                            <span className="text-xs font-black uppercase tracking-widest">Pin on Map</span>
+                        <button onClick={() => setShowMapPicker(true)} className="w-full p-8 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex items-center justify-center gap-4 text-slate-900 bg-slate-50 hover:bg-white transition-all">
+                            <span className="material-symbols-outlined text-2xl">add_location_alt</span>
+                            <span className="text-xs font-black uppercase tracking-widest">Add New Address</span>
                         </button>
                         {addresses.map(addr => (
                             <div 
@@ -673,45 +731,114 @@ const CartPage = () => {
         {showMapPicker && (
             <div className="fixed inset-0 z-[200] flex items-end justify-center">
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMapPicker(false)} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-                <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-2xl rounded-t-[3rem] p-10 relative z-10 shadow-2xl min-h-[50vh] flex flex-col">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-2xl font-black uppercase tracking-tighter">Pin on Map</h3>
-                        <button onClick={() => setShowMapPicker(false)} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center"><span className="material-symbols-outlined">close</span></button>
+                <motion.div 
+                    initial={{ y: "100%" }} 
+                    animate={{ y: 0 }} 
+                    exit={{ y: "100%" }} 
+                    className="bg-white w-full max-w-2xl rounded-t-[3rem] p-8 md:p-10 relative z-10 shadow-2xl flex flex-col max-h-[95vh] overflow-y-auto hide-scrollbar"
+                >
+                    <div className="flex flex-col mb-8">
+                        <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6" />
+                        <h3 className="text-4xl font-black italic tracking-tighter leading-none mb-2">LOCATE<br/>ADDRESS.</h3>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Details for accurate delivery</p>
                     </div>
-                    <div className="flex-1 bg-slate-50 rounded-[2rem] overflow-hidden relative h-[400px]">
-                        {!isLoaded ? (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4">
-                                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase">Loading Satellite View...</p>
-                            </div>
-                        ) : (
-                            <>
-                                <button
-                                    onClick={() => {
-                                        if (navigator.geolocation) {
-                                            navigator.geolocation.getCurrentPosition((pos) => {
-                                               const newPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                                               setMapLocation(newPos);
-                                               reverseGeocode(newPos.lat, newPos.lng);
-                                               mapRef.current?.panTo(newPos);
-                                            });
-                                        }
-                                    }}
-                                    className="absolute top-4 right-4 z-[10] w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-primary border border-slate-100 active:scale-90 transition-all"
+                    
+                    <div className="space-y-8">
+                        {/* Address Type Selection */}
+                        <div className="flex gap-3">
+                            {['HOME', 'OFFICE', 'OTHER'].map(t => (
+                                <button 
+                                    key={t}
+                                    onClick={() => setAddrDetails(prev => ({ ...prev, type: t }))}
+                                    className={`flex-1 py-4 rounded-2xl text-[10px] font-black tracking-widest transition-all ${addrDetails.type === t ? 'bg-black text-white shadow-xl scale-[1.02]' : 'bg-slate-50 text-slate-400'}`}
                                 >
-                                    <span className="material-symbols-outlined">my_location</span>
+                                    {t}
                                 </button>
-                                <GoogleMap mapContainerStyle={mapContainerStyle} center={mapLocation} zoom={15} onLoad={(map) => mapRef.current = map}>
-                                    <Marker position={mapLocation} draggable={true} onDragEnd={onMarkerDragEnd} />
-                                </GoogleMap>
-                            </>
-                        )}
+                            ))}
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">Address Line 1</label>
+                                <input 
+                                    className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
+                                    placeholder="Flat/House No, Building Name"
+                                    value={addrDetails.line1}
+                                    onChange={(e) => setAddrDetails(prev => ({ ...prev, line1: e.target.value }))}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">Address Line 2</label>
+                                <input 
+                                    className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
+                                    placeholder="Street, Area Name"
+                                    value={addrDetails.line2}
+                                    onChange={(e) => setAddrDetails(prev => ({ ...prev, line2: e.target.value }))}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">Floor / Apt</label>
+                                    <input 
+                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
+                                        placeholder="e.g. 4th Floor"
+                                        value={addrDetails.floor}
+                                        onChange={(e) => setAddrDetails(prev => ({ ...prev, floor: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">Landmark</label>
+                                    <input 
+                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
+                                        placeholder="Near Temple/Gym"
+                                        value={addrDetails.landmark}
+                                        onChange={(e) => setAddrDetails(prev => ({ ...prev, landmark: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">Pincode</label>
+                                    <input 
+                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
+                                        placeholder="6-digit ZIP"
+                                        value={addrDetails.pincode}
+                                        onChange={(e) => setAddrDetails(prev => ({ ...prev, pincode: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">City</label>
+                                    <input 
+                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
+                                        placeholder="City Name"
+                                        value={addrDetails.city}
+                                        onChange={(e) => setAddrDetails(prev => ({ ...prev, city: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">State</label>
+                                <input 
+                                    className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
+                                    placeholder="State Name"
+                                    value={addrDetails.state}
+                                    onChange={(e) => setAddrDetails(prev => ({ ...prev, state: e.target.value }))}
+                                />
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={confirmMapAddress} 
+                            disabled={!addrDetails.line1 || !addrDetails.pincode}
+                            className="w-full py-6 bg-black text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl disabled:opacity-30 disabled:grayscale transition-all mt-6 active:scale-95"
+                        >
+                            Secure Location
+                        </button>
                     </div>
-                    <div className="mt-6 p-6 bg-primary/5 rounded-[2rem] border border-primary/10">
-                        <p className="text-[10px] font-black text-primary uppercase mb-1">Selected Address</p>
-                        <p className="text-xs font-bold text-slate-900 leading-normal">{mapAddress || 'Fetching address...'}</p>
-                    </div>
-                    <button onClick={confirmMapAddress} className="w-full mt-6 py-5 bg-primary text-white rounded-2xl font-black text-sm uppercase shadow-xl">Confirm Locale</button>
                 </motion.div>
             </div>
         )}

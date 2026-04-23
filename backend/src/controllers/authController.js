@@ -37,12 +37,19 @@ export const requestOtp = async (req, res) => {
         }
 
         // If Signup and user not found, create as Customer by default
+        const finalType = (req.body.customerType || customerType || 'individual').toLowerCase();
+        console.log(`👤 [AUTH_TYPE] Setting Customer Type: ${finalType} for ${phone}`);
+
         if (!user) {
             user = new User({ 
                 phone, 
-                role: 'Customer',
-                customerType: customerType || 'individual'
+                role: requestedRole, // Use the role requested by the frontend
+                status: requestedRole === 'Vendor' ? 'pending' : 'approved',
+                customerType: finalType
             });
+        } else if (mode === 'signup') {
+             // If for some reason user exists but trying to signup, update type
+             user.customerType = finalType;
         }
 
         user.otp = otp;
@@ -205,6 +212,7 @@ export const verifyOtp = async (req, res) => {
                 id: user._id,
                 phone: user.phone,
                 role: user.role,
+                customerType: user.customerType || 'individual',
                 displayName: user.displayName,
                 status: user.status,
                 isProfileComplete: user.isProfileComplete
@@ -347,9 +355,13 @@ export const updateUserProfile = async (req, res) => {
         const user = await User.findById(id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        // Surgical update: only change fields that are sent in the request
+        // Surgical update: handle nested objects correctly
         Object.keys(updates).forEach(key => {
-            user[key] = updates[key];
+            if (typeof updates[key] === 'object' && updates[key] !== null && !Array.isArray(updates[key])) {
+                user[key] = { ...user[key], ...updates[key] };
+            } else {
+                user[key] = updates[key];
+            }
         });
 
         // ROLE-AWARE SYNC: If root address/pincode/city is updated, sync to specific details

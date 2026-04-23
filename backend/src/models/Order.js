@@ -104,6 +104,25 @@ const orderSchema = new mongoose.Schema({
     deliveryCharge: {
         type: Number,
         default: 0
+    },
+    shipmentDetails: {
+        shipmentId: String,
+        orderId: String, // Shiprocket's internal order ID
+        awbCode: String,
+        courierName: String,
+        labelUrl: String,
+        isQC: { type: Boolean, default: false },
+        lastStatus: String,
+        pickupTokenNumber: String
+    },
+    deliveryShipmentDetails: {
+        shipmentId: String,
+        orderId: String,
+        awbCode: String,
+        courierName: String,
+        labelUrl: String,
+        lastStatus: String,
+        pickupTokenNumber: String
     }
 }, { timestamps: true });
 

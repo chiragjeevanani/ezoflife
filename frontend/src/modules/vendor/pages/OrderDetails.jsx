@@ -174,6 +174,87 @@ const OrderDetails = () => {
                         </div>
                     </div>
 
+                    {/* Shiprocket Section (Only if exists) */}
+                    {order.shipmentDetails && (
+                        <div className="bg-primary/5 p-6 rounded-[2.5rem] border border-primary/20 space-y-5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-primary text-xl">local_shipping</span>
+                                    <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-primary">Shipment Tracking</h3>
+                                </div>
+                                <span className="px-3 py-1 bg-primary text-white rounded-full text-[8px] font-black uppercase tracking-widest">
+                                    {order.shipmentDetails.lastStatus || 'Pending'}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white/50 p-4 rounded-2xl border border-white">
+                                    <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">AWB Code</p>
+                                    <p className="text-xs font-black text-on-surface tracking-tight">{order.shipmentDetails.awbCode || 'Generating...'}</p>
+                                </div>
+                                <div className="bg-white/50 p-4 rounded-2xl border border-white">
+                                    <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">Shipment ID</p>
+                                    <p className="text-xs font-black text-on-surface tracking-tight">{order.shipmentDetails.shipmentId}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white/50 p-4 rounded-2xl border border-white flex items-center justify-between">
+                                <div>
+                                    <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">Courier Partner</p>
+                                    <p className="text-xs font-black text-on-surface">{order.shipmentDetails.courierName || 'Auto-Assigning'}</p>
+                                </div>
+                                {order.shipmentDetails.pickupTokenNumber && (
+                                    <div className="text-right">
+                                        <p className="text-[8px] font-black text-primary uppercase tracking-widest mb-1">Pickup Token</p>
+                                        <p className="text-xs font-black text-primary">{order.shipmentDetails.pickupTokenNumber}</p>
+                                    </div>
+                                )}
+                                {order.shipmentDetails.isQC && !order.shipmentDetails.pickupTokenNumber && (
+                                    <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[7px] font-black uppercase tracking-widest">QC Enabled</span>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Delivery (Drop-off) Shiprocket Section */}
+                    {order.deliveryShipmentDetails && (
+                        <div className="bg-emerald-500/5 p-6 rounded-[2.5rem] border border-emerald-500/20 space-y-5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-emerald-500 text-xl">rebase_edit</span>
+                                    <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-emerald-600">Delivery Shipment (Drop-off)</h3>
+                                </div>
+                                <span className="px-3 py-1 bg-emerald-500 text-white rounded-full text-[8px] font-black uppercase tracking-widest">
+                                    {order.deliveryShipmentDetails.lastStatus || 'Ready'}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white/50 p-4 rounded-2xl border border-white">
+                                    <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">AWB Code</p>
+                                    <p className="text-xs font-black text-on-surface tracking-tight">{order.deliveryShipmentDetails.awbCode || 'Generating...'}</p>
+                                </div>
+                                <div className="bg-white/50 p-4 rounded-2xl border border-white">
+                                    <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">Shipment ID</p>
+                                    <p className="text-xs font-black text-on-surface tracking-tight">{order.deliveryShipmentDetails.shipmentId}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white/50 p-4 rounded-2xl border border-white flex items-center justify-between">
+                                <div>
+                                    <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">Courier Partner</p>
+                                    <p className="text-xs font-black text-on-surface">{order.deliveryShipmentDetails.courierName || 'Auto-Assigning'}</p>
+                                </div>
+                                {order.deliveryShipmentDetails.pickupTokenNumber && (
+                                    <div className="text-right">
+                                        <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mb-1">Pickup Token</p>
+                                        <p className="text-xs font-black text-emerald-600">{order.deliveryShipmentDetails.pickupTokenNumber}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Order Items Table */}
                     <div className="bg-surface-container-low rounded-3xl border border-outline-variant/10 shadow-sm overflow-hidden text-sm">
                         <div className="p-4 border-b border-outline-variant/5 bg-surface-container/30">

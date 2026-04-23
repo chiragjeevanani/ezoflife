@@ -10,7 +10,22 @@ const AddServicePage = () => {
     const [price, setPrice] = useState('');
     const [unit, setUnit] = useState('Per Kg');
     const [tier, setTier] = useState('Essential'); // 'Essential' or 'Heritage'
+    const [tags, setTags] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const getVendorId = () => {
+        const keys = ['user', 'vendorData', 'userData', 'auth_user', 'vendor'];
+        for (const key of keys) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) continue;
+                const data = JSON.parse(raw);
+                const id = data?._id || data?.id || data?.user?._id || data?.user?.id || data?.uid;
+                if (id) return id;
+            } catch (e) { continue; }
+        }
+        return null;
+    };
 
     const icons = useMemo(() => [
         'local_laundry_service', 'dry_cleaning', 'iron', 'bed', 'checkroom', 'opacity', 'sanitizer', 'soap'
@@ -25,8 +40,7 @@ const AddServicePage = () => {
 
         setLoading(true);
         try {
-            const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
-            const vendorId = vendorData._id || vendorData.id;
+            const vendorId = getVendorId();
 
             await serviceApi.create({
                 name: serviceName,
@@ -35,10 +49,11 @@ const AddServicePage = () => {
                 category: 'Premium', 
                 tier: tier,
                 icon: selectedIcon,
-                vendorId: vendorId
+                vendorId: vendorId,
+                tags: tags.split(',').map(t => t.trim()).filter(Boolean)
             });
 
-            alert('Service submitted for approval!');
+            alert('Service created and submitted to Admin for approval!');
             navigate('/vendor/services');
         } catch (error) {
             console.error('Add Service Error:', error);
@@ -54,8 +69,6 @@ const AddServicePage = () => {
             animate={{ opacity: 1 }}
             className="bg-background text-on-background min-h-screen pb-32 font-body"
         >
-            <VendorHeader title="Add Service" showBack={true} />
-
             <main className="max-w-xl mx-auto px-6 pt-8 space-y-8">
                 <section className="bg-white p-8 rounded-[2.5rem] border border-outline-variant/10 shadow-sm space-y-8">
                     <div className="space-y-6">
@@ -134,6 +147,18 @@ const AddServicePage = () => {
                                     <option>Per Pair</option>
                                 </select>
                             </div>
+                        </div>
+
+                        {/* Search Tags Input */}
+                        <div className="space-y-3">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface ml-1">SEARCH TAGS (COMMA SEPARATED)</p>
+                            <input 
+                                type="text"
+                                value={tags}
+                                onChange={(e) => setTags(e.target.value)}
+                                placeholder="e.g. shirt, pant, jeans, formal"
+                                className="w-full px-6 py-4 bg-surface-container border-2 border-transparent rounded-[1.5rem] text-sm font-bold text-on-surface outline-none focus:bg-white focus:border-primary/20 transition-all placeholder:text-on-surface-variant/20 shadow-sm"
+                            />
                         </div>
                     </div>
 

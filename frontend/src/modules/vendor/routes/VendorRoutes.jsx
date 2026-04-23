@@ -41,10 +41,10 @@ const VendorRoutes = () => {
   return (
     <Routes>
       <Route element={<VendorLayout />}>
-        {/* Auth Flow - REDIRECTED TO UNIFIED LOGIN */}
-        <Route path="/splash" element={<Navigate to="/user/auth" replace />} />
-        <Route path="/auth" element={<Navigate to="/user/auth" replace />} />
-        <Route path="/otp" element={<Navigate to="/user/auth" replace />} />
+        {/* Auth Flow */}
+        <Route path="/splash" element={<VendorSplash />} />
+        <Route path="/auth" element={<VendorAuth />} />
+        <Route path="/otp" element={<VendorOtp />} />
 
         {/* Registration Flow */}
         <Route path="/register" element={<ShopDetails />} />

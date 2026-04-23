@@ -77,12 +77,8 @@ const OtpVerificationPage = () => {
           } else if (actingRole === 'supplier') {
             navigate('/supplier/dashboard');
           } else {
-            // CUSTOMER FLOW: SMART REDIRECT
-            if (user.displayName && user.address) {
-              navigate('/user/home');
-            } else {
-              navigate('/user/profile/create');
-            }
+            // CUSTOMER FLOW: DIRECT TO HOME
+            navigate('/user/home');
           }
         } else {
           setError(response.message || 'Invalid OTP');

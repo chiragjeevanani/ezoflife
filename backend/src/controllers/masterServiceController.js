@@ -2,11 +2,14 @@ import MasterService from '../models/MasterService.js';
 
 export const createMasterService = async (req, res) => {
     try {
-        const { name, icon, basePrice, category, description } = req.body;
+        console.log('DEBUG: Received Master Service Data:', req.body);
+        const { name, icon, basePrice, category, description, targetAudience, address, location, tier } = req.body;
         const exists = await MasterService.findOne({ name });
         if (exists) return res.status(400).json({ message: 'Service already exists' });
 
-        const service = new MasterService({ name, icon, basePrice, category, description });
+        const service = new MasterService({ 
+            name, icon, basePrice, category, description, targetAudience, address, location, tier 
+        });
         await service.save();
         res.status(201).json(service);
     } catch (err) {

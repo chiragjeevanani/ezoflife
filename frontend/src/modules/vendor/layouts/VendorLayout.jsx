@@ -30,7 +30,6 @@ const VendorLayout = () => {
                 setTimeLeft((prev) => {
                     if (prev <= 1) {
                         clearInterval(timer);
-                        clearIncomingRequest();
                         return 0;
                     }
                     return prev - 1;
@@ -38,7 +37,14 @@ const VendorLayout = () => {
             }, 1000);
         }
         return () => clearInterval(timer);
-    }, [incomingRequest, clearIncomingRequest]);
+    }, [incomingRequest]);
+
+    // Handle timer expiration in a separate effect to avoid updates during render
+    useEffect(() => {
+        if (incomingRequest && timeLeft === 0) {
+            clearIncomingRequest();
+        }
+    }, [timeLeft, incomingRequest, clearIncomingRequest]);
 
     // Socket Logic
     useEffect(() => {
@@ -119,71 +125,7 @@ const VendorLayout = () => {
 
             {showNav && <VendorBottomNav />}
 
-            {/* Global Incoming Request Modal */}
-            <AnimatePresence>
-                {incomingRequest && (
-                    <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-[#0a0f18]/90 backdrop-blur-xl"
-                            onClick={() => clearIncomingRequest()}
-                        />
-                        <motion.div
-                            initial={{ scale: 0.85, opacity: 0, y: 100 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.85, opacity: 0, y: 100 }}
-                            className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl relative z-[5001] overflow-hidden"
-                        >
-                            <div className="h-2 bg-[#73e0c9]"></div>
-                            <div className="p-8 space-y-6">
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-rose-50 rounded-full border border-rose-100 text-rose-500 font-bold text-[10px] uppercase">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-                                        Expires in 00:{timeLeft.toString().padStart(2, '0')}
-                                    </div>
-                                    <span className="bg-slate-900 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                                        {incomingRequest.orderId}
-                                    </span>
-                                </div>
-
-                                <div className="flex flex-col items-center text-center space-y-4">
-                                    <div className="w-16 h-16 rounded-3xl bg-[#73e0c9]/10 flex items-center justify-center text-[#73e0c9]">
-                                        <span className="material-symbols-outlined text-3xl animate-bounce">notifications_active</span>
-                                    </div>
-                                    <h3 className="text-2xl font-black text-slate-900 uppercase">Incoming Request</h3>
-                                </div>
-
-                                <div className="bg-slate-50 rounded-[2rem] p-6 space-y-4 border border-slate-100">
-                                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
-                                        <span>Status</span>
-                                        <span className="text-[#73e0c9]">New Near You</span>
-                                    </div>
-                                    <div className="h-px bg-slate-200"></div>
-                                    <p className="text-xs font-bold text-slate-600">Fresh order available in your service area. Review and accept to proceed.</p>
-                                </div>
-
-                                <div className="flex flex-col gap-3">
-                                    <button
-                                        onClick={() => handleAccept(incomingRequest._id)}
-                                        disabled={acceptingId === incomingRequest._id}
-                                        className="w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
-                                    >
-                                        {acceptingId === incomingRequest._id ? 'Accepting...' : 'Accept Order'}
-                                    </button>
-                                    <button
-                                        onClick={() => clearIncomingRequest()}
-                                        className="w-full py-4 rounded-2xl bg-slate-100 text-slate-400 font-bold text-xs uppercase tracking-widest"
-                                    >
-                                        Ignore
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            {/* Global Incoming Request Modal - REMOVED TO PREVENT DUPLICATE BASIC UI */}
         </div>
     );
 };

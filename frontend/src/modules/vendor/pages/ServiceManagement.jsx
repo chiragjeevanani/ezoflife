@@ -8,42 +8,66 @@ const ServiceManagement = () => {
     const navigate = useNavigate();
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
-    const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
-    const vendorData = JSON.parse(vendorDataRaw);
-    const vendorId = vendorData?._id || vendorData?.id || vendorData?.user?._id || vendorData?.user?.id;
+    // Extremely Robust Identity Extraction
+    const getVendorId = () => {
+        const keys = ['user', 'vendorData', 'userData', 'auth_user', 'vendor'];
+        for (const key of keys) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) continue;
+                const data = JSON.parse(raw);
+                const id = data?._id || data?.id || data?.user?._id || data?.user?.id || data?.uid;
+                if (id) return id;
+            } catch (e) { continue; }
+        }
+        return null;
+    };
+
+    const vendorId = getVendorId();
 
     const fetchConfig = async () => {
+        if (!vendorId) return;
         try {
             setLoading(true);
-            const masterRes = await serviceApi.getAll({ vendorId });
+            const masterRes = await serviceApi.getAll({ vendorId }); // These are custom services with vendorId
             const profileRes = await authApi.getProfile(vendorId);
+            const registrationServices = profileRes.shopDetails?.services || [];
             
-            // Merge profile services with master if available, otherwise just use master
-            const vendorServices = profileRes.shopDetails?.services || [];
+            // Filter registration services to only show those that are already APPROVED
+            // (As per your request: Registration wali admin approve karega tabhi dikhengi)
+            const approvedRegistrationServices = registrationServices.filter(s => s.status === 'approved');
             
-            const merged = masterRes.map(ms => {
-                const msId = String(ms._id || ms.id || '');
-                const vs = vendorServices.find(v => String(v._id || v.id || '') === msId);
-                
-                const isGloballyActive = ms.status === 'Active';
+            const mergedMap = new Map();
 
-                // If it's NOT a master service, it belongs to this vendor (filtered by backend)
-                // Source of truth for vendor-owned services is the global status
-                let activeState = false;
-                if (ms.isMaster === false) {
-                    activeState = isGloballyActive;
-                } else {
-                    activeState = vs ? vs.active : false;
-                }
+            // 1. Process Registration Services (Lowest priority or initial state)
+            approvedRegistrationServices.forEach(s => {
+                const id = s.id || s._id;
+                mergedMap.set(id, {
+                    ...s,
+                    id: id,
+                    _id: id,
+                    isFromRegistration: true,
+                    approvalStatus: 'Approved',
+                    active: s.active ?? true,
+                    basePrice: s.basePrice || s.vendorRate || 0
+                });
+            });
 
-                return {
-                    ...ms,
-                    active: activeState,
-                    basePrice: vs ? vs.basePrice : ms.basePrice
-                };
+            // 2. Process Master Services (Higher priority - real database items)
+            masterRes.forEach(s => {
+                const id = s._id || s.id;
+                mergedMap.set(id, {
+                    ...s,
+                    id: id,
+                    _id: id,
+                    isFromRegistration: false,
+                    approvalStatus: s.approvalStatus || 'Pending',
+                    active: s.status === 'Active',
+                    basePrice: s.basePrice || 0
+                });
             });
             
-            setServices(merged);
+            setServices(Array.from(mergedMap.values()));
         } catch (error) {
             console.error('Error fetching services:', error);
         } finally {
@@ -55,15 +79,21 @@ const ServiceManagement = () => {
         if (vendorId) {
             fetchConfig();
         } else {
-            navigate('/vendor/auth');
+            console.error('⚠️ [DEBUG] No Vendor ID found in any storage key.');
         }
     }, [vendorId]);
 
     const toggleService = async (idx) => {
         const newServices = [...services];
         const target = newServices[idx];
-        const newStatus = !target.active;
         
+        // SECURITY: Block toggle if not approved
+        if (target.approvalStatus !== 'Approved') {
+            alert('This service is waiting for Admin approval. You cannot activate it yet.');
+            return;
+        }
+
+        const newStatus = !target.active;
         console.log(`--- Toggling Service: ${target.name} to ${newStatus ? 'Active' : 'Inactive'} ---`);
         target.active = newStatus;
         setServices(newServices);
@@ -71,12 +101,14 @@ const ServiceManagement = () => {
         // Immediate API Sync for better reliability
         const sId = target._id || target.id;
         try {
-            if (target.vendorId || target.isMaster === false) {
-                console.log(`Sending immediate sync for ${target.name}...`);
+            // Only sync custom services via the main serviceApi
+            if (!target.isFromRegistration) {
                 await serviceApi.update(sId, { 
                     status: newStatus ? 'Active' : 'Inactive'
                 });
-                console.log(`Sync successful for ${target.name}`);
+            } else {
+                // Registration services are synced via profile update in handleUpdate
+                console.log('Registration service state updated locally.');
             }
         } catch (err) {
             console.error(`Failed to sync ${target.name}:`, err);
@@ -100,22 +132,30 @@ const ServiceManagement = () => {
             setLoading(true);
             const profile = await authApi.getProfile(vendorId);
             
+            // Map services to match the User model schema (vendorRate, status, etc.)
+            const mappedServicesForProfile = services.map(s => ({
+                id: s._id || s.id,
+                name: s.name,
+                vendorRate: Number(s.basePrice),
+                adminRate: Number(s.basePrice), // Fallback
+                status: s.approvalStatus === 'Approved' ? 'approved' : 'pending',
+                icon: s.icon,
+                normalTime: s.normalTime || '',
+                expressTime: s.expressTime || ''
+            }));
+
             // 1. Update Profile (Save local preferences)
             const updatedShopDetails = {
                 ...(profile.shopDetails || {}),
-                services: services
+                services: mappedServicesForProfile
             };
             await authApi.updateProfile(vendorId, { shopDetails: updatedShopDetails });
             console.log('Profile updated successfully');
 
             // 2. Sync to Global Services collection
-            // We sync ANY service that has been modified or belongs to a vendor
             const syncPromises = services.map(service => {
                 const sId = service._id || service.id;
-                console.log(`Checking sync for service: ${service.name} (isMaster: ${service.isMaster})`);
                 
-                // Allow syncing for anything that is not a strictly global master without vendorId
-                // OR if it's explicitly a vendor-added service
                 if (service.vendorId || service.isMaster === false) {
                     return serviceApi.update(sId, { 
                         status: service.active ? 'Active' : 'Inactive',
@@ -219,7 +259,7 @@ const ServiceManagement = () => {
                                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400 group-focus-within/price:text-primary transition-colors">₹</span>
                                                 <input 
                                                     type="number"
-                                                    value={service.basePrice}
+                                                    value={service.basePrice || 0}
                                                     onChange={(e) => updatePrice(idx, e.target.value)}
                                                     className="w-full pl-8 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-[1.5rem] text-sm font-black text-slate-900 focus:bg-white focus:border-primary/20 transition-all outline-none shadow-sm"
                                                 />

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { serviceApi } from '../../../lib/api';
+import { serviceApi, masterServiceApi } from '../../../lib/api';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -23,16 +23,27 @@ const HomePage = () => {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const data = await serviceApi.getAll({ approvedOnly: true });
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      const customerType = userData.customerType || 'individual';
+      // Normalize customerType to lowercase for consistent comparison
+      const customerType = (userData.customerType || 'individual').toLowerCase();
       
-      // Filter for 'Approved' status AND customerType matching targetAudience
+      let data;
+      if (customerType === 'retail') {
+        data = await masterServiceApi.getAll();
+      } else {
+        data = await serviceApi.getAll({ approvedOnly: true });
+      }
+
       const filtered = data.filter(s => {
-        const isActive = s.status === 'Active' && s.approvalStatus === 'Approved';
-        const target = s.targetAudience || 'both';
+        // Master services use 'isActive', Vendor services use 'status'
+        const isActive = s.isActive === true || s.status === 'Active';
+        const isApproved = s.approvalStatus === 'Approved' || customerType === 'retail';
+        
+        // Match target audience
+        const target = (s.targetAudience || 'both').toLowerCase();
         const isMatch = target === 'both' || target === customerType;
-        return isActive && isMatch;
+        
+        return isActive && isApproved && isMatch;
       });
       
       setServices(filtered);
@@ -196,7 +207,13 @@ const HomePage = () => {
         animate="visible"
         className="flex-1 pt-24 pb-36 px-6 max-w-5xl mx-auto w-full overflow-y-auto hide-scrollbar"
       >
-        {/* Tier Toggle (Sprint 1) */}
+        {/* Debug Audience Indicator */}
+        <div className="mb-4 flex justify-center">
+            <div className="bg-slate-100 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-slate-400">
+                Active Mode: {JSON.parse(localStorage.getItem('userData') || '{}').customerType || 'individual'}
+            </div>
+        </div>
+        {/* 1. Tier Toggle */}
         <motion.div variants={cardVariants} className="mb-6 flex justify-center">
           <div className="bg-white p-1.5 rounded-full shadow-sm border border-slate-200 flex gap-1">
             <button 
@@ -214,89 +231,16 @@ const HomePage = () => {
           </div>
         </motion.div>
 
-        {/* Active Order Banner (Commented out until real active order API exists) */}
-        {/* 
-        {activeOrder && (
-          <motion.div 
-            variants={cardVariants}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/user/tracking')}
-            className={`mb-8 bg-white border ${themeBorder} p-4 rounded-3xl flex items-center justify-between cursor-pointer group shadow-sm shadow-primary/5`}
-          >
-            ...
-          </motion.div>
-        )}
-        */}
-
-        {/* Search Bar */}
-        <motion.div variants={cardVariants} className="mb-8">
-          <div className={`relative flex items-center bg-white rounded-3xl px-6 py-4 shadow-sm border ${isHeritage ? 'border-[#D4AF37]/30' : 'border-slate-300'} focus-within:ring-2 ${isHeritage ? 'focus-within:ring-[#996515]/10' : 'focus-within:ring-primary/10'} transition-all`}>
-            <span className={`material-symbols-outlined ${isHeritage ? 'text-[#996515]' : 'text-outline'} mr-3`}>search</span>
-            <input 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearch}
-              className="bg-transparent border-none focus:ring-0 p-0 text-md w-full placeholder:text-outline-variant font-semibold" 
-              placeholder={isHeritage ? "Find premium care..." : "How can we help today?"}
-              type="text"
-            />
-          </div>
-        </motion.div>
-
-        {/* Promotional Banner Carousel */}
-        <motion.section variants={cardVariants} className="mb-10 w-full relative group">
-          <div className="overflow-hidden rounded-[2.5rem] shadow-2xl shadow-primary/10">
-            <AnimatePresence mode="wait">
-              <motion.div 
-                key={banners[currentBanner].id}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                transition={{ duration: 0.6, ease: "anticipate" }}
-                className={`${banners[currentBanner].bg} p-8 relative overflow-hidden flex flex-col justify-end min-h-[220px]`}
-              >
-                <div className={`absolute top-0 right-0 w-48 h-48 ${banners[currentBanner].accent} rounded-full -mr-12 -mt-12 blur-3xl animate-pulse`}></div>
-                <div className="relative z-10">
-                  <span className="text-on-primary text-[10px] font-extrabold uppercase tracking-[0.2em] mb-2.5 block opacity-80">{banners[currentBanner].sub}</span>
-                  <h2 className="text-3xl font-black text-on-primary mb-6 leading-[1.1] tracking-tighter">{banners[currentBanner].title}</h2>
-                  <motion.button 
-                    whileTap={{ scale: 0.95 }}
-                    className={`${banners[currentBanner].btn} px-7 py-3 rounded-full font-black text-[10px] uppercase tracking-widest inline-flex items-center gap-2 shadow-xl`}
-                  >
-                    {banners[currentBanner].label} <span className="material-symbols-outlined text-sm">{banners[currentBanner].icon}</span>
-                  </motion.button>
-                </div>
-                
-                {/* Indicators */}
-                <div className="absolute right-8 top-8 flex gap-1.5">
-                  {banners.map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`h-1 rounded-full transition-all duration-300 ${i === currentBanner ? 'w-6 bg-white' : 'w-1.5 bg-white/30'}`}
-                    />
-                  ))}
-                </div>
-
-                <div className="absolute -left-4 -bottom-4 opacity-10 rotate-[-15deg] pointer-events-none">
-                  <span className="material-symbols-outlined text-[160px] text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    {banners[currentBanner].icon === 'bolt' ? 'eco' : banners[currentBanner].icon === 'diamond' ? 'military_tech' : 'rocket'}
-                  </span>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </motion.section>
-
-        {/* Enhanced Service Selection (Sprint 5) */}
+        {/* 2. Enhanced Service Selection (Our Expertise) - MOVED UP */}
         <motion.section variants={cardVariants} className="mb-10 w-full font-body">
           <div className="flex justify-between items-end mb-6">
             <div>
-              <span className={`text-[10px] uppercase tracking-[0.25em] ${themeText} font-black`}>{isHeritage ? 'Heritage Collection' : 'Our Expertise'}</span>
-              <h2 className="text-3xl font-black tracking-tighter leading-tight">{isHeritage ? 'Pristine Luxury.' : 'Choose Care.'}</h2>
+              <span className={`text-[10px] uppercase tracking-[0.25em] ${themeText} font-black`}>
+                {JSON.parse(localStorage.getItem('userData') || '{}').customerType === 'retail' ? 'Retail Collection' : (isHeritage ? 'Heritage Collection' : 'Our Expertise')}
+              </span>
             </div>
           </div>
           
-          {/* Category Chips */}
           <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-6 -mx-6 px-6">
             {categoryChips.map(cat => (
               <button key={cat} className={`px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
@@ -318,7 +262,7 @@ const HomePage = () => {
                 ))
             ) : (
                 <>
-                {services.filter(s => s.tier === selectedTier).map((service, i) => {
+                {services.filter(s => (s.tier || 'Essential') === selectedTier).map((service, i) => {
                     const serviceId = service._id || service.id;
                     const qty = selectedQuantities[serviceId] || 0;
                     const isSelected = qty > 0;
@@ -392,11 +336,62 @@ const HomePage = () => {
                 </>
             )}
           </div>
+        </motion.section>
 
+        {/* 3. Search Bar - MOVED DOWN */}
+        <motion.div variants={cardVariants} className="mb-8">
+          <div className={`relative flex items-center bg-white rounded-3xl px-6 py-4 shadow-sm border ${isHeritage ? 'border-[#D4AF37]/30' : 'border-slate-300'} focus-within:ring-2 ${isHeritage ? 'focus-within:ring-[#996515]/10' : 'focus-within:ring-primary/10'} transition-all`}>
+            <span className={`material-symbols-outlined ${isHeritage ? 'text-[#996515]' : 'text-outline'} mr-3`}>search</span>
+            <input 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearch}
+              className="bg-transparent border-none focus:ring-0 outline-none p-0 text-md w-full placeholder:text-outline-variant font-semibold" 
+              placeholder={isHeritage ? "Find premium care..." : "How can we help today?"}
+              type="text"
+            />
+          </div>
+        </motion.div>
+
+        {/* 4. Promotional Banner Carousel - MOVED DOWN */}
+        <motion.section variants={cardVariants} className="mb-10 w-full relative group">
+          <div className="overflow-hidden rounded-[2.5rem] shadow-2xl shadow-primary/10">
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={banners[currentBanner].id}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.6, ease: "anticipate" }}
+                className={`${banners[currentBanner].bg} p-8 relative overflow-hidden flex flex-col justify-end min-h-[220px]`}
+              >
+                <div className={`absolute top-0 right-0 w-48 h-48 ${banners[currentBanner].accent} rounded-full -mr-12 -mt-12 blur-3xl animate-pulse`}></div>
+                <div className="relative z-10">
+                  <span className="text-on-primary text-[10px] font-extrabold uppercase tracking-[0.2em] mb-2.5 block opacity-80">{banners[currentBanner].sub}</span>
+                  <h2 className="text-3xl font-black text-on-primary mb-6 leading-[1.1] tracking-tighter">{banners[currentBanner].title}</h2>
+                  <motion.button 
+                    whileTap={{ scale: 0.95 }}
+                    className={`${banners[currentBanner].btn} px-7 py-3 rounded-full font-black text-[10px] uppercase tracking-widest inline-flex items-center gap-2 shadow-xl`}
+                  >
+                    {banners[currentBanner].label} <span className="material-symbols-outlined text-sm">{banners[currentBanner].icon}</span>
+                  </motion.button>
+                </div>
+                
+                <div className="absolute right-8 top-8 flex gap-1.5">
+                  {banners.map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`h-1 rounded-full transition-all duration-300 ${i === currentBanner ? 'w-6 bg-white' : 'w-1.5 bg-white/30'}`}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </motion.section>
 
         {/* Express Booking */}
-        <motion.section variants={cardVariants} className="w-full">
+        <motion.section variants={cardVariants} className="w-full mb-10">
           <div className="bg-white rounded-[2rem] p-7 border border-outline-variant/10 shadow-[0_32px_32px_rgba(47,50,58,0.06)] relative overflow-hidden">
             <div className="flex flex-col gap-6 relative z-10">
               <div className="flex items-center gap-4">
@@ -421,6 +416,56 @@ const HomePage = () => {
             <div className={`absolute top-0 right-0 w-32 h-32 ${themeBgSubtle} rounded-full blur-3xl -mr-16 -mt-16`}></div>
           </div>
         </motion.section>
+
+        {/* 5. Automatic Location Detection Bar - MOVED TO BOTTOM */}
+        <motion.div variants={cardVariants} className="mb-12">
+            <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-200 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center text-primary shrink-0">
+                        <span className="material-symbols-outlined text-[20px]">location_on</span>
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Your Location</p>
+                        <h4 className="text-xs font-black text-slate-900 mt-1 truncate">
+                            {localStorage.getItem('detected_address') || 'Detecting location...'}
+                        </h4>
+                    </div>
+                </div>
+                <button 
+                    onClick={() => {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(async (position) => {
+                                const { latitude, longitude } = position.coords;
+                                try {
+                                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+                                    const data = await response.json();
+                                    const addr = data.address;
+                                    const components = [
+                                        addr.road || addr.suburb || addr.neighbourhood || addr.industrial,
+                                        addr.city || addr.town || addr.village,
+                                        addr.state
+                                    ].filter(Boolean);
+                                    const detailedAddress = components.join(', ');
+                                    const isFull = !!(addr.road || addr.suburb || addr.neighbourhood || addr.house_number);
+                                    localStorage.setItem('detected_address', detailedAddress);
+                                    localStorage.setItem('address_is_full', isFull ? 'true' : 'false');
+                                    localStorage.setItem('detected_coords', JSON.stringify({ lat: latitude, lng: longitude }));
+                                    window.location.reload();
+                                } catch (err) {
+                                    console.error('Location error:', err);
+                                    alert('Could not fetch detailed address. Please try again.');
+                                }
+                            }, (err) => {
+                                alert('Please allow location permission in your browser settings.');
+                            }, { enableHighAccuracy: true });
+                        }
+                    }}
+                    className="px-4 py-2 bg-primary/10 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all shrink-0"
+                >
+                    {localStorage.getItem('detected_address') ? 'Update' : 'Detect'}
+                </button>
+            </div>
+        </motion.div>
         {/* Floating Cart Bar (BRD Requirement) */}
         <AnimatePresence>
           {cartItemsCount > 0 && (

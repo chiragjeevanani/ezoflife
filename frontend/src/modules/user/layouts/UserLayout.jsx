@@ -36,7 +36,6 @@ const UserLayout = () => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
-            clearIncomingRequest();
             return 0;
           }
           return prev - 1;
@@ -44,7 +43,14 @@ const UserLayout = () => {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [incomingRequest, clearIncomingRequest, userRole]);
+  }, [incomingRequest, userRole]);
+
+  // Handle timer expiration in a separate effect
+  useEffect(() => {
+    if (userRole === 'vendor' && incomingRequest && timeLeft === 0) {
+      clearIncomingRequest();
+    }
+  }, [timeLeft, incomingRequest, clearIncomingRequest, userRole]);
 
   // Socket Logic (Vendor Only)
   useEffect(() => {

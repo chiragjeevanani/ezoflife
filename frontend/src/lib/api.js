@@ -2,7 +2,7 @@ export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/a
 export const UPLOADS_URL = BASE_URL.replace('/api', '');
 
 export const authApi = {
-    requestOtp: async (phone, channel, mode, role) => {
+    requestOtp: async (phone, channel, mode, options = {}) => {
         // Mock Credentials Bypass
         if (phone === '9999999999') {
             return { message: 'OTP sent successfully', mock: true };
@@ -11,7 +11,7 @@ export const authApi = {
             const response = await fetch(`${BASE_URL}/auth/request-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, channel, mode, role })
+                body: JSON.stringify({ phone, channel, mode, ...options })
             });
             return await response.json();
         } catch (error) {

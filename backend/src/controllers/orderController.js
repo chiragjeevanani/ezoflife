@@ -6,6 +6,7 @@ import Notification from '../models/Notification.js';
 import fs from 'fs';
 import { getIO } from '../socket.js';
 import { sendWalkInWhatsApp } from '../utils/whatsappHelper.js';
+import ShiprocketService from '../services/ShiprocketService.js';
 
 
 const logToFile = (msg) => {
@@ -202,7 +203,12 @@ export const createOrder = async (req, res) => {
                     io.to(`user_${v.id}`).emit('new_order_available', {
                         orderId: newOrder._id,
                         displayId: newOrder.orderId,
-                        distance: v.distance
+                        distance: v.distance,
+                        items: newOrder.items,
+                        tier: newOrder.items[0]?.tier || 'Essential',
+                        deliveryMode: newOrder.deliveryMode,
+                        notes: newOrder.specialInstructions,
+                        totalAmount: newOrder.totalAmount
                     });
                 });
             } catch (notifErr) {
@@ -284,22 +290,57 @@ export const updateOrderStatus = async (req, res) => {
         const updateData = { status };
 
         if (status === 'Ready') {
-            console.log(`[LOGISTICS] Order ${order.orderId} marked as READY. Searching for delivery riders...`);
+            console.log(`[LOGISTICS] Order ${order.orderId} marked as READY. Triggering Shiprocket Drop-off...`);
             
-            // Delivery Phase: Start searching for riders from Vendor to Customer
-            // Fallback to dropLocation if vendor profile location is missing
-            const vLat = order.vendor?.location?.lat || 22.7984; // Default to test region if shop location is 0
+            // 🚀 SHIPROCKET FORWARD FLOW (Drop-off: Vendor -> Customer)
+            if (order.shipmentDetails && !order.deliveryShipmentDetails?.shipmentId) {
+                try {
+                    const customer = await User.findById(order.customer);
+                    
+                    // 1. Create Forward Order (Pickup: Vendor, Drop: Customer)
+                    const fwdOrder = await ShiprocketService.createForwardOrder(order, customer);
+                    
+                    if (fwdOrder && fwdOrder.shipment_id) {
+                        const deliveryShipment = {
+                            shipmentId: fwdOrder.shipment_id,
+                            orderId: fwdOrder.order_id,
+                            lastStatus: 'CREATED'
+                        };
+                        
+                        // 2. Check Serviceability from Vendor/Hub Pincode (452010)
+                        const serviceability = await ShiprocketService.checkServiceability(order.vendor?.shopDetails?.pincode || '452010', false);
+                        
+                        if (serviceability?.data?.available_courier_companies?.length > 0) {
+                            const bestCourier = serviceability.data.available_courier_companies[0];
+                            
+                            // 3. Assign AWB
+                            const awbData = await ShiprocketService.generateAWB(fwdOrder.shipment_id, bestCourier.courier_company_id);
+                            if (awbData?.response?.data?.awb_code) {
+                                deliveryShipment.awbCode = awbData.response.data.awb_code;
+                                deliveryShipment.courierName = bestCourier.courier_name;
+                                
+                                // 4. Schedule Pickup from Vendor
+                                const pickupData = await ShiprocketService.generatePickup(fwdOrder.shipment_id);
+                                const token = pickupData?.response?.data?.pickup_token_number || pickupData?.pickup_token_number;
+                                if (token) {
+                                    deliveryShipment.pickupTokenNumber = token;
+                                    console.log(`✅ [SHIPROCKET] Drop-off Scheduled! Token: ${token}`);
+                                }
+                            }
+                        }
+                        updateData.deliveryShipmentDetails = deliveryShipment;
+                    }
+                } catch (srError) {
+                    console.error('⚠️ [SHIPROCKET_DROP_OFF_ERROR]:', srError.message);
+                }
+            }
+
+            // Internal Rider Search (Keeping as fallback or secondary notification)
+            const vLat = order.vendor?.location?.lat || 22.7984; 
             const vLng = order.vendor?.location?.lng || 75.9225;
-
-            console.log(`[LOGISTICS] Provider (${order.vendor?.shopDetails?.name || 'Vendor'}) at ${vLat}, ${vLng}`);
-
             const nearbyRiders = await getNearbyRiders(vLat, vLng, 4);
-            console.log(`[LOGISTICS] Found ${nearbyRiders.length} riders within 4km`);
-
             updateData.nearbyRiders = nearbyRiders;
-            updateData.rider = null; // Open task for delivery rider
-            
-            // Generate deliveryOtp
+            updateData.rider = null; 
             updateData.deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
             const io = getIO();
@@ -402,25 +443,35 @@ export const getPoolOrders = async (req, res) => {
         const vendor = await User.findById(vendorId);
         if (!vendor) {
             console.log(`⚠️ [POOL] Vendor lookup FAILED for ID: ${vendorId}`);
-            return res.status(404).json({ message: 'Vendor not found in database. Check your token/session.' });
+            return res.status(404).json({ message: 'Vendor not found' });
+        }
+
+        // SECURITY: If vendor is NOT approved, return empty pool
+        if (vendor.status !== 'approved') {
+            console.log(`🛡️ [POOL_SEC] Blocking pending vendor ${vendor.phone} from seeing orders.`);
+            return res.status(200).json([]);
         }
 
         const vLat = vendor.location?.lat || 0;
         const vLng = vendor.location?.lng || 0;
 
-        // Find all Pending orders that have no vendor yet
+        // Find all Pending orders that have no vendor yet AND were created after this vendor was approved (or created recently)
         const orders = await Order.find({ 
             status: 'Pending', 
-            vendor: null 
+            vendor: null,
+            createdAt: { $gte: vendor.updatedAt } // Only orders created after vendor's last status update (Approval)
         }).populate('customer', 'displayName address location');
         
         const pool = orders.filter(order => {
-            if (!order.location?.lat) return false;
-            const dist = calculateHaversineDistance(vLat, vLng, order.location.lat, order.location.lng);
+            if (!order.pickupLocation?.lat) return false;
+            const dist = calculateHaversineDistance(vLat, vLng, order.pickupLocation.lat, order.pickupLocation.lng);
             return dist <= 4; // 4km radius
         }).map(o => ({
             ...o._doc,
-            distance: calculateHaversineDistance(vLat, vLng, o.location.lat, o.location.lng).toFixed(2)
+            distance: calculateHaversineDistance(vLat, vLng, o.pickupLocation.lat, o.pickupLocation.lng).toFixed(2),
+            tier: o.items[0]?.tier || 'Essential',
+            deliveryMode: o.deliveryMode || 'Normal',
+            notes: o.specialInstructions
         }));
 
         res.status(200).json(pool);
@@ -477,6 +528,57 @@ export const vendorAcceptOrder = async (req, res) => {
 
         // Update nearby riders in order for dashboard listing
         updatedOrder.nearbyRiders = nearbyRiders;
+        
+        // --- SHIPROCKET AUTOMATION TRIGGER ---
+        try {
+            const customer = await User.findById(updatedOrder.customer);
+            const isRetail = customer.customerType === 'retail';
+            
+            console.log(`🚚 [SHIPROCKET] Initiating shipment for ${customer.customerType} order: ${updatedOrder.orderId}`);
+            
+            // 1. Create Return Order in Shiprocket
+            // For Individual -> isQC = true, For Retail -> isQC = false
+            const srOrder = await ShiprocketService.createReturnOrder(updatedOrder, customer, !isRetail);
+            
+            if (srOrder && srOrder.shipment_id) {
+                updatedOrder.shipmentDetails = {
+                    shipmentId: srOrder.shipment_id,
+                    orderId: srOrder.order_id,
+                    isQC: !isRetail,
+                    lastStatus: 'CREATED'
+                };
+                
+                // 2. Check Serviceability for QC (Optional auto-assign logic)
+                const serviceability = await ShiprocketService.checkServiceability(customer.pincode, !isRetail);
+                
+                if (serviceability && serviceability.data && serviceability.data.available_courier_companies.length > 0) {
+                    const bestCourier = serviceability.data.available_courier_companies[0];
+                    console.log(`📦 [SHIPROCKET] Best Courier Found: ${bestCourier.courier_name}`);
+                    
+                    // 3. Assign AWB
+                    const awbData = await ShiprocketService.generateAWB(srOrder.shipment_id, bestCourier.courier_company_id);
+                    if (awbData && awbData.response && awbData.response.data) {
+                        updatedOrder.shipmentDetails.awbCode = awbData.response.data.awb_code;
+                        updatedOrder.shipmentDetails.courierName = bestCourier.courier_name;
+                        
+                        // 4. Schedule Pickup (Trigger QC Checklist flow as per client request)
+                        console.log(`📅 [SHIPROCKET] Scheduling pickup for shipment: ${srOrder.shipment_id}`);
+                        const pickupData = await ShiprocketService.generatePickup(srOrder.shipment_id);
+                        
+                        // Extract pickup token from mock or real response
+                        const token = pickupData?.response?.data?.pickup_token_number || pickupData?.pickup_token_number;
+                        if (token) {
+                            updatedOrder.shipmentDetails.pickupTokenNumber = token;
+                            console.log(`✅ [SHIPROCKET] Pickup Scheduled! Token: ${token}`);
+                        }
+                    }
+                }
+            }
+        } catch (srError) {
+            console.error('⚠️ [SHIPROCKET_INTEGRATION_ERROR]:', srError.message);
+            // We don't block the order acceptance if Shiprocket fails, but we log it
+        }
+
         await updatedOrder.save();
 
         // Socket.io updates

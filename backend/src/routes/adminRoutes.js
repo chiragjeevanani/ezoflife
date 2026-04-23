@@ -6,6 +6,7 @@ import {
     rejectVendor, 
     getDashboardStats,
     getAllVendors,
+    getVendorById,
     getCustomers,
     deleteVendor,
     registerCustomer,
@@ -28,16 +29,7 @@ router.post('/config', updateSystemConfig);
 router.get('/stats', getDashboardStats);
 router.get('/vendors', getAllVendors);
 router.post('/vendors/:id/documents', upload.single('file'), uploadVendorDocument);
-router.get('/vendors/:id', async (req, res) => {
-    try {
-        const User = (await import('../models/User.js')).default;
-        const vendor = await User.findById(req.params.id).select('-otp -otpExpiry');
-        if (!vendor) return res.status(404).json({ message: 'Vendor not found' });
-        res.json(vendor);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
+router.get('/vendors/:id', getVendorById);
 router.patch('/vendors/:vendorId/services/:serviceId/status', updateVendorServiceStatus);
 router.delete('/vendors/:id', deleteVendor);
 router.get('/customers', getCustomers);

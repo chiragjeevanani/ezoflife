@@ -59,8 +59,11 @@ const serviceSchema = new mongoose.Schema({
     expressTime: {
         type: String,
         default: ''
+    },
+    tags: {
+        type: [String],
+        default: []
     }
-
 }, { timestamps: true });
 
 const Service = mongoose.model('Service', serviceSchema);

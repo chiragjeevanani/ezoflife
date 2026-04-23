@@ -199,24 +199,44 @@ export const getDashboardStats = async (req, res) => {
 export const getAllVendors = async (req, res) => {
     try {
         let vendors = await User.find({ role: 'Vendor' }).select('-otp -otpExpiry').lean();
-        
-        // Auto-seed if less than 5 vendors
-        if (!vendors || vendors.length < 5) {
-            const vendorsData = [
-                { phone: '9876543210', displayName: 'Aman Laundry Hub', role: 'Vendor', status: 'approved', email: 'aman@laundry.com', address: 'Sector 15, Gurgaon', isProfileComplete: true, shopDetails: { name: 'Aman Laundry & Dry Cleaners', gst: '06AAAAA0000A1Z5', address: 'Shop No. 4, Huda Market, Sector 15' } },
-                { phone: '9876543211', displayName: 'QuickWash Solutions', role: 'Vendor', status: 'approved', email: 'quickwash@gmail.com', address: 'MG Road, Gurgaon', isProfileComplete: true, shopDetails: { name: 'QuickWash Professional Cleaning', gst: '06BBBBB1111B1Z5', address: 'Basement, DT City Center' } },
-                { phone: '9876543212', displayName: 'EcoClean Experts', role: 'Vendor', status: 'approved', email: 'eco@clean.com', address: 'Golf Course Road, Gurgaon', isProfileComplete: true, shopDetails: { name: 'EcoClean Bio-Laundry', gst: '06CCCCC2222C1Z5', address: 'Shop 12, South Point Mall' } },
-                { phone: '9876543213', displayName: 'Royal Garments Care', role: 'Vendor', status: 'approved', email: 'royal@care.com', address: 'DLF Phase 3, Gurgaon', isProfileComplete: true, shopDetails: { name: 'Royal Textile & Care', gst: '06DDDDD3333D1Z5', address: 'Cyber Hub Backside' } },
-                { phone: '9876543214', displayName: 'Silver Streak Laundry', role: 'Vendor', status: 'pending', email: 'silver@streak.com', address: 'Sector 56, Gurgaon', isProfileComplete: true, shopDetails: { name: 'Silver Streak Express', gst: '06EEEEE4444E1Z5', address: 'Rail Vihar market' } }
-            ];
-            for (const v of vendorsData) {
-                await User.updateOne({ phone: v.phone }, { $set: v }, { upsert: true });
-            }
-            vendors = await User.find({ role: 'Vendor' }).select('-otp -otpExpiry').lean();
-        }
         res.status(200).json(vendors);
     } catch (err) {
         res.status(500).json({ message: 'Error fetching vendors' });
+    }
+};
+
+// Get single vendor with unified service catalog
+export const getVendorById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const vendor = await User.findById(id).select('-otp -otpExpiry').lean();
+        if (!vendor) return res.status(404).json({ message: 'Vendor not found' });
+
+        // Fetch custom services from Service collection
+        const Service = (await import('../models/Service.js')).default;
+        const customServices = await Service.find({ vendorId: id }).lean();
+
+        // Merge Master Services (from shopDetails) and Custom Services
+        const masterServices = vendor.shopDetails?.services || [];
+        const unifiedServices = [
+            ...masterServices.map(s => ({ ...s, isCustom: false })),
+            ...customServices.map(s => ({ 
+                id: s._id, 
+                name: s.name, 
+                vendorRate: s.basePrice, 
+                status: s.approvalStatus.toLowerCase(),
+                icon: s.icon,
+                isCustom: true,
+                normalTime: s.normalTime,
+                expressTime: s.expressTime
+            }))
+        ];
+
+        vendor.shopDetails = { ...vendor.shopDetails, services: unifiedServices };
+        res.status(200).json(vendor);
+    } catch (err) {
+        console.error('Get Vendor By ID Error:', err);
+        res.status(500).json({ message: 'Error fetching vendor details' });
     }
 };
 
@@ -295,26 +315,35 @@ export const updateVendorServiceStatus = async (req, res) => {
         const vendor = await User.findById(vendorId);
         if (!vendor) return res.status(404).json({ message: 'Vendor not found' });
 
-        // Update the specific service in the array
-        let serviceFound = false;
-        vendor.shopDetails.services = vendor.shopDetails.services.map(service => {
-            if (service.id === serviceId) {
-                serviceFound = true;
-                service.status = status;
-                if (status === 'rejected') {
-                    service.rejectionReason = message || 'Criteria not met';
-                } else {
-                    service.rejectionReason = '';
+        // 1. Check Custom Services (Service Collection)
+        const Service = (await import('../models/Service.js')).default;
+        const customService = await Service.findOne({ _id: serviceId, vendorId });
+        
+        if (customService) {
+            customService.approvalStatus = status === 'approved' ? 'Approved' : 'Rejected';
+            customService.status = status === 'approved' ? 'Active' : 'Suspended';
+            if (status === 'rejected') customService.rejectionReason = message;
+            await customService.save();
+        } else {
+            // 2. Check Master Services (User Collection shopDetails)
+            let serviceFound = false;
+            vendor.shopDetails.services = vendor.shopDetails.services.map(service => {
+                if (service.id === serviceId) {
+                    serviceFound = true;
+                    service.status = status;
+                    if (status === 'rejected') {
+                        service.rejectionReason = message || 'Criteria not met';
+                    } else {
+                        service.rejectionReason = '';
+                    }
                 }
-            }
-            return service;
-        });
+                return service;
+            });
 
-        if (!serviceFound) return res.status(404).json({ message: 'Service not found in vendor profile' });
-
-        // Mark services array as modified for Mongoose
-        vendor.markModified('shopDetails.services');
-        await vendor.save();
+            if (!serviceFound) return res.status(404).json({ message: 'Service not found in vendor profile' });
+            vendor.markModified('shopDetails.services');
+            await vendor.save();
+        }
 
         // Optional: Trigger notification to vendor
         if (status === 'rejected') {

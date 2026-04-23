@@ -1,4 +1,5 @@
 import Service from '../models/Service.js';
+import User from '../models/User.js';
 
 // Get all services
 export const getAllServices = async (req, res) => {
@@ -11,13 +12,10 @@ export const getAllServices = async (req, res) => {
         }
 
         if (vendorId) {
-            // Get all Master services OR services belonging to this specific vendor
+            // Get ONLY services belonging to this specific vendor
             query = {
                 ...query,
-                $or: [
-                    { isMaster: true },
-                    { vendorId: vendorId }
-                ]
+                vendorId: vendorId
             };
         }
 

@@ -1,26 +1,50 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { serviceApi, BASE_URL } from '../../../lib/api';
 
 const SearchResultsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const initialQuery = useMemo(() => new URLSearchParams(location.search).get('q') || '', [location.search]);
   const [query, setQuery] = useState(initialQuery);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const [masterRes, vendorRes] = await Promise.all([
+            fetch(`${BASE_URL}/master-services`).then(res => res.json()),
+            serviceApi.getAll()
+        ]);
+        
+        // Combine and filter: Only show Approved or Master services
+        const combined = [
+            ...masterRes.map(s => ({ ...s, isMaster: true })),
+            ...vendorRes.map(s => ({ ...s, isMaster: false }))
+        ].filter(s => s.isMaster || s.approvalStatus === 'Approved' || s.status === 'Active');
 
-  const MASTER_RESULTS = useMemo(() => [
-    { id: 'wash_fold', title: 'Wash & Fold', desc: 'Everyday wear, scented & stacked', icon: 'local_laundry_service', color: 'primary', price: '₹99.00' },
-    { id: 'dry_clean', title: 'Dry Cleaning', desc: 'Suits, Silks & Delicates', icon: 'dry_cleaning', color: 'tertiary', price: '₹149.00' },
-    { id: 'ironing', title: 'Ironing', desc: 'Crisp Finish, Steam Ironed', icon: 'iron', color: 'secondary', price: '₹49.00' },
-    { id: 'shoe_spa', title: 'Shoe Spa', desc: 'Deep cleaning & restoration', icon: 'steps', color: 'primary', price: '₹199.00' }
-  ], []);
+        setServices(combined);
+      } catch (err) {
+        console.error('Search fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchServices();
+  }, []);
 
   const results = useMemo(() => 
-    MASTER_RESULTS.filter(item => 
-      item.title.toLowerCase().includes(query.toLowerCase()) || 
-      item.desc.toLowerCase().includes(query.toLowerCase())
-    ),
-    [MASTER_RESULTS, query]
+    services.filter(item => {
+      const q = query.toLowerCase();
+      const nameMatch = (item.name || '').toLowerCase().includes(q);
+      const descMatch = (item.description || '').toLowerCase().includes(q);
+      const tagsMatch = item.tags && item.tags.some(tag => tag.toLowerCase().includes(q));
+      
+      return nameMatch || descMatch || tagsMatch;
+    }),
+    [services, query]
   );
 
   const containerVariants = useMemo(() => ({
@@ -85,16 +109,20 @@ const SearchResultsPage = () => {
                         className="bg-white p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm flex items-center justify-between group cursor-pointer"
                     >
                         <div className="flex items-center gap-5">
-                            <div className={`w-14 h-14 rounded-2xl bg-${item.color}-container/40 flex items-center justify-center text-${item.color}`}>
-                                <span className="material-symbols-outlined text-2xl">{item.icon}</span>
+                            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                {item.image ? (
+                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-2xl" />
+                                ) : (
+                                    <span className="material-symbols-outlined text-2xl">{item.icon || 'local_laundry_service'}</span>
+                                )}
                             </div>
                             <div>
-                                <h3 className="font-headline font-black text-lg text-on-surface">{item.title}</h3>
-                                <p className="text-[11px] font-bold text-on-surface-variant opacity-60">{item.desc}</p>
+                                <h3 className="font-headline font-black text-lg text-on-surface">{item.name}</h3>
+                                <p className="text-[11px] font-bold text-on-surface-variant opacity-60">{item.description}</p>
                             </div>
                         </div>
                         <div className="text-right">
-                            <p className="font-headline font-black text-primary text-sm">{item.price}</p>
+                            <p className="font-headline font-black text-primary text-sm">₹{item.basePrice}</p>
                             <span className="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors text-lg">chevron_right</span>
                         </div>
                     </motion.div>

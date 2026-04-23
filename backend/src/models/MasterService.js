@@ -40,6 +40,15 @@ const masterServiceSchema = new mongoose.Schema({
     location: {
         lat: { type: Number, default: 0 },
         lng: { type: Number, default: 0 }
+    },
+    tier: {
+        type: String,
+        enum: ['Essential', 'Heritage'],
+        default: 'Essential'
+    },
+    tags: {
+        type: [String],
+        default: []
     }
 }, { timestamps: true });
 

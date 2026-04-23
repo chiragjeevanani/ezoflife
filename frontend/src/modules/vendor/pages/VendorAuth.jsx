@@ -12,6 +12,10 @@ const VendorAuth = () => {
     const [registerShop, setRegisterShop] = useState('');
     const [registerPhone, setRegisterPhone] = useState('');
     const [apiError, setApiError] = useState('');
+    const authTabs = [
+        { key: true, label: 'Login' },
+        { key: false, label: 'Register' }
+    ];
 
     const isLoginValid = loginPhone.length === 10 && /^\d+$/.test(loginPhone);
     const isRegisterValid = registerShop.length >= 3 && registerPhone.length === 10 && /^\d+$/.test(registerPhone);
