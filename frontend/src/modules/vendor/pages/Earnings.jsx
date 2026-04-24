@@ -110,27 +110,23 @@ const Earnings = () => {
         }
     };
 
-    const performanceData = useMemo(() => {
-        const hasData = stats.totalGross > 0;
-        const base = hasData ? stats.totalGross / 100 : 0;
-        return {
-            'Daily': { labels: ['18', '19', '20', '21', '22', '23', '24'], values: hasData ? [65, 40, 85, 30, 95, 60, 45].map(v => Math.min(100, (v * base) / 100 + 10)) : [0,0,0,0,0,0,0], activeIdx: hasData ? 6 : -1 },
-            'Weekly': { labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], values: hasData ? [45, 65, 55, 90, 45, 75, 30].map(v => Math.min(100, (v * base) / 100 + 10)) : [0,0,0,0,0,0,0], activeIdx: hasData ? 3 : -1 },
-            'Monthly': { labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'], values: hasData ? [60, 80, 55, 95, 70, 85].map(v => Math.min(100, (v * base) / 100 + 10)) : [0,0,0,0,0,0], activeIdx: hasData ? 5 : -1 }
-        };
-    }, [stats.totalGross]);
+    const deliveredOrders = useMemo(() => {
+        return (Array.isArray(orders) ? orders : [])
+            .filter(o => o.status === 'Delivered' || o.status === 'Completed' || o.status === 'Ready')
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }, [orders]);
 
-    const payoutHistory = useMemo(() => [
-        { id: '#SETT-9821', date: 'Mar 23', amt: `₹${(stats.netYield * 0.2).toFixed(0)}` },
-        { id: '#SETT-9740', date: 'Mar 16', amt: `₹${(stats.netYield * 0.15).toFixed(0)}` },
-        { id: '#SETT-9655', date: 'Mar 09', amt: `₹${(stats.netYield * 0.25).toFixed(0)}` },
-    ], [stats.netYield]);
-
-    const currentData = useMemo(() => performanceData[performanceFilter], [performanceFilter, performanceData]);
+    const weeklyTotal = useMemo(() => {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        return deliveredOrders
+            .filter(o => new Date(o.createdAt) >= oneWeekAgo)
+            .reduce((sum, o) => sum + (Number(o.totalAmount || 0) * 0.85), 0);
+    }, [deliveredOrders]);
 
     if (loading) {
         return (
-            <div className="bg-background min-h-screen flex items-center justify-center">
+            <div className="bg-[#F8FAFC] min-h-screen flex items-center justify-center">
                 <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
@@ -140,110 +136,89 @@ const Earnings = () => {
         <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-background text-on-background min-h-screen pb-32 font-body"
+            className="bg-[#F8FAFC] text-slate-900 min-h-screen pb-32 font-body"
         >
-            
-            <div className="flex justify-center mt-6">
-                <div className="flex bg-surface-container p-1 rounded-full border border-outline-variant/10">
-                    {['Daily', 'Weekly', 'Monthly'].map((filter) => (
+            <header className="bg-white px-6 py-6 border-b border-slate-100 sticky top-0 z-50 flex items-center gap-4">
+                <motion.button whileTap={{ scale: 0.9 }} onClick={() => navigate(-1)} className="p-2 hover:bg-slate-50 rounded-full">
+                    <span className="material-symbols-outlined text-primary">arrow_back</span>
+                </motion.button>
+                <h1 className="text-xl font-black tracking-tight">Earnings & History</h1>
+            </header>
+
+            <main className="max-w-xl mx-auto px-6 pt-6 space-y-8">
+                {/* 1. WEEKLY TOTAL HIGHLIGHT */}
+                <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-xl shadow-slate-900/10 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/30 transition-all"></div>
+                    
+                    <div className="relative z-10 space-y-6">
+                        <div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Weekly Earnings</p>
+                            </div>
+                            <h2 className="text-5xl font-black tracking-tighter">₹{weeklyTotal.toLocaleString()}</h2>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Last 7 Days (Net Yield)</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/5">
+                            <div>
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Gross Rev</p>
+                                <p className="text-sm font-black text-slate-200">₹{stats.totalGross.toLocaleString()}</p>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Platform Fee</p>
+                                <p className="text-sm font-black text-rose-300">-15%</p>
+                            </div>
+                        </div>
+
                         <button 
-                            key={filter}
-                            onClick={() => setPerformanceFilter(filter)}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${performanceFilter === filter ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant opacity-60'}`}
+                            onClick={handleDownloadInvoice}
+                            className="w-full py-4 bg-white text-slate-900 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg hover:bg-primary hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
-                            {filter}
+                            <span className="material-symbols-outlined text-lg">download</span>
+                            Download Statement
                         </button>
-                    ))}
-                </div>
-            </div>
-
-            <main className="max-w-xl mx-auto px-6 pt-8 space-y-8">
-                <div className="grid grid-cols-1 gap-4">
-                    <div className="vendor-gradient p-8 rounded-[2.5rem] text-white shadow-xl shadow-primary/20 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                        <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-60 mb-2">Total Earnings</p>
-                        <h2 className="text-4xl font-bold tracking-tighter">₹{stats.netYield.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
-                        <div className="mt-8 pt-8 border-t border-white/10 space-y-6">
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-60">
-                                    <span>Gross Revenue</span>
-                                    <span className="tabular-nums italic text-slate-200">₹{stats.totalGross.toLocaleString()}</span>
-                                </div>
-                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-rose-300">
-                                    <span>Platform Fee (15%)</span>
-                                    <span className="tabular-nums">-₹{stats.platformFee.toLocaleString()}</span>
-                                </div>
-                                <div className="flex justify-between text-[11px] font-black uppercase tracking-[0.2em] pt-2 border-t border-white/5">
-                                    <span className="text-emerald-300">Net Shop Yield</span>
-                                    <span className="tabular-nums text-white">₹{stats.netYield.toLocaleString()}</span>
-                                </div>
-                            </div>
-                            
-                            <div className="flex flex-col gap-3">
-                                <button 
-                                    onClick={() => navigate('/vendor/payouts')}
-                                    className="w-full py-4 bg-white text-primary rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                >
-                                    Instant Settlement
-                                </button>
-                                <button 
-                                    onClick={handleDownloadInvoice}
-                                    className="w-full py-3 bg-white/10 text-white rounded-xl text-[9px] font-black uppercase tracking-widest border border-white/5"
-                                >
-                                    Download Tax Invoice (GST)
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                <section className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm space-y-10">
-                    <div className="flex justify-between items-start px-2">
-                        <div className="space-y-1">
-                            <h3 className="text-base font-bold text-slate-800 tracking-tight">Performance Trend</h3>
-                            <p className="text-xs text-slate-400 font-medium font-body">Revenue growth analysis</p>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-primary">
-                            <span className="material-symbols-outlined text-[18px]">trending_up</span>
-                            <span className="text-lg font-black tracking-tight">+{orders.length > 0 ? '12.4%' : '0%'}</span>
-                        </div>
-                    </div>
-                    <div className="flex items-end justify-between gap-3 h-48 px-2">
-                        {currentData.values.map((h, i) => (
-                            <div key={i} className="flex flex-col items-center grow gap-4 group cursor-pointer h-full justify-end">
-                                <div className="relative w-full max-w-[32px] overflow-hidden rounded-full h-full bg-slate-50">
-                                    <motion.div 
-                                        initial={{ height: 0 }}
-                                        animate={{ height: `${h}%` }}
-                                        transition={{ duration: 1, delay: i * 0.05 }}
-                                        className={`absolute bottom-0 w-full rounded-full transition-all duration-500 ${i === currentData.activeIdx ? 'vendor-gradient shadow-lg shadow-primary/30' : 'bg-primary/5 group-hover:bg-primary/10'}`}
-                                    />
-                                </div>
-                                <span className={`text-[9px] font-black uppercase tracking-widest transition-colors duration-300 ${i === currentData.activeIdx ? 'text-primary' : 'text-on-surface-variant/40'}`}>
-                                    {currentData.labels[i]}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
+                {/* 2. DELIVERED ORDERS RECORD */}
                 <section className="space-y-6">
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest px-1">Payout History</h3>
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Delivered Orders Record</h3>
+                        <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-100">
+                            {deliveredOrders.length} Completed
+                        </div>
+                    </div>
+
                     <div className="space-y-3">
-                        {payoutHistory.map((payout, i) => (
-                            <div key={payout.id} className="bg-white p-5 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm transition-all hover:bg-slate-50 cursor-pointer group">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 group-hover:text-green-500 transition-colors">
-                                        <span className="material-symbols-outlined text-[20px]">payments</span>
+                        {deliveredOrders.length > 0 ? (
+                            deliveredOrders.map((order) => (
+                                <div key={order._id} className="bg-white p-5 rounded-3xl flex items-center justify-between border border-slate-100 shadow-sm transition-all hover:border-primary/20 cursor-pointer group">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500 shadow-inner group-hover:bg-primary group-hover:text-white transition-all">
+                                            <span className="material-symbols-outlined text-2xl">verified</span>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{order.orderId}</p>
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                                                {new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="min-w-0">
-                                        <p className="text-xs font-bold text-slate-800">{payout.id}</p>
-                                        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">{payout.date}</p>
+                                    <div className="text-right">
+                                        <p className="text-base font-black text-slate-900 tracking-tight leading-none">₹{(Number(order.totalAmount || 0) * 0.85).toFixed(0)}</p>
+                                        <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mt-1">Net Earned</p>
                                     </div>
                                 </div>
-                                <p className="text-sm font-black text-slate-700 tracking-tight">{payout.amt}</p>
+                            ))
+                        ) : (
+                            <div className="py-20 text-center opacity-30">
+                                <span className="material-symbols-outlined text-5xl mb-3">history_edu</span>
+                                <p className="text-[10px] font-black uppercase tracking-widest">No delivered orders yet</p>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </section>
             </main>

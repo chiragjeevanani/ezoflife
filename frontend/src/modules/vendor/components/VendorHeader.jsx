@@ -1,57 +1,78 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import useNotificationStore from '../../../shared/stores/notificationStore';
 
-const VendorHeader = ({ title = "SPINZYT", showBack = false }) => {
-    const navigate = useNavigate();
-    const notifications = useNotificationStore((state) => state.notifications);
-    const unreadCount = notifications.filter(n => n.persona === 'vendor' && !n.read).length;
+const VendorHeader = () => {
+  const navigate = useNavigate();
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  
+  const userData = JSON.parse(localStorage.getItem('user') || '{}');
+  // For vendor, we'll show their shop name/address or current operational area
+  const shopAddress = userData.shopAddress || 'Select Shop Location';
 
-    const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
-    const vendorData = JSON.parse(vendorDataRaw);
-    const vendorName = vendorData.displayName || (vendorData.user && vendorData.user.displayName) || "Vendor Partner";
-    const vendorPhone = vendorData.phone || (vendorData.user && vendorData.user.phone) || "98765 43210";
+  const handleProfileClick = () => {
+    navigate('/vendor/profile');
+  };
 
-    return (
-        <header className="bg-surface/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-outline-variant/10 min-h-[72px]">
-            <div className="flex items-center gap-3">
-                {showBack && (
-                    <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
-                        <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-                    </button>
-                )}
-                {!showBack && (
-                    <div 
-                        onClick={() => navigate('/vendor/profile')}
-                        className="w-10 h-10 rounded-xl vendor-gradient flex items-center justify-center overflow-hidden cursor-pointer border border-outline-variant/5 text-white"
-                    >
-                        <span className="material-symbols-outlined text-xl">person</span>
-                    </div>
-                )}
-                <div className="flex flex-col">
-                    <h1 className="text-[14px] font-black tracking-tight text-on-surface leading-none mb-1 uppercase">
-                        {title !== "SPINZYT" ? title : vendorName}
-                    </h1>
-                    <p className="text-[10px] font-bold tracking-widest text-primary flex items-center gap-1 leading-none">
-                        <span className="material-symbols-outlined text-[12px]">smartphone</span>
-                        +91 {vendorPhone}
-                    </p>
-                </div>
+  return (
+    <>
+      <motion.header 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="fixed top-0 z-[100] bg-white/80 backdrop-blur-xl w-full flex justify-between items-center px-4 md:px-6 py-2.5 border-b border-slate-100 min-h-[64px]"
+      >
+        {/* 1. App Logo (Left) */}
+        <div className="flex items-center gap-4">
+          <div onClick={() => navigate('/vendor/dashboard')} className="cursor-pointer">
+            <h1 className="font-headline font-black text-xl text-primary tracking-tighter leading-none uppercase">SPINZYT</h1>
+          </div>
+          
+          <div className="h-6 w-px bg-slate-200" /> {/* Divider */}
+
+          {/* 2. Current Address (Shop/Office) */}
+          <div className="flex flex-col max-w-[150px] md:max-w-[200px] cursor-pointer group" onClick={() => setShowAddressModal(true)}>
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded-md transition-colors group-hover:bg-primary group-hover:text-white">SHOP</span>
+              <span className="material-symbols-outlined text-slate-400 text-[14px] group-hover:text-primary transition-colors">expand_more</span>
             </div>
-            <button 
-                onClick={() => navigate('/vendor/notifications')}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container text-on-surface-variant hover:text-primary transition-colors relative"
-            >
-                <span className="material-symbols-outlined text-[22px]">notifications</span>
-                {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm animate-bounce">
-                        {unreadCount}
-                    </span>
-                )}
-            </button>
-        </header>
-    );
-};
+            <p className="text-[11px] font-bold text-slate-500 truncate leading-tight mt-0.5 group-hover:text-slate-900 transition-colors">
+              {shopAddress}
+            </p>
+          </div>
+        </div>
 
+        {/* Right Side Actions */}
+        <div className="flex items-center gap-3">
+          {/* 3. Notification Bell */}
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate('/vendor/notifications')}
+            className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-50 rounded-full relative transition-colors"
+          >
+            <span className="material-symbols-outlined text-[24px]">notifications</span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
+            )}
+          </motion.button>
+
+          {/* 4. Profile Icon */}
+          <motion.div 
+            onClick={handleProfileClick}
+            whileHover={{ scale: 1.05 }}
+            className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden cursor-pointer border border-slate-200"
+          >
+            {userData.avatar ? (
+              <img src={userData.avatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className="material-symbols-outlined text-slate-500 text-[20px]">person</span>
+            )}
+          </motion.div>
+        </div>
+      </motion.header>
+    </>
+  );
+};
 
 export default VendorHeader;

@@ -119,7 +119,7 @@ const VendorLayout = () => {
         <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
             {showHeader && <VendorHeader />}
             
-            <main className="flex-1 pb-24">
+            <main className={`flex-1 pb-24 ${showHeader ? 'pt-20' : ''}`}>
                 <Outlet />
             </main>
 

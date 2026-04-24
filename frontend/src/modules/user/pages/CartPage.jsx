@@ -566,53 +566,53 @@ const CartPage = () => {
               const isHeritageService = item.tier === 'Heritage' || (item.basePrice > 200);
 
               return (
-                <div key={itemId} className="bg-white rounded-[2.5rem] p-6 flex items-center gap-5 border border-slate-100 shadow-sm relative overflow-hidden group">
+                <div key={itemId} className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-5 border border-slate-100 shadow-sm relative overflow-hidden group">
                   {/* Icon Box */}
-                  <div className="w-16 h-16 rounded-[1.5rem] bg-slate-50 flex items-center justify-center text-slate-900 border border-slate-100 shrink-0">
-                    <span className="material-symbols-outlined text-2xl">{item.icon || 'local_laundry_service'}</span>
+                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-[1.5rem] bg-slate-50 flex items-center justify-center text-slate-900 border border-slate-100 shrink-0">
+                    <span className="material-symbols-outlined text-xl md:text-2xl">{item.icon || 'local_laundry_service'}</span>
                   </div>
 
                   {/* Content Area */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-4">
-                      <h3 className="font-black text-lg text-slate-900 uppercase tracking-tight leading-none">{item.name}</h3>
-                      <span className="text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest bg-slate-100 text-slate-400">
+                  <div className="flex-1 min-w-0 w-full">
+                    <div className="flex items-center gap-2 mb-3 md:mb-4">
+                      <h3 className="font-black text-md md:text-lg text-slate-900 uppercase tracking-tight leading-none truncate">{item.name}</h3>
+                      <span className="text-[8px] md:text-[9px] font-black px-2 py-0.5 md:py-1 rounded-lg uppercase tracking-widest bg-slate-100 text-slate-400 shrink-0">
                         {isHeritageService ? 'Heritage' : 'Essential'}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-8">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-8">
                       {/* NEW PILL-STYLE QTY CONTROL - MATCHING IMAGE */}
-                      <div className="bg-slate-50 rounded-[2rem] px-2 py-1.5 flex items-center gap-4 border border-slate-100/50 shadow-inner">
+                      <div className="bg-slate-50 rounded-[2rem] px-1.5 py-1 flex items-center gap-2 md:gap-4 border border-slate-100/50 shadow-inner w-full sm:w-auto justify-between sm:justify-start">
                         <button 
                           onClick={() => updateQuantity(itemId, -1)}
-                          className="w-10 h-10 flex items-center justify-center bg-white rounded-full text-slate-400 shadow-sm hover:text-black transition-all active:scale-90"
+                          className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center bg-white rounded-full text-slate-400 shadow-sm hover:text-black transition-all active:scale-90"
                         >
-                          <span className="material-symbols-outlined text-xl font-black">remove</span>
+                          <span className="material-symbols-outlined text-sm md:text-md font-black">remove</span>
                         </button>
                         
-                        <div className="flex flex-col items-center min-w-[40px]">
+                        <div className="flex flex-col items-center min-w-[30px] md:min-w-[40px]">
                           <span className="text-xs font-black text-slate-900 leading-none">{qty}</span>
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter mt-1">Per {billingUnits[itemId] || 'Kg'}</span>
+                          <span className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-tighter mt-1 whitespace-nowrap">Per {billingUnits[itemId] || 'Kg'}</span>
                         </div>
 
                         <button 
                           onClick={() => updateQuantity(itemId, 1)}
-                          className="w-10 h-10 flex items-center justify-center bg-white rounded-full text-slate-400 shadow-sm hover:text-black transition-all active:scale-90"
+                          className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center bg-white rounded-full text-slate-400 shadow-sm hover:text-black transition-all active:scale-90"
                         >
-                          <span className="material-symbols-outlined text-xl font-black">add</span>
+                          <span className="material-symbols-outlined text-sm md:text-md font-black">add</span>
                         </button>
                       </div>
 
                       {/* Pricing Section - MATCHING IMAGE */}
-                      <div className="flex items-center gap-8">
+                      <div className="flex items-center justify-between sm:justify-start gap-6 md:gap-8 w-full sm:w-auto pt-2 sm:pt-0">
                         <div className="flex flex-col">
-                          <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none">Price/Unit</p>
-                          <p className="text-lg font-black text-slate-900 mt-1 tracking-tighter">₹{unitPrice}</p>
+                          <p className="text-[8px] md:text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none">Price/Unit</p>
+                          <p className="text-md md:text-lg font-black text-slate-900 mt-1 tracking-tighter">₹{unitPrice}</p>
                         </div>
                         <div className="flex flex-col">
-                          <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none">Total</p>
-                          <p className="text-2xl font-black text-slate-900 mt-1 tracking-tighter">₹{totalPrice.toFixed(0)}</p>
+                          <p className="text-[8px] md:text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none">Total</p>
+                          <p className="text-xl md:text-2xl font-black text-slate-900 mt-1 tracking-tighter">₹{totalPrice.toFixed(0)}</p>
                         </div>
                       </div>
                     </div>
@@ -621,9 +621,9 @@ const CartPage = () => {
                   {/* Circular Remove Button - TOP RIGHT */}
                   <button 
                     onClick={() => updateQuantity(itemId, -qty)}
-                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm"
+                    className="absolute top-3 right-3 md:top-4 md:right-4 w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm"
                   >
-                    <span className="material-symbols-outlined text-xl font-black">close</span>
+                    <span className="material-symbols-outlined text-lg md:text-xl font-black">close</span>
                   </button>
                 </div>
               );

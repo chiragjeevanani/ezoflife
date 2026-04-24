@@ -28,6 +28,8 @@ import B2BFulfillmentPage from '../pages/B2BFulfillmentPage';
 import B2BOrderHistory from '../pages/B2BOrderHistory';
 import VendorReviews from '../pages/VendorReviews';
 import JobManagerPage from '../pages/JobManagerPage';
+import MaterialRequestPage from '../pages/MaterialRequestPage';
+import LaborRequestPage from '../pages/LaborRequestPage';
 
 // Profile sub-pages
 import EditProfile from '../pages/EditProfile';
@@ -67,6 +69,8 @@ const VendorRoutes = () => {
         <Route path="/walk-in" element={<WalkInOrderPage />} />
         <Route path="/promotions" element={<PromotionManagerPage />} />
         <Route path="/fulfillment" element={<B2BFulfillmentPage />} />
+        <Route path="/material-request" element={<MaterialRequestPage />} />
+        <Route path="/labor-request" element={<LaborRequestPage />} />
         <Route path="/material-orders" element={<B2BOrderHistory />} />
         <Route path="/reviews" element={<VendorReviews />} />
         <Route path="/jobs" element={<JobManagerPage />} />

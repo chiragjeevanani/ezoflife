@@ -524,231 +524,309 @@ const Dashboard = () => {
                 )}
             </AnimatePresence>
 
-            {/* Mobile Availability Bar */}
-            <main className="max-w-xl mx-auto px-6 pt-8 space-y-10">
-                {/* Compact Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                    {dashboardStats.map((stat, i) => (
-                        <div 
-                            key={i} 
-                            className={`${stat.variant === 'primary' ? 'bg-primary-gradient text-on-primary shadow-xl shadow-primary/20' : 'bg-white text-on-surface border border-slate-300 shadow-sm'} p-5 rounded-3xl transition-all hover:scale-[1.02]`}
-                        >
-                            <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${stat.variant === 'primary' ? 'opacity-80' : 'text-on-surface-variant'}`}>{stat.label}</p>
-                            <h2 className={`text-${stat.variant === 'primary' ? '3xl' : '2xl'} font-black tracking-tighter leading-none`}>{stat.value}</h2>
-                            {stat.subValue ? (
-                                <p className="text-[9px] font-black uppercase mt-2.5 opacity-60">{stat.subValue}</p>
-                            ) : (
-                                <span className={`text-[9px] ${stat.trend === 'up' ? 'text-green-500' : 'text-rose-500'} font-black uppercase mt-1.5 block flex items-center gap-1`}>
-                                    <span className="material-symbols-outlined text-[12px]">{stat.trend === 'up' ? 'trending_up' : 'trending_down'}</span>
-                                    {stat.change}
-                                </span>
-                            )}
-                        </div>
-                    ))}
-                </div>
+            {/* 🚀 MAIN CONTENT AREA */}
+            <main className="max-w-xl mx-auto px-6 pt-6 space-y-8">
                 
-                {/* Available Pool Orders Section - New Broadcaster UI */}
-                {poolOrders.length > 0 && (
-                    <section className="space-y-4">
-                        <div className="flex items-center justify-between px-1">
-                            <div className="flex items-center gap-2">
-                                <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                                </span>
-                                <h3 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em]">Nearby Requests (Broadcast)</h3>
-                            </div>
-                        </div>
-                        <div className="flex gap-4 overflow-x-auto pb-6 -mx-6 px-6 hide-scrollbar">
-                            <AnimatePresence>
-                                {poolOrders.map((order) => (
-                                    <PoolOrderCard 
-                                        key={order._id} 
-                                        order={order} 
-                                        onAccept={handleVendorAccept}
-                                        acceptingId={acceptingId}
-                                        onReject={handleIgnoreOrder}
-                                    />
-                                ))}
-                            </AnimatePresence>
-                        </div>
-                    </section>
-                )}
-
-                {/* Management Quick Actions */}
-                <section className="space-y-4">
-                    <h3 className="text-[10px] font-black text-on-background uppercase tracking-[0.2em] ml-1 opacity-40">Management Center</h3>
-                    <div className="grid grid-cols-3 gap-3">
-                        <motion.button 
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate('/vendor/walk-in')}
-                            className="bg-white p-4 rounded-3xl border border-slate-300 shadow-sm flex flex-col items-center gap-2 hover:border-primary/30 transition-all"
-                        >
-                            <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center text-primary">
-                                <span className="material-symbols-outlined text-xl">add_shopping_cart</span>
-                            </div>
-                            <span className="text-[8px] font-black uppercase tracking-widest leading-none text-center">Walk-In</span>
-                        </motion.button>
-                        <motion.button 
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate('/vendor/promotions')}
-                            className="bg-white p-4 rounded-3xl border border-slate-300 shadow-sm flex flex-col items-center gap-2 hover:border-tertiary/30 transition-all"
-                        >
-                            <div className="w-10 h-10 rounded-2xl bg-tertiary/5 flex items-center justify-center text-tertiary">
-                                <span className="material-symbols-outlined text-xl">campaign</span>
-                            </div>
-                            <span className="text-[8px] font-black uppercase tracking-widest leading-none text-center">Promos</span>
-                        </motion.button>
-                        <motion.button 
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate('/vendor/jobs')}
-                            className="bg-white p-4 rounded-3xl border border-slate-300 shadow-sm flex flex-col items-center gap-2 hover:border-primary/30 transition-all"
-                        >
-                            <div className="w-10 h-10 rounded-2xl bg-amber-500/5 flex items-center justify-center text-amber-500">
-                                <span className="material-symbols-outlined text-xl">work</span>
-                            </div>
-                            <span className="text-[8px] font-black uppercase tracking-widest leading-none text-center">Jobs</span>
-                        </motion.button>
-                    </div>
-                </section>
-
-                {/* Workflow */}
+                {/* 1. ORDER WORKFLOW TABS (NOW AT THE TOP) */}
                 <section className="space-y-6">
-                    <div className="flex flex-col gap-4 px-1">
-                        <div className="flex flex-col">
-                            <h3 className="text-sm font-black text-on-background uppercase tracking-widest">Order Workflow</h3>
-                            {categorizedOrders['In Progress'].length > 5 && (
-                                <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
-                                    <span className="text-[7px] font-black text-rose-500 uppercase tracking-widest">Active Rush: High Throughput</span>
-                                </div>
-                            )}
+                    <div className="flex flex-col gap-5">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Order Hub</h3>
+                            <div className="flex items-center gap-1.5 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                                <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Live Broadcast</span>
+                            </div>
                         </div>
-                        <div className="flex bg-slate-100 p-1 rounded-[1.2rem] border border-slate-200 shadow-inner w-full sm:w-fit overflow-x-auto hide-scrollbar">
-                            {['Available', 'In Progress', 'Ready'].map((tab) => (
+
+                        <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-inner w-full">
+                            {['Available', 'In Progress', 'Completed'].map((tab) => (
                                 <button 
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
-                                    className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === tab ? 'bg-white text-primary shadow-lg scale-[1.02]' : 'text-on-surface-variant/40'}`}
+                                    className={`flex-1 py-3 px-1 rounded-[1.1rem] text-[9px] font-black uppercase tracking-tight transition-all flex items-center justify-center gap-1.5 ${activeTab === tab ? 'bg-white text-primary shadow-lg scale-[1.02]' : 'text-slate-400'}`}
                                 >
-                                    {tab === 'In Progress' ? 'Active' : tab === 'Ready' ? 'Done' : 'New'}
-                                    <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-black tabular-nums transition-colors ${activeTab === tab ? 'bg-primary text-white shadow-sm' : 'bg-slate-200 text-slate-500'}`}>
-                                        {categorizedOrders[tab].length}
+                                    <span className="whitespace-nowrap">{tab}</span>
+                                    <span className={`w-4 h-4 rounded-md flex items-center justify-center text-[7px] font-black tabular-nums transition-colors ${activeTab === tab ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>
+                                        {tab === 'Available' ? poolOrders.length : (categorizedOrders[tab === 'Completed' ? 'Ready' : tab] || []).length}
                                     </span>
                                 </button>
                             ))}
                         </div>
+
+                        <div className="space-y-4">
+                            <AnimatePresence mode="wait">
+                                {activeTab === 'Available' ? (
+                                    // 1. AVAILABLE TAB: Nearby Orders
+                                    poolOrders.length > 0 ? (
+                                        poolOrders.map((order) => (
+                                            <motion.div 
+                                                key={order._id}
+                                                layout
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                className="bg-white p-7 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-6 relative overflow-hidden group"
+                                            >
+                                                {/* Card Content Header */}
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="bg-slate-900 text-white px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md">{order.orderId}</span>
+                                                        <span className="bg-rose-50 text-rose-500 px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-rose-100 flex items-center gap-1.5">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                                                            Nearby
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{order.distance || '1.2'} KM AWAY</p>
+                                                </div>
+
+                                                <div className="flex gap-5">
+                                                    <div className="w-16 h-16 bg-slate-50 rounded-[1.5rem] flex items-center justify-center text-slate-400 shrink-0 border border-slate-100 shadow-inner">
+                                                        <span className="material-symbols-outlined text-3xl">local_laundry_service</span>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Customer Area</p>
+                                                        <h4 className="text-xl font-black text-slate-900 tracking-tight truncate">{order.customerArea || order.pickupAddress?.split(',')[0] || 'Malviya Nagar'}</h4>
+                                                        <div className="flex flex-wrap gap-2 mt-3">
+                                                            {order.items?.map((item, idx) => (
+                                                                <span key={idx} className="bg-slate-50 px-3 py-1.5 rounded-xl text-[10px] font-black text-slate-600 uppercase tracking-tight border border-slate-100">{item.name}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4 py-5 border-y border-slate-50">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center text-primary"><span className="material-symbols-outlined text-xl">schedule</span></div>
+                                                        <div>
+                                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pickup Time</p>
+                                                            <p className="text-[11px] font-black text-slate-900 mt-0.5">{order.pickupSlot?.time || 'ASAP'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400"><span className="material-symbols-outlined text-xl">inventory_2</span></div>
+                                                        <div>
+                                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Quantity</p>
+                                                            <p className="text-[11px] font-black text-slate-900 mt-0.5">{order.items?.reduce((a,c) => a + c.quantity, 0) || 0} Articles</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between gap-6 pt-2">
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none">Est. Earning</p>
+                                                        <p className="text-3xl font-black text-slate-900 tracking-tighter mt-2">₹{(order.totalAmount * 0.85).toFixed(0)}</p>
+                                                    </div>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleVendorAccept(order._id); }}
+                                                        disabled={acceptingId === order._id}
+                                                        className="flex-1 py-5 rounded-[1.6rem] bg-primary text-white font-black text-[12px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:bg-black transition-all active:scale-95"
+                                                    >
+                                                        {acceptingId === order._id ? 'ACCEPTING...' : 'ACCEPT ORDER'}
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        ))
+                                    ) : (
+                                        <div className="py-24 text-center opacity-30">
+                                            <span className="material-symbols-outlined text-6xl mb-4 animate-pulse">radar</span>
+                                            <p className="text-[11px] font-black uppercase tracking-[0.2em]">Scanning for nearby orders...</p>
+                                        </div>
+                                    )
+                                ) : (
+                                    // 2. IN PROGRESS & COMPLETED TABS
+                                    (activeTab === 'In Progress' ? (categorizedOrders['In Progress'] || []) : (categorizedOrders['Ready'] || [])).length > 0 ? (
+                                        (activeTab === 'In Progress' ? (categorizedOrders['In Progress'] || []) : (categorizedOrders['Ready'] || [])).map((order) => (
+                                            <motion.div 
+                                                key={order._id}
+                                                layout
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-5 cursor-pointer hover:border-primary/20 transition-all group"
+                                                onClick={() => navigate(`/vendor/order/${order._id}`)}
+                                            >
+                                                {/* Header: ID & Status */}
+                                                <div className="flex justify-between items-center">
+                                                    <span className="bg-slate-100 text-slate-900 px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                                                        {order.orderId}
+                                                    </span>
+                                                    <span className={`px-3.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
+                                                        activeTab === 'In Progress' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                    }`}>
+                                                        {activeTab === 'Completed' ? 'COMPLETED' : order.status}
+                                                    </span>
+                                                </div>
+
+                                                {/* Content: Service Info */}
+                                                <div className="flex items-center gap-5">
+                                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
+                                                        activeTab === 'In Progress' ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'
+                                                    }`}>
+                                                        <span className="material-symbols-outlined text-2xl">
+                                                            {activeTab === 'In Progress' ? 'autofps_select' : 'local_shipping'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-base font-black text-slate-900 truncate">
+                                                            {order.items[0]?.name} {order.items.length > 1 ? `+${order.items.length - 1} more` : ''}
+                                                        </h4>
+                                                        <div className="flex flex-wrap gap-1.5 mt-1">
+                                                            {order.items.map((item, idx) => (
+                                                                <span key={idx} className="text-[9px] font-bold text-slate-400 uppercase">
+                                                                    {item.name} {idx < order.items.length - 1 ? '•' : ''}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <span className="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span>
+                                                </div>
+
+                                                {/* Footer: Time & Action */}
+                                                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+                                                            <span className="material-symbols-outlined text-lg">timer</span>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Time In Shop</p>
+                                                            <p className="text-[11px] font-black text-slate-900 mt-0.5">
+                                                                {Math.floor((new Date() - new Date(order.updatedAt)) / (1000 * 60))} Mins
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {activeTab === 'In Progress' && (
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); setSelectedOrderForReady(order); }}
+                                                            className="px-6 py-3 rounded-xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+                                                        >
+                                                            Mark Ready
+                                                        </button>
+                                                    )}
+
+                                                    {activeTab === 'Completed' && (
+                                                        <div className="flex items-center gap-2 bg-emerald-50 px-4 py-2.5 rounded-xl border border-emerald-100">
+                                                            <div className="relative">
+                                                                <span className="material-symbols-outlined text-emerald-500 text-xl animate-bounce">local_shipping</span>
+                                                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">Rider Alerted</p>
+                                                                <p className="text-[8px] font-bold text-emerald-400 uppercase mt-1">Waiting Pickup</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        ))
+                                    ) : (
+                                        <div className="py-24 text-center opacity-30">
+                                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <span className="material-symbols-outlined text-3xl">inventory_2</span>
+                                            </div>
+                                            <p className="text-[11px] font-black uppercase tracking-widest">No active orders</p>
+                                        </div>
+                                    )
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 2. MATERIAL SUPPLY REQUEST */}
+                <section className="space-y-4">
+                    <div className="bg-slate-900 rounded-[2.5rem] p-6 shadow-xl shadow-slate-900/10 relative overflow-hidden group">
+                        <div className="absolute -right-4 -top-4 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all"></div>
+                        <div className="relative z-10 flex items-center justify-between gap-6">
+                            <div className="flex-1 space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                    <h3 className="text-[10px] font-black text-primary uppercase tracking-widest">Inventory Management</h3>
+                                </div>
+                                <h4 className="text-xl font-black text-white tracking-tight">Need Supplies?</h4>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                                    Request Detergents, Packing Bags, or Labels from the material supplier.
+                                </p>
+                            </div>
+                            <motion.button 
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate('/vendor/material-request')}
+                                className="bg-primary text-white p-5 rounded-2xl shadow-lg shadow-primary/20 flex items-center justify-center group-hover:bg-white group-hover:text-primary transition-all"
+                            >
+                                <span className="material-symbols-outlined text-2xl">shopping_cart_checkout</span>
+                            </motion.button>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 3. SKILLED LABOR REQUEST (NEW SECTION) */}
+                <section className="space-y-4">
+                    <div className="bg-white rounded-[2.5rem] p-6 border border-slate-200 shadow-sm relative overflow-hidden group">
+                        <div className="absolute -right-4 -top-4 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 transition-all"></div>
+                        
+                        <div className="relative z-10 flex items-center justify-between gap-6">
+                            <div className="flex-1 space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                    <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Workforce Support</h3>
+                                </div>
+                                <h4 className="text-xl font-black text-slate-900 tracking-tight">Request Skilled Labor</h4>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {['Ironman', 'Washerman', 'Helper'].map((tag) => (
+                                        <span key={tag} className="bg-slate-50 px-2.5 py-1 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest border border-slate-100">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed pt-1">
+                                    Raise a request for additional staff during rush hours.
+                                </p>
+                            </div>
+                            
+                            <motion.button 
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate('/vendor/labor-request')}
+                                className="bg-indigo-500 text-white p-5 rounded-2xl shadow-lg shadow-indigo-500/20 flex items-center justify-center group-hover:bg-slate-900 transition-all"
+                            >
+                                <span className="material-symbols-outlined text-2xl">person_add</span>
+                            </motion.button>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 4. STATS & QUICK ACTIONS */}
+                <section className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                        {dashboardStats.map((stat, i) => (
+                            <div 
+                                key={i} 
+                                className={`${stat.variant === 'primary' ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/10' : 'bg-white text-slate-900 border border-slate-200 shadow-sm'} p-5 rounded-[2rem] transition-all hover:scale-[1.02]`}
+                            >
+                                <p className={`text-[9px] font-black uppercase tracking-widest mb-1.5 ${stat.variant === 'primary' ? 'text-primary' : 'text-slate-400'}`}>{stat.label}</p>
+                                <h2 className="text-2xl font-black tracking-tighter leading-none">{stat.value}</h2>
+                                {stat.subValue && <p className="text-[9px] font-black uppercase mt-2.5 opacity-40">{stat.subValue}</p>}
+                            </div>
+                        ))}
                     </div>
 
-
-                    <div className="space-y-4">
-                        <AnimatePresence mode="popLayout">
-                            {categorizedOrders[activeTab].map((order) => (
-                                <motion.div 
-                                    key={order._id}
-                                    layout
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col gap-4 cursor-pointer hover:border-[#3D5AFE]/20 transition-all"
-                                >
-                                    <div className="flex items-center gap-5" onClick={() => navigate(`/vendor/order/${order._id}`)}>
-                                        <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
-                                            <span className="material-symbols-outlined text-[24px]">local_laundry_service</span>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between mb-0.5">
-                                                <h4 className="text-sm font-bold text-on-surface truncate">{order.items[0]?.name} {order.items.length > 1 ? `+${order.items.length - 1}` : ''}</h4>
-                                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{order.orderId}</span>
-                                            </div>
-                                            <div className="flex items-center gap-3 mb-1.5">
-                                                <p className="text-xs text-on-surface-variant font-medium truncate">{order.customer?.displayName || 'Customer'}</p>
-                                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                                <span className="text-[10px] font-black text-on-surface-variant opacity-60 uppercase">{order.items.reduce((acc, i) => acc + i.quantity, 0)} Items</span>
-                                            </div>
-                                            
-                                            {order.specialInstructions && (
-                                                <div className="bg-amber-50 px-3 py-2 rounded-xl mb-3 border border-amber-100/50">
-                                                    <p className="text-[10px] font-bold text-amber-700 leading-tight">
-                                                        <span className="material-symbols-outlined text-[12px] align-middle mr-1">sticky_note_2</span>
-                                                        {order.specialInstructions}
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            <div className="flex items-center gap-2">
-                                                <span className="material-symbols-outlined text-[14px] text-outline-variant">schedule</span>
-                                                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{order.status}</span>
-                                            </div>
-                                        </div>
-                                        <span className="material-symbols-outlined text-outline-variant/30 text-[18px]">chevron_right</span>
-                                    </div>
-
-                                    {activeTab === 'Available' && (
-                                         <div className="pt-2">
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    startProcessing(order);
-                                                }}
-                                                className="w-full py-3.5 rounded-2xl bg-primary text-white font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <span className="material-symbols-outlined text-sm">local_shipping</span>
-                                                Accept Pickup
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {activeTab === 'In Progress' && (
-                                        <div className="pt-2">
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedOrderForReady(order);
-                                                }}
-                                                className="w-full py-3.5 rounded-2xl bg-primary/5 text-primary border border-primary/20 font-black text-[10px] uppercase tracking-widest hover:bg-primary/10 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <span className="material-symbols-outlined text-sm">check_circle</span>
-                                                Mark as Ready
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {activeTab === 'Ready' && (
-                                        <div className="pt-2">
-                                            <div className="bg-primary/5 rounded-[1.5rem] p-4 flex items-center justify-between border border-primary/10">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="relative">
-                                                        <span className="material-symbols-outlined text-primary text-xl animate-pulse">local_shipping</span>
-                                                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full animate-ping"></span>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Searching</p>
-                                                        <p className="text-[9px] font-bold text-on-surface-variant opacity-60 uppercase mt-1">Delivery Rider Nearby</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-1">
-                                                    {[1, 2, 3].map(i => (
-                                                        <motion.div 
-                                                            key={i}
-                                                            animate={{ opacity: [0.2, 1, 0.2] }}
-                                                            transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }}
-                                                            className="w-1 h-1 bg-primary rounded-full"
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </motion.div>
-                            ))}
-                            {categorizedOrders[activeTab].length === 0 && (
-                                <div className="py-20 text-center opacity-30">
-                                    <span className="material-symbols-outlined text-6xl mb-4">inventory_2</span>
-                                    <p className="text-[11px] font-black uppercase tracking-widest">No orders in this flow.</p>
+                    <div className="grid grid-cols-3 gap-3">
+                        {[
+                            { label: 'Walk-In', icon: 'add_shopping_cart', color: 'primary', path: '/vendor/walk-in' },
+                            { label: 'Promos', icon: 'campaign', color: 'tertiary', path: '/vendor/promotions' },
+                            { label: 'Jobs', icon: 'work', color: 'amber', path: '/vendor/jobs' }
+                        ].map((action, i) => (
+                            <motion.button 
+                                key={i}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate(action.path)}
+                                className="bg-white p-4 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col items-center gap-2 hover:border-primary/20 transition-all"
+                            >
+                                <div className={`w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-900 shadow-inner`}>
+                                    <span className="material-symbols-outlined text-xl">{action.icon}</span>
                                 </div>
-                            )}
-                        </AnimatePresence>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">{action.label}</span>
+                            </motion.button>
+                        ))}
                     </div>
                 </section>
             </main>
