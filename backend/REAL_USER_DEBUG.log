@@ -3256,3 +3256,11 @@
 2026-04-24T12:07:13.078Z - SOCKET_JOIN - Client 4ij4PbyStsVIgXicAAAF -> user_69eafd0d2c76f5ab4ec7b5f1
 2026-04-24T12:07:13.079Z - SOCKET_JOIN - Client 4ij4PbyStsVIgXicAAAF -> vendors_pool
 2026-04-24T12:07:13.080Z - SOCKET_JOIN - Client 4ij4PbyStsVIgXicAAAF -> user_69eafd0d2c76f5ab4ec7b5f1
+2026-04-24T12:10:50.180Z - [DEBUG] Fetching orders for CustomerID: 69eafd0d2c76f5ab4ec7b5f0. Detecting phone...
+2026-04-24T12:10:50.314Z - [DEBUG] Found phone: 9999999991 for account 69eafd0d2c76f5ab4ec7b5f0
+2026-04-24T12:10:50.387Z - [DEBUG] Cross-account search for 9999999991. Found 1 linked IDs.
+2026-04-24T12:10:50.474Z - [DEBUG] Orders found for 9999999991: 1
+2026-04-24T12:10:50.479Z - [DEBUG] Fetching orders for CustomerID: 69eafd0d2c76f5ab4ec7b5f0. Detecting phone...
+2026-04-24T12:10:50.554Z - [DEBUG] Found phone: 9999999991 for account 69eafd0d2c76f5ab4ec7b5f0
+2026-04-24T12:10:50.645Z - [DEBUG] Cross-account search for 9999999991. Found 1 linked IDs.
+2026-04-24T12:10:50.760Z - [DEBUG] Orders found for 9999999991: 1

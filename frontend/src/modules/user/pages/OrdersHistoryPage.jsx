@@ -309,7 +309,7 @@ const OrdersHistoryPage = () => {
                            <span className="material-symbols-outlined text-[14px] text-slate-400">inventory_2</span>
                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Package Details</p>
                         </div>
-                        <p className="text-[11px] font-bold text-slate-600 leading-relaxed italic line-clamp-1">{order.items?.map(i => i.name).join(', ') || 'Service Request Bundle'}</p>
+                        <p className="text-[11px] font-bold text-slate-600 leading-relaxed line-clamp-1">{order.items?.map(i => i.name).join(', ') || 'Service Request Bundle'}</p>
                       </div>
 
                       <div className="flex flex-col gap-3">

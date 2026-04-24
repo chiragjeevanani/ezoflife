@@ -88,6 +88,15 @@ const HomePage = () => {
   }, 0), [selectedQuantities, services]);
 
   
+  const [isCartDismissed, setIsCartDismissed] = useState(false);
+
+  // Reset dismissal when cart items change (if increasing)
+  useEffect(() => {
+    if (cartItemsCount > 0) {
+      setIsCartDismissed(false);
+    }
+  }, [cartItemsCount]);
+
   // RBAC Direct Logic
   useEffect(() => {
     const userRole = localStorage.getItem('userRole');
@@ -367,44 +376,57 @@ const HomePage = () => {
 
         {/* Floating Cart Bar (BRD Requirement) */}
         <AnimatePresence>
-          {cartItemsCount > 0 && (
+          {cartItemsCount > 0 && !isCartDismissed && (
             <motion.div 
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
-              className="fixed bottom-28 left-6 right-6 z-[100] max-w-lg mx-auto"
+              className="fixed bottom-28 left-6 right-6 z-[100] max-w-lg mx-auto group"
             >
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleCartClick}
-                className={`${themeGradient} w-full h-[64px] rounded-3xl p-1 flex items-center justify-between shadow-2xl shadow-primary/30 group overflow-hidden`}
-              >
-                <div className="flex items-center gap-4 pl-6">
-                  <div className="flex flex-col items-start leading-none gap-1">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">Shopping Bag</span>
-                    <h3 className="text-white font-black text-lg tracking-tight">₹{cartTotal.toLocaleString()}</h3>
+              <div className="relative">
+                <motion.button 
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleCartClick}
+                  className={`${themeGradient} w-full h-[64px] rounded-3xl p-1 flex items-center justify-between shadow-2xl shadow-primary/30 overflow-hidden`}
+                >
+                  <div className="flex items-center gap-4 pl-6">
+                    <div className="flex flex-col items-start leading-none gap-1">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">Shopping Bag</span>
+                      <h3 className="text-white font-black text-lg tracking-tight">₹{cartTotal.toLocaleString()}</h3>
+                    </div>
+                    <div className="h-8 w-px bg-white/20"></div>
+                    <span className="text-white/80 font-black text-[10px] uppercase tracking-widest bg-black/10 px-3 py-1.5 rounded-full">
+                      {cartItemsCount} {cartItemsCount === 1 ? 'Article' : 'Articles'}
+                    </span>
                   </div>
-                  <div className="h-8 w-px bg-white/20"></div>
-                  <span className="text-white/80 font-black text-[10px] uppercase tracking-widest bg-black/10 px-3 py-1.5 rounded-full">
-                    {cartItemsCount} {cartItemsCount === 1 ? 'Article' : 'Articles'}
-                  </span>
-                </div>
-                
-                <div className="flex items-center gap-2 pr-5">
-                  <span className="text-white font-black text-[11px] uppercase tracking-widest group-hover:mr-1 transition-all">Proceed to Cart</span>
-                  <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white">
-                    <span className="material-symbols-outlined text-xl">shopping_bag</span>
+                  
+                  <div className="flex items-center gap-2 pr-12">
+                    <span className="text-white font-black text-[11px] uppercase tracking-widest group-hover:mr-1 transition-all">Proceed to Cart</span>
+                    <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white">
+                      <span className="material-symbols-outlined text-xl">shopping_bag</span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Animated Light Sweep Effect */}
-                <motion.div 
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-[100%]"
-                  animate={{ translateX: ["100%", "-100%"] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear", repeatDelay: 1 }}
-                />
-              </motion.button>
+                  {/* Animated Light Sweep Effect */}
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-[100%]"
+                    animate={{ translateX: ["100%", "-100%"] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear", repeatDelay: 1 }}
+                  />
+                </motion.button>
+
+                {/* DISMISS BUTTON */}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCartDismissed(true);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/20 hover:bg-black/40 text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-all z-10"
+                >
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
