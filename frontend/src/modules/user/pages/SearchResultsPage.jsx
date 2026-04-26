@@ -23,7 +23,7 @@ const SearchResultsPage = () => {
         const combined = [
             ...masterRes.map(s => ({ ...s, isMaster: true })),
             ...vendorRes.map(s => ({ ...s, isMaster: false }))
-        ].filter(s => s.isMaster || s.approvalStatus === 'Approved' || s.status === 'Active');
+        ].filter(s => s.status === 'Active' && (s.isMaster || s.approvalStatus === 'Approved'));
 
         setServices(combined);
       } catch (err) {
@@ -122,7 +122,7 @@ const SearchResultsPage = () => {
                             </div>
                         </div>
                         <div className="text-right">
-                            <p className="font-headline font-black text-primary text-sm">₹{item.basePrice}</p>
+                            <p className="font-headline font-black text-primary text-sm">₹{item.totalPrice}</p>
                             <span className="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors text-lg">chevron_right</span>
                         </div>
                     </motion.div>

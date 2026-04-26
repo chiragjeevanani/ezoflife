@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 
-const MoreMenuPage = () => {
+const SupplierMorePage = () => {
   const navigate = useNavigate();
 
   const menuSections = useMemo(() => [
@@ -12,7 +12,6 @@ const MoreMenuPage = () => {
       icon: "handshake",
       items: [
         { icon: "storefront", title: "Become a Vendor", desc: "Onboard Physical Shop", path: "/user/become-vendor" },
-        { icon: "factory", title: "Become a Supplier", desc: "Distribute Materials", path: "/user/become-supplier" },
         { icon: "campaign", title: "Advertise with us", desc: "Digital Media Kit", path: "/user/advertise", color: "primary" },
         { icon: "handshake", title: "Partner with us", desc: "Logistics & Alliances", path: "/user/partnerships", color: "tertiary" },
       ]
@@ -58,7 +57,7 @@ const MoreMenuPage = () => {
       <main className="max-w-md mx-auto px-6 pt-10">
         <header className="mb-10">
           <h2 className="text-3xl font-black tracking-tighter text-slate-950 uppercase italic leading-none">More</h2>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-3">Customer Experience Hub</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-3">Supplier Operations Hub</p>
         </header>
 
         <motion.div 
@@ -104,7 +103,7 @@ const MoreMenuPage = () => {
 
           <footer className="mt-12 px-4 text-center text-slate-400">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1">SPINZYT Operations Control</p>
-            <p className="text-[9px] font-bold uppercase tracking-widest italic">v.2.4.0-Customer • Operational Core 2026</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest italic">v.2.9.0-Supplier • Operational Core 2026</p>
           </footer>
         </motion.div>
       </main>
@@ -112,4 +111,4 @@ const MoreMenuPage = () => {
   );
 };
 
-export default MoreMenuPage;
+export default SupplierMorePage;

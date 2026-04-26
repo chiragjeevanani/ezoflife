@@ -40,23 +40,10 @@ const MasterServiceManagement = () => {
         fetchServices();
     }, []);
 
-    const [activeTab, setActiveTab] = useState('master'); // 'master' or 'requests'
-
     const fetchServices = async () => {
         try {
-            const [masterData, vendorRequests] = await Promise.all([
-                masterServiceApi.getAll(),
-                serviceApi.getAll() // Fetch from Service collection too
-            ]);
-            
-            // Combine both: Master services are global, vendorRequests are specific
-            // Ensure they have identifiers for the list
-            const combined = [
-                ...masterData.map(s => ({ ...s, isMaster: true })),
-                ...vendorRequests.filter(s => s.vendorId).map(s => ({ ...s, isMaster: false }))
-            ];
-            
-            setServices(combined);
+            const masterData = await masterServiceApi.getAll();
+            setServices(masterData.map(s => ({ ...s, isMaster: true })));
         } catch (err) {
             toast.error('Failed to fetch services');
         } finally {
@@ -150,83 +137,53 @@ const MasterServiceManagement = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this service?')) return;
+    const handleClearAll = async () => {
+        if (!window.confirm('CRITICAL: This will delete ALL master services. Are you sure?')) return;
         try {
-            await masterServiceApi.delete(id);
-            toast.success('Service deleted');
-            fetchServices();
+            const response = await fetch('http://localhost:5001/api/master-services/clear-all', {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                toast.success('All services cleared');
+                fetchServices();
+            }
         } catch (err) {
-            toast.error('Delete failed');
+            toast.error('Clear failed');
         }
     };
 
-    const handleApprove = async (id) => {
-        try {
-            await serviceApi.update(id, { approvalStatus: 'Approved', status: 'Active' });
-            toast.success('Service approved and live!');
-            fetchServices();
-        } catch (err) {
-            toast.error('Approval failed');
-        }
-    };
-
-    const handleReject = async (id) => {
-        if (!window.confirm('Reject this service request?')) return;
-        try {
-            await serviceApi.update(id, { approvalStatus: 'Rejected', status: 'Suspended' });
-            toast.success('Service request rejected');
-            fetchServices();
-        } catch (err) {
-            toast.error('Rejection failed');
-        }
-    };
-
-    const filteredServices = useMemo(() => {
-        if (activeTab === 'master') {
-            return services.filter(s => s.isMaster);
-        }
-        return services.filter(s => !s.isMaster && s.approvalStatus === 'Pending');
-    }, [services, activeTab]);
-
-    const categories = ['General', 'Premium', 'Express', 'Industrial'];
     const icons = ['local_laundry_service', 'dry_cleaning', 'iron', 'checkroom', 'eco', 'sanitizer'];
+    const categories = ['General', 'Premium', 'Express', 'Industrial'];
 
     return (
         <div className="p-8 bg-slate-50 min-h-screen font-body">
             <header className="flex justify-between items-end mb-10">
                 <div>
                     <h1 className="text-4xl font-black tracking-tighter text-slate-900 mb-2">Service Control</h1>
-                    <p className="text-slate-500 text-sm font-medium mb-6">Manage global catalog and approve vendor-specific requests</p>
-                    
-                    {/* Tab System */}
-                    <div className="flex bg-slate-200/50 p-1 rounded-2xl w-fit border border-slate-200">
-                        <button 
-                            onClick={() => setActiveTab('master')}
-                            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'master' ? 'bg-white text-primary shadow-md' : 'text-slate-400'}`}
-                        >
-                            Master Services
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab('requests')}
-                            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'requests' ? 'bg-white text-rose-500 shadow-md' : 'text-slate-400'}`}
-                        >
-                            Vendor Requests
-                            {services.filter(s => !s.isMaster && s.approvalStatus === 'Pending').length > 0 && (
-                                <span className="w-5 h-5 bg-rose-500 text-white text-[10px] rounded-full flex items-center justify-center animate-pulse">
-                                    {services.filter(s => !s.isMaster && s.approvalStatus === 'Pending').length}
-                                </span>
-                            )}
-                        </button>
-                    </div>
+                    <p className="text-slate-500 text-sm font-medium mb-6">Manage global master service catalog</p>
                 </div>
-                <button 
-                    onClick={() => handleOpenModal()}
-                    className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
-                >
-                    <span className="material-symbols-outlined text-sm font-black">add</span>
-                    Create Master Service
-                </button>
+                <div className="flex gap-4">
+                    <button 
+                        onClick={handleClearAll}
+                        className="bg-white border border-rose-100 text-rose-500 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-50 active:scale-95 transition-all flex items-center gap-3"
+                    >
+                        <span className="material-symbols-outlined text-sm font-black">delete_sweep</span>
+                        Clear All
+                    </button>
+                    <button 
+                        className="bg-white border border-slate-200 text-slate-600 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 active:scale-95 transition-all flex items-center gap-3"
+                    >
+                        <span className="material-symbols-outlined text-sm font-black">upload_file</span>
+                        Upload Excel
+                    </button>
+                    <button 
+                        onClick={() => handleOpenModal()}
+                        className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                    >
+                        <span className="material-symbols-outlined text-sm font-black">add</span>
+                        Create Master Service
+                    </button>
+                </div>
             </header>
 
             {isLoading ? (
@@ -235,79 +192,53 @@ const MasterServiceManagement = () => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredServices.map((service) => (
+                    {services.map((service) => (
                         <motion.div 
                             layout
                             key={service._id}
-                            className={`bg-white p-7 rounded-[2.5rem] border ${activeTab === 'requests' ? 'border-rose-100 shadow-rose-500/5' : 'border-slate-100'} shadow-sm hover:shadow-2xl transition-all group relative overflow-hidden`}
+                            className="bg-white p-7 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all group relative overflow-hidden"
                         >
                             <div className="flex items-start justify-between mb-8">
-                                <div className={`w-16 h-16 ${activeTab === 'requests' ? 'bg-rose-50 text-rose-500' : 'bg-primary/5 text-primary'} rounded-[1.5rem] flex items-center justify-center`}>
+                                <div className="w-16 h-16 bg-primary/5 text-primary rounded-[1.5rem] flex items-center justify-center">
                                     <span className="material-symbols-outlined text-4xl">{service.icon}</span>
                                 </div>
-                                <div className="flex gap-2">
-                                    {activeTab === 'requests' ? (
-                                        <>
-                                            <button 
-                                                onClick={() => handleApprove(service._id)}
-                                                className="w-10 h-10 bg-emerald-500 text-white rounded-xl hover:scale-110 active:scale-90 transition-all flex items-center justify-center shadow-lg shadow-emerald-500/20"
-                                            >
-                                                <span className="material-symbols-outlined text-xl">done</span>
-                                            </button>
-                                            <button 
-                                                onClick={() => handleReject(service._id)}
-                                                className="w-10 h-10 bg-rose-500 text-white rounded-xl hover:scale-110 active:scale-90 transition-all flex items-center justify-center shadow-lg shadow-rose-500/20"
-                                            >
-                                                <span className="material-symbols-outlined text-xl">close</span>
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                                            <button 
-                                                onClick={() => handleOpenModal(service)}
-                                                className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-sm">edit</span>
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDelete(service._id)}
-                                                className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-rose-100 hover:text-rose-600 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-sm">delete</span>
-                                            </button>
-                                        </div>
-                                    )}
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                    <button 
+                                        onClick={() => handleOpenModal(service)}
+                                        className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">edit</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDelete(service._id)}
+                                        className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-rose-100 hover:text-rose-600 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">delete</span>
+                                    </button>
                                 </div>
                             </div>
 
                             <div className="space-y-2 mb-6">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${activeTab === 'requests' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-primary/10 text-primary border border-primary/10'}`}>
+                                    <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/10">
                                         {service.category}
                                     </span>
-                                    {activeTab === 'requests' && (
-                                        <span className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[8px] font-black uppercase tracking-widest">
-                                            From Vendor
-                                        </span>
-                                    )}
                                 </div>
                                 <h3 className="text-2xl font-black tracking-tight text-slate-900 leading-tight">{service.name}</h3>
-                                <p className="text-slate-400 text-[13px] font-bold line-clamp-2">{service.description || 'Professional laundry service request.'}</p>
+                                <p className="text-slate-400 text-[13px] font-bold line-clamp-2">{service.description || 'Professional laundry service template.'}</p>
                             </div>
 
                             <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{activeTab === 'requests' ? 'Proposed Price' : 'Admin Base Rate'}</span>
+                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Admin Base Rate</span>
                                     <span className="text-3xl font-black text-slate-900 tracking-tighter">₹{service.basePrice}<span className="text-sm font-bold text-slate-300 ml-1">/{service.unit || 'kg'}</span></span>
                                 </div>
-                                {activeTab === 'master' && (
-                                    <button 
-                                        onClick={() => handleViewRates(service)}
-                                        className="px-5 py-2.5 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary transition-all shadow-xl shadow-slate-900/10"
-                                    >
-                                        Pricing Analytics
-                                    </button>
-                                )}
+                                <button 
+                                    onClick={() => handleViewRates(service)}
+                                    className="px-5 py-2.5 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary transition-all shadow-xl shadow-slate-900/10"
+                                >
+                                    Pricing Analytics
+                                </button>
                             </div>
                         </motion.div>
                     ))}
@@ -444,16 +375,6 @@ const MasterServiceManagement = () => {
                                                 Loading Maps Engine...
                                             </div>
                                         )}
-                                        <div className="flex gap-4 px-2">
-                                            <div className="flex flex-col">
-                                                <span className="text-[8px] font-black text-slate-300 uppercase">Latitude</span>
-                                                <span className="text-[10px] font-bold text-primary">{formData.location.lat.toFixed(6)}</span>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[8px] font-black text-slate-300 uppercase">Longitude</span>
-                                                <span className="text-[10px] font-bold text-primary">{formData.location.lng.toFixed(6)}</span>
-                                            </div>
-                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
@@ -478,7 +399,7 @@ const MasterServiceManagement = () => {
                                         </select>
                                     </div>
                                     <div className="space-y-2 col-span-2">
-                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Target Audience (Individual / Retail / Both)</label>
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Target Audience</label>
                                         <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
                                             {['individual', 'retail', 'both'].map(target => (
                                                 <button
@@ -521,15 +442,6 @@ const MasterServiceManagement = () => {
                                                 </button>
                                             ))}
                                         </div>
-                                    </div>
-                                    <div className="space-y-2 col-span-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Search Tags (comma separated)</label>
-                                        <input 
-                                            className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:bg-white focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold text-slate-800"
-                                            value={formData.tags}
-                                            onChange={e => setFormData({...formData, tags: e.target.value})}
-                                            placeholder="shirt, pant, suit, jacket..."
-                                        />
                                     </div>
                                     <div className="space-y-2 col-span-2">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label>

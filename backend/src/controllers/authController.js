@@ -75,23 +75,62 @@ export const requestOtp = async (req, res) => {
 export const becomeVendor = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findById(id);
+        const { 
+            shopName, 
+            businessAddress, 
+            gstNumber, 
+            msmeStatus, 
+            bankAccountName, 
+            bankAccountNumber, 
+            ifscCode, 
+            bankName,
+            serviceRates 
+        } = req.body;
         
+        const user = await User.findById(id);
         if (!user) return res.status(404).json({ message: 'User not found' });
         
-        if (user.role === 'Vendor') {
-            return res.status(400).json({ message: 'Already a vendor' });
-        }
+        // Map serviceRates (object {id: rate}) to shopDetails.services array
+        const servicesArray = Object.keys(serviceRates || {}).map(sId => ({
+            id: sId,
+            vendorRate: Number(serviceRates[sId]),
+            status: 'pending' // Individual service status
+        }));
 
         user.role = 'Vendor';
-        user.status = 'pending'; // MUST BE in ['pending', 'approved', 'rejected']
-        await user.save();
-        console.log(`✅ [ROLE_UPGRADE] User ${user.phone} successfully upgraded to Vendor`);
+        user.status = 'pending'; // Global account status
+        user.isProfileComplete = true;
+        
+        user.shopDetails = {
+            name: shopName,
+            address: businessAddress,
+            gst: gstNumber,
+            msmeStatus: msmeStatus,
+            services: servicesArray
+        };
 
-        res.status(200).json({ message: 'Upgraded to vendor successfully', role: user.role });
+        user.bankDetails = {
+            accountHolder: bankAccountName,
+            accountNumber: bankAccountNumber,
+            ifscCode: ifscCode,
+            bankName: bankName
+        };
+
+        await user.save();
+        console.log(`✅ [VENDOR_REGISTRATION] User ${user.phone} successfully submitted application (PENDING APPROVAL)`);
+
+        res.status(200).json({ 
+            message: 'Application submitted successfully! Waiting for Admin approval.', 
+            user: {
+                id: user._id,
+                role: user.role,
+                status: user.status,
+                isProfileComplete: user.isProfileComplete
+            }
+        });
     } catch (err) {
         console.error('Become Vendor Error:', err);
-        res.status(500).json({ message: 'Error upgrading to vendor' });
+        res.status(500).json({ message: 'Error submitting vendor application' });
     }
 };
 
@@ -137,20 +176,20 @@ export const becomeSupplier = async (req, res) => {
             user.location = location;
         }
 
-        // Handle Document Uploads from req.files (Local Storage)
+        // Handle Document Uploads from req.files (Cloudinary)
         const documentFiles = [];
         if (req.files) {
             if (req.files.gstCert) {
-                documentFiles.push({ type: 'GST Certificate', url: `/uploads/documents/${req.files.gstCert[0].filename}` });
+                documentFiles.push({ type: 'GST Certificate', url: req.files.gstCert[0].path });
             }
             if (req.files.udyogAadhar) {
-                documentFiles.push({ type: 'Udyog Aadhar', url: `/uploads/documents/${req.files.udyogAadhar[0].filename}` });
+                documentFiles.push({ type: 'Udyog Aadhar', url: req.files.udyogAadhar[0].path });
             }
             if (req.files.aadharCard) {
-                documentFiles.push({ type: 'Aadhar Card', url: `/uploads/documents/${req.files.aadharCard[0].filename}` });
+                documentFiles.push({ type: 'Aadhar Card', url: req.files.aadharCard[0].path });
             }
             if (req.files.addressProof) {
-                documentFiles.push({ type: 'Address Proof', url: `/uploads/documents/${req.files.addressProof[0].filename}` });
+                documentFiles.push({ type: 'Address Proof', url: req.files.addressProof[0].path });
             }
         }
         
@@ -249,11 +288,11 @@ export const completeVendorProfile = async (req, res) => {
         // Handle File Uploads from Local Storage
         const documentFiles = [];
         if (req.files) {
-            if (req.files.idCard) {
-                documentFiles.push({ type: 'Government ID', url: `/uploads/documents/${req.files.idCard[0].filename}` });
+            if (req.files.gstDoc) {
+                documentFiles.push({ type: 'GST Document', url: req.files.gstDoc[0].path });
             }
-            if (req.files.businessProof) {
-                documentFiles.push({ type: 'Business proof', url: `/uploads/documents/${req.files.businessProof[0].filename}` });
+            if (req.files.msmeDoc) {
+                documentFiles.push({ type: 'MSME Document', url: req.files.msmeDoc[0].path });
             }
         }
 
@@ -339,10 +378,27 @@ export const adminLogin = async (req, res) => {
 export const getUserProfile = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findById(id);
+        const user = await User.findById(id).lean();
         if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // If Vendor, merge/map service details for clear UI
+        if (user.role === 'Vendor' && user.shopDetails?.services) {
+            const MasterService = (await import('../models/MasterService.js')).default;
+            const masterServices = await MasterService.find().lean();
+            
+            user.shopDetails.services = user.shopDetails.services.map(svc => {
+                const master = masterServices.find(m => m._id.toString() === svc.id || m.id === svc.id);
+                return {
+                    ...svc,
+                    name: master ? master.name : `Service ${svc.id.slice(-4)}`,
+                    icon: master ? master.icon : 'local_laundry_service'
+                };
+            });
+        }
+
         res.status(200).json(user);
     } catch (err) {
+        console.error('Get Profile Error:', err);
         res.status(500).json({ message: 'Error fetching profile' });
     }
 };
@@ -388,6 +444,42 @@ export const updateUserProfile = async (req, res) => {
     } catch (err) {
         console.error('Update Profile Error:', err);
         res.status(500).json({ message: 'Error updating profile', error: err.message });
+    }
+};
+
+export const updateVendorDocuments = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { type } = req.body;
+        
+        if (!req.file) {
+            return res.status(400).json({ message: 'No document file uploaded' });
+        }
+
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const newDoc = {
+            type,
+            url: req.file.path // Cloudinary URL
+        };
+
+        // Find if document of same type exists
+        const existingDocIdx = user.documents.findIndex(d => d.type === type);
+        
+        if (existingDocIdx > -1) {
+            // Replace existing
+            user.documents[existingDocIdx] = newDoc;
+        } else {
+            // Add new
+            user.documents.push(newDoc);
+        }
+
+        await user.save();
+        res.status(200).json(user);
+    } catch (err) {
+        console.error('Update Documents Error:', err);
+        res.status(500).json({ message: 'Error updating documents' });
     }
 };
 
@@ -494,5 +586,33 @@ export const vendorLogin = async (req, res) => {
     } catch (err) {
         console.error('Vendor Login Error:', err);
         res.status(500).json({ message: 'Internal server error' });
+    }
+};
+export const tempSeedUser = async (req, res) => {
+    try {
+        const phone = '9926335339';
+        const otp = '123456';
+        let user = await User.findOne({ phone });
+        
+        if (user) {
+            user.otp = otp;
+            user.otpExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+            await user.save();
+            return res.status(200).json({ message: 'User updated successfully', user });
+        } else {
+            user = new User({
+                phone,
+                otp,
+                otpExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                role: 'Customer',
+                status: 'approved',
+                isProfileComplete: false
+            });
+            await user.save();
+            return res.status(201).json({ message: 'User created successfully', user });
+        }
+    } catch (err) {
+        console.error('Seed Error:', err);
+        res.status(500).json({ message: 'Seed failed', error: err.message });
     }
 };

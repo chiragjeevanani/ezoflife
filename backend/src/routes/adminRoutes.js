@@ -16,17 +16,27 @@ import {
     approveSupplier,
     rejectSupplier,
     updateSupplier,
-    deleteSupplier,
     getSystemConfig,
-    updateSystemConfig
+    updateSystemConfig,
+    getAllUsers,
+    toggleUserStatus,
+    deleteUser,
+    clearAllUsers,
+    clearAllServices,
+    clearAllOrders
 } from '../controllers/adminController.js';
 import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
+router.delete('/services-clear-all', clearAllServices);
+
 router.get('/config', getSystemConfig);
 router.post('/config', updateSystemConfig);
 router.get('/stats', getDashboardStats);
+router.get('/users', getAllUsers);
+router.patch('/users/:id/toggle-status', toggleUserStatus);
+router.delete('/users/:id', deleteUser);
 router.get('/vendors', getAllVendors);
 router.post('/vendors/:id/documents', upload.single('file'), uploadVendorDocument);
 router.get('/vendors/:id', getVendorById);
@@ -37,13 +47,15 @@ router.post('/register-customer', registerCustomer);
 router.get('/pending-approvals', getPendingApprovals);
 router.post('/approve-vendor/:id', approveVendor);
 router.post('/reject-vendor/:id', rejectVendor);
+router.delete('/users-clear-all', clearAllUsers);
+router.post('/orders-clear-all', clearAllOrders);
 
 // Supplier Management
 router.get('/suppliers', getAllSuppliers);
 router.patch('/suppliers/:id/approve', approveSupplier);
 router.patch('/suppliers/:id/reject', rejectSupplier);
 router.patch('/suppliers/:id', updateSupplier);
-router.delete('/suppliers/:id', deleteSupplier);
+router.delete('/suppliers/:id', deleteUser); // Use generic deleteUser
 
 // Diagnostic Route
 router.get('/diagnostic', async (req, res) => {

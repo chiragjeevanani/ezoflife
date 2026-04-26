@@ -15,12 +15,16 @@ const CareerModeration = () => {
     const [form, setForm] = useState({
         title: '',
         companyName: 'EzOfLife Corporate',
+        category: 'Laundry Operations',
         description: '',
         requirements: '',
+        experience: '1-2 Years',
         location: 'Gurgaon (HQ)',
         type: 'Full-time',
-        salary: 'As per Industry'
+        salary: 'As per Industry',
+        skills: ['Punctual', 'Steam Iron Exp']
     });
+    const [newSkill, setNewSkill] = useState('');
 
     useEffect(() => {
         fetchJobs();
@@ -75,15 +79,26 @@ const CareerModeration = () => {
             const requirementsArray = form.requirements.split(',').map(r => r.trim()).filter(r => r !== '');
             const jobData = {
                 ...form,
-                requirements: requirementsArray,
+                requirements: form.requirements.split(',').map(r => r.trim()).filter(r => r !== ''),
                 createdBy: adminData._id || adminData.id || adminData.user?._id || adminData.user?.id || 'admin_id',
                 creatorRole: 'Admin',
-                status: 'Approved'
+                status: 'Active'
             };
             await jobApi.create(jobData);
             fetchJobs();
             setIsCreating(false);
-            setForm({ title: '', companyName: 'EzOfLife Corporate', description: '', requirements: '', location: 'Gurgaon (HQ)', type: 'Full-time', salary: 'As per Industry' });
+            setForm({ 
+                title: '', 
+                companyName: 'EzOfLife Corporate', 
+                category: 'Laundry Operations',
+                description: '', 
+                requirements: '', 
+                experience: '1-2 Years',
+                location: 'Gurgaon (HQ)', 
+                type: 'Full-time', 
+                salary: 'As per Industry',
+                skills: ['Punctual', 'Steam Iron Exp']
+            });
         } catch (error) {
             alert('Creation failed');
         }
@@ -186,7 +201,7 @@ const CareerModeration = () => {
                                         <div className="space-y-3">
                                             <p className="text-xs font-medium text-slate-500 line-clamp-2">{job.description}</p>
                                             <div className="flex flex-wrap gap-2">
-                                                {job.requirements.slice(0, 3).map((r, i) => (
+                                                {(job.requirements || []).slice(0, 3).map((r, i) => (
                                                     <span key={i} className="px-2 py-1 bg-slate-50 text-slate-400 rounded-lg text-[8px] font-bold uppercase">{r}</span>
                                                 ))}
                                             </div>
@@ -340,12 +355,81 @@ const CareerModeration = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Location</label>
-                                        <input required value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Category</label>
+                                        <select 
+                                            value={form.category} 
+                                            onChange={e => setForm({...form, category: e.target.value})} 
+                                            className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold border-none outline-none focus:ring-2 focus:ring-slate-200"
+                                        >
+                                            <option>Laundry Operations</option>
+                                            <option>Dry Cleaning</option>
+                                            <option>Customer Support</option>
+                                            <option>Logistics / Delivery</option>
+                                            <option>Quality Control</option>
+                                            <option>Warehouse</option>
+                                            <option>Corporate / Admin</option>
+                                        </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Salary</label>
-                                        <input required value={form.salary} onChange={e => setForm({...form, salary: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Required Experience</label>
+                                        <input required placeholder="e.g. 1-2 Years" value={form.experience} onChange={e => setForm({...form, experience: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Job Type</label>
+                                        <select 
+                                            value={form.type} 
+                                            onChange={e => setForm({...form, type: e.target.value})} 
+                                            className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold border-none outline-none focus:ring-2 focus:ring-slate-200"
+                                        >
+                                            <option>Full-time</option>
+                                            <option>Part-time</option>
+                                            <option>Contract</option>
+                                            <option>Internship</option>
+                                            <option>Freelance</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Salary Range</label>
+                                        <input required placeholder="e.g. 25k - 30k" value={form.salary} onChange={e => setForm({...form, salary: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Location</label>
+                                    <input required value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Skills & Qualifications</label>
+                                    <div className="flex flex-wrap gap-2 px-2">
+                                        {form.skills.map(skill => (
+                                            <span key={skill} className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase flex items-center gap-2">
+                                                {skill}
+                                                <button type="button" onClick={() => setForm({...form, skills: form.skills.filter(s => s !== skill)})}>
+                                                    <span className="material-symbols-outlined text-[12px]">close</span>
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            value={newSkill} 
+                                            onChange={e => setNewSkill(e.target.value)}
+                                            placeholder="Add a skill..." 
+                                            className="flex-1 bg-slate-50 rounded-xl p-3 text-[10px] font-bold"
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                if (newSkill.trim() && !form.skills.includes(newSkill.trim())) {
+                                                    setForm({...form, skills: [...form.skills, newSkill.trim()]});
+                                                    setNewSkill('');
+                                                }
+                                            }}
+                                            className="px-4 bg-slate-900 text-white rounded-xl text-[10px] font-black"
+                                        >
+                                            ADD
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -386,13 +470,27 @@ const CareerModeration = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Location</label>
-                                        <input required value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Job Type</label>
+                                        <select 
+                                            value={form.type} 
+                                            onChange={e => setForm({...form, type: e.target.value})} 
+                                            className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold border-none outline-none focus:ring-2 focus:ring-slate-200"
+                                        >
+                                            <option>Full-time</option>
+                                            <option>Part-time</option>
+                                            <option>Contract</option>
+                                            <option>Internship</option>
+                                            <option>Freelance</option>
+                                        </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Salary</label>
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Salary Range</label>
                                         <input required value={form.salary} onChange={e => setForm({...form, salary: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
                                     </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Location</label>
+                                    <input required value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Requirements (CSV)</label>

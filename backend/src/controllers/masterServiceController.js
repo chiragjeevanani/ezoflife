@@ -1,4 +1,5 @@
 import MasterService from '../models/MasterService.js';
+import SystemConfig from '../models/SystemConfig.js';
 
 export const createMasterService = async (req, res) => {
     try {
@@ -19,8 +20,30 @@ export const createMasterService = async (req, res) => {
 
 export const getAllMasterServices = async (req, res) => {
     try {
-        const services = await MasterService.find({ isActive: true });
-        res.status(200).json(services);
+        const services = await MasterService.find({ isActive: true }).lean();
+        
+        // Fetch System Config for Pricing Calculation
+        const config = await SystemConfig.find({ 
+            key: { $in: ['essential_fee', 'heritage_fee'] } 
+        });
+
+        const essentialFee = Number(config.find(c => c.key === 'essential_fee')?.value || 20);
+        const heritageFee = Number(config.find(c => c.key === 'heritage_fee')?.value || 150);
+
+        const enrichedServices = services.map(service => {
+            const feePercent = service.tier === 'Heritage' ? heritageFee : essentialFee;
+            const feeAmount = (service.basePrice * feePercent) / 100;
+            const totalPrice = service.basePrice + feeAmount;
+
+            return {
+                ...service,
+                feePercent,
+                feeAmount,
+                totalPrice
+            };
+        });
+
+        res.status(200).json(enrichedServices);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

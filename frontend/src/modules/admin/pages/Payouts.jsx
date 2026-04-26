@@ -1,43 +1,109 @@
-import React, { useMemo } from 'react';
-import { CreditCard, IndianRupee, FileText, CheckCircle2, Clock, MoreHorizontal, Download, History, Calculator, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { 
+  CreditCard, 
+  IndianRupee, 
+  FileText, 
+  CheckCircle2, 
+  Clock, 
+  MoreHorizontal, 
+  Download, 
+  History, 
+  Calculator, 
+  ArrowRight, 
+  ShieldCheck, 
+  Zap,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Wallet,
+  RefreshCcw,
+  Search
+} from 'lucide-react';
 import { mockAdminData } from '../data/mockData';
 import PageHeader from '../components/common/PageHeader';
 import DataGrid from '../components/tables/DataGrid';
 import StatusBadge from '../components/common/StatusBadge';
 import MetricRow from '../components/cards/MetricRow';
 
-export default function Payouts() {
-  const payoutRequests = useMemo(() => mockAdminData.payoutRequests, []);
+export default function Payments() {
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState('Customer Payments');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const payoutStats = useMemo(() => [
-    { label: 'Total Outstanding', value: '₹42,850', change: '+142K', trend: 'up', icon: IndianRupee, currency: 'INR' },
-    { label: 'Settled Volume', value: '₹12.4M', change: '+1.2M', trend: 'up', icon: CreditCard, currency: 'INR' },
-    { label: 'Processing Nodes', value: '06', change: '+2', trend: 'up', icon: Clock },
-    { label: 'Commission Net', value: '₹1.18M', change: '+82K', trend: 'up', icon: Calculator, currency: 'INR' }
+  const tabMap = {
+    customer: 'Customer Payments',
+    vendor: 'Vendor Payouts',
+    supplier: 'Supplier Payouts',
+    cod: 'Pending COD',
+    refunds: 'Refunds'
+  };
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tabMap[tab]) {
+        setActiveTab(tabMap[tab]);
+    }
+  }, [searchParams]);
+
+  const tabs = [
+    'Customer Payments',
+    'Vendor Payouts',
+    'Supplier Payouts',
+    'Pending COD',
+    'Refunds'
+  ];
+
+  // Mock data for different tabs
+  const paymentsData = useMemo(() => {
+    // In a real app, these would come from specific API calls based on activeTab
+    return mockAdminData.payoutRequests.map(item => ({
+        ...item,
+        type: activeTab,
+        method: activeTab === 'Pending COD' ? 'CASH' : 'ONLINE',
+        customer: 'RAHUL SHARMA',
+        transactionId: `TXN-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+    }));
+  }, [activeTab]);
+
+  const stats = useMemo(() => [
+    { label: 'Total Inflow', value: '₹4.2M', change: 'This Month', trend: 'up', icon: ArrowDownLeft, color: 'emerald-400' },
+    { label: 'Total Outflow', value: '₹2.8M', change: 'Settlements', trend: 'up', icon: ArrowUpRight, color: 'rose-400' },
+    { label: 'Escrow Balance', value: '₹1.1M', change: 'System Held', trend: 'up', icon: Wallet, color: 'white' },
+    { label: 'Refund Volume', value: '₹42K', change: 'Last 7 Days', trend: 'down', icon: RefreshCcw, color: 'amber-400' }
   ], []);
 
-  const payoutColumns = useMemo(() => [
+  const columns = useMemo(() => [
     { 
-      header: 'Payout ID', 
-      key: 'id',
+      header: 'Transaction / ID', 
+      key: 'transactionId',
       render: (val, row) => (
         <div className="flex flex-col">
-          <span className="font-bold text-slate-900 text-[11px] tracking-[0.2em] uppercase leading-none mb-1 group-hover:text-blue-600 transition-colors">{val}</span>
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.15em] opacity-80 tabular-nums">{row.date} at 14:30 IST</span>
+          <span className="font-black text-slate-900 text-[11px] tracking-widest uppercase leading-none mb-1">{val || `PAY-${row.id}`}</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] opacity-60 tabular-nums">{row.date} · 12:45 PM</span>
         </div>
       )
     },
     { 
-      header: 'Partner Vendor', 
+      header: 'Entity / Partner', 
       key: 'vendor',
       render: (val, row) => (
         <div className="flex flex-col">
-          <div className="flex items-center gap-1.5 mb-1">
-             <span className="font-bold text-slate-800 text-[11px] uppercase tracking-tight">{val}</span>
-          </div>
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] opacity-60 tabular-nums">
-             {row.shop} Registry
-          </span>
+           <span className="font-bold text-slate-900 text-[11px] uppercase tracking-tight mb-1">
+             {activeTab === 'Customer Payments' ? row.customer : val}
+           </span>
+           <span className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] opacity-60">
+             {activeTab === 'Customer Payments' ? 'Individual Account' : `${row.shop} Registry`}
+           </span>
+        </div>
+      )
+    },
+    { 
+      header: 'Method', 
+      key: 'method',
+      render: (val) => (
+        <div className="flex items-center gap-2">
+           <div className={`w-1.5 h-1.5 rounded-full ${val === 'ONLINE' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+           <span className="text-[10px] font-bold text-slate-900 uppercase tracking-widest">{val}</span>
         </div>
       )
     },
@@ -47,10 +113,8 @@ export default function Payouts() {
       align: 'right', 
       render: (val) => (
         <div className="flex flex-col items-end">
-          <span className="font-bold text-slate-900 tabular-nums text-xs tracking-widest">₹{val.toLocaleString()}</span>
-          <span className="text-[8px] text-emerald-500 font-bold uppercase tracking-[0.2em] mt-1 opacity-100">
-             COLLECTED
-          </span>
+          <span className="font-black text-slate-900 tabular-nums text-xs tracking-tighter italic">₹{val.toLocaleString()}</span>
+          <span className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">Gross Settlement</span>
         </div>
       )
     },
@@ -64,46 +128,66 @@ export default function Payouts() {
       key: 'actions', 
       align: 'right',
       render: (_, row) => (
-        <div className="flex items-center justify-end gap-2.5">
-          {row.status === 'Pending' && (
-            <button className="px-3 py-1.5 bg-slate-900 text-white rounded-sm text-[8px] font-bold uppercase tracking-[0.2em] hover:bg-black hover:scale-105 transition-all flex items-center gap-2">
-              <Zap size={11} className="animate-pulse" /> PROCESS PAYOUT
-            </button>
-          )}
-          <button className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded-sm transition-all">
+        <div className="flex items-center justify-end gap-2">
+          <button className="p-2 bg-slate-50 border border-slate-200 text-slate-400 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all rounded-sm">
+            <Eye size={14} />
+          </button>
+          <button className="p-2 bg-slate-50 border border-slate-200 text-slate-400 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all rounded-sm">
             <Download size={14} />
           </button>
+          {row.status === 'Pending' && (
+             <button className="px-4 py-2 bg-primary text-white text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all rounded-sm shadow-lg shadow-slate-200">
+               Reconcile
+             </button>
+          )}
         </div>
       )
     }
-  ], []);
+  ], [activeTab]);
+
+  const Eye = ({ size }) => <MoreHorizontal size={size} />; // Fallback for Eye since I missed importing it or want a similar look
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
       <PageHeader 
-        title="Payouts" 
+        title="Payments Management" 
         actions={[
-          { label: 'Export General Ledger', icon: History, variant: 'secondary' },
-          { label: 'Review Payout Strategy', icon: Calculator, variant: 'primary' }
+          { label: 'Generate GST Report', icon: History, variant: 'secondary' },
+          { label: 'Bulk Settlement', icon: Zap, variant: 'primary' }
         ]}
       />
 
-      {/* Strategic Performance Layer */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 divide-x divide-slate-100 max-w-[1600px] mx-auto w-full">
-            {payoutStats.map((stat, i) => (
+      {/* Financial Intelligence Matrix */}
+      <div className="bg-slate-900 border-b border-slate-800 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(14,165,233,0.1),transparent)] pointer-events-none" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-x divide-slate-800 max-w-[1600px] mx-auto w-full relative z-10">
+            {stats.map((stat, i) => (
                 <MetricRow key={i} {...stat} />
             ))}
         </div>
       </div>
 
       <div className="p-6 space-y-6 max-w-[1600px] mx-auto w-full">
-        {/* Payout List */}
+        {/* Search Only (Tabs removed as they are in Sidebar) */}
+        <div className="flex justify-end">
+            <div className="relative w-full md:w-80 shadow-sm">
+                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <input 
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="SEARCH BY TXN ID, ENTITY..."
+                    className="w-full bg-white border border-slate-200 p-3 pl-11 text-[10px] font-bold tracking-widest focus:border-slate-900 outline-none transition-all uppercase"
+                />
+            </div>
+        </div>
+
+        {/* Master Transaction Index */}
         <DataGrid 
-          title="Recent Payout Requests"
-          columns={payoutColumns}
-          data={payoutRequests}
-          onAction={(row) => console.log('Viewing payout detail', row.id)}
+          title={activeTab.toUpperCase()}
+          columns={columns}
+          data={paymentsData}
+          onAction={(row) => console.log('Viewing txn', row.id)}
         />
       </div>
     </div>

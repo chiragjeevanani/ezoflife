@@ -1,7 +1,8 @@
 import React, { useMemo, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Sparkles, PlusCircle, Settings, IndianRupee, Layers, CheckCircle2, XCircle, RotateCw, Filter, Download, ArrowRight, Trash2 } from 'lucide-react';
-import { serviceApi } from '../../../lib/api';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, PlusCircle, Settings, IndianRupee, Layers, CheckCircle2, XCircle, RotateCw, Filter, Download, ArrowRight, Trash2, Info, TrendingUp, Award, ShieldCheck } from 'lucide-react';
+import { serviceApi, BASE_URL } from '../../../lib/api';
+import { shippingConfigApi } from '../../../lib/shippingApi';
 import PageHeader from '../components/common/PageHeader';
 import DataGrid from '../components/tables/DataGrid';
 import StatusBadge from '../components/common/StatusBadge';
@@ -11,12 +12,22 @@ export default function Services() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('All'); // 'All' or 'Pending'
+  const [systemFees, setSystemFees] = useState({ essential: 20, heritage: 150 });
+  const [viewingService, setViewingService] = useState(null);
 
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const services = await serviceApi.getAll();
+      const [services, config] = await Promise.all([
+        serviceApi.getAll(),
+        shippingConfigApi.getConfig()
+      ]);
       setData(services);
+
+      const eFee = config.find(c => c.key === 'essential_fee')?.value || 20;
+      const hFee = config.find(c => c.key === 'heritage_fee')?.value || 150;
+      setSystemFees({ essential: Number(eFee), heritage: Number(hFee) });
+
     } catch (error) {
       console.error('Error fetching services:', error);
       alert('Failed to load services');
@@ -125,6 +136,29 @@ export default function Services() {
   };
 
 
+  const handleClearAll = async () => {
+    if (window.confirm('CRITICAL ACTION: This will delete ALL master and custom services. Are you absolutely sure?')) {
+        try {
+            setLoading(true);
+            const response = await fetch(`${BASE_URL}/admin/services-clear-all`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            if (response.ok) {
+                alert(result.message);
+                fetchServices();
+            } else {
+                alert(result.message || 'Operation failed');
+            }
+        } catch (err) {
+            console.error('Clear services error:', err);
+            alert('Failed to clear services');
+        } finally {
+            setLoading(false);
+        }
+    }
+  };
+
   const serviceColumns = useMemo(() => [
     { 
       header: 'Service Name', 
@@ -171,6 +205,30 @@ export default function Services() {
       render: (val) => <StatusBadge status={val} /> 
     },
     { 
+      header: 'Price Breakdown', 
+      key: '_id',
+      render: (val, row) => {
+        const feePercent = row.tier === 'Heritage' ? systemFees.heritage : systemFees.essential;
+        const feeAmount = (row.basePrice * feePercent) / 100;
+        const totalPrice = row.basePrice + feeAmount;
+        return (
+          <div 
+            onClick={(e) => { e.stopPropagation(); setViewingService(row); }}
+            className="flex flex-col cursor-pointer group/tip"
+          >
+            <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[10px] font-black text-slate-400 tabular-nums">₹{row.basePrice}</span>
+                <span className="text-[8px] font-bold text-slate-300 tracking-tighter">+ {feePercent}%</span>
+            </div>
+            <span className="font-black text-slate-900 tabular-nums text-xs tracking-tight flex items-center gap-1.5">
+                ₹{totalPrice.toLocaleString()}
+                <Info size={10} className="text-slate-300 group-hover/tip:text-slate-900 transition-colors" />
+            </span>
+          </div>
+        );
+      }
+    },
+    { 
       header: 'Status', 
       key: 'status', 
       render: (val) => <StatusBadge status={val} /> 
@@ -212,13 +270,15 @@ export default function Services() {
       <PageHeader 
         title="Services" 
         actions={[
-          { label: 'Add New Service', icon: PlusCircle, variant: 'primary', onClick: () => openModal() }
+          { label: 'Clear All', icon: Trash2, variant: 'rose', onClick: handleClearAll },
+          { label: 'Create New', icon: PlusCircle, variant: 'primary', onClick: () => openModal() }
         ]}
       />
 
       {/* CRUD Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -363,7 +423,132 @@ export default function Services() {
             </form>
           </motion.div>
         </div>
-      )}
+        )}
+      </AnimatePresence>
+
+      {/* Price Audit Detail Modal */}
+      <AnimatePresence>
+        {viewingService && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 overflow-hidden">
+                <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    onClick={() => setViewingService(null)}
+                    className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm"
+                />
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.98, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.98, y: 20 }}
+                    className="bg-white w-full max-w-2xl max-h-[85vh] rounded-[1.5rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden border border-slate-100 relative z-10 flex flex-col"
+                >
+                    {/* Compact Header */}
+                    <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-slate-900 text-white flex items-center justify-center rounded-xl">
+                                <TrendingUp size={18} />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight italic">Audit Detail</h3>
+                                <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Transaction Breakdown</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setViewingService(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 text-slate-400 transition-colors">
+                            <XCircle size={20} />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+                        {/* Profile Section - More Slim */}
+                        <div className="flex items-center justify-between pb-6 border-b border-slate-50">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-2xl border border-slate-100 overflow-hidden bg-slate-50 p-0.5 shadow-sm">
+                                    <div className="w-full h-full rounded-[0.8rem] overflow-hidden">
+                                        {viewingService.image ? <img src={viewingService.image} className="w-full h-full object-cover" /> : <Sparkles className="m-auto text-slate-200 mt-4" size={14} />}
+                                    </div>
+                                </div>
+                                <div className="space-y-0.5">
+                                    <h4 className="text-base font-black text-slate-900 tracking-tighter uppercase italic leading-none">{viewingService.name}</h4>
+                                    <div className="flex gap-1.5 mt-1">
+                                        <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[7px] font-black uppercase tracking-widest rounded-md">{viewingService.category}</span>
+                                        <span className={`px-2 py-0.5 text-[7px] font-black uppercase tracking-widest rounded-md ${viewingService.tier === 'Heritage' ? 'bg-purple-50 text-purple-600' : 'bg-emerald-50 text-emerald-600'}`}>{viewingService.tier} Tier</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ID: {viewingService.vendorId?.slice(-8) || 'MASTER'}</p>
+                                <span className="text-[7px] font-bold text-emerald-500 uppercase tracking-widest px-1.5 py-0.5 bg-emerald-50 rounded-full mt-1 inline-block">Verified</span>
+                            </div>
+                        </div>
+
+                        {/* Calculations - Sleeker horizontal layout */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-white text-slate-400 flex items-center justify-center rounded-lg shadow-sm">
+                                        <IndianRupee size={14} />
+                                    </div>
+                                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Vendor Net</span>
+                                </div>
+                                <span className="text-base font-black text-slate-900 tabular-nums tracking-tight">₹{viewingService.basePrice.toLocaleString()}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-blue-50/30 border border-blue-100/50 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-white text-blue-500 flex items-center justify-center rounded-lg shadow-sm">
+                                        <Settings size={14} />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Platform Fee</span>
+                                        <span className="px-1.5 py-0.5 bg-blue-600 text-white text-[6px] font-black rounded-full">{viewingService.tier === 'Heritage' ? systemFees.heritage : systemFees.essential}%</span>
+                                    </div>
+                                </div>
+                                <span className="text-base font-black text-blue-600 tabular-nums tracking-tight">+ ₹{((viewingService.basePrice * (viewingService.tier === 'Heritage' ? systemFees.heritage : systemFees.essential)) / 100).toLocaleString()}</span>
+                            </div>
+
+                            {/* Final Total - Highlighted but compact */}
+                            <div className="mt-6 p-6 bg-slate-900 text-white rounded-[1.25rem] shadow-lg shadow-slate-900/10 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+                                <div className="relative z-10 flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Marketplace Value</p>
+                                        <p className="text-[7px] font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                                            <Award size={10} /> FINAL CUSTOMER PRICE
+                                        </p>
+                                    </div>
+                                    <p className="text-3xl font-black tabular-nums tracking-tighter italic">₹{(viewingService.basePrice + (viewingService.basePrice * (viewingService.tier === 'Heritage' ? systemFees.heritage : systemFees.essential)) / 100).toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-xl flex gap-3">
+                            <Info size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                            <p className="text-[8px] text-amber-700/70 font-bold leading-relaxed uppercase tracking-widest italic">
+                                Pricing syncs with <span className="text-amber-700 underline underline-offset-2">Global Policies</span>. Last updated: Just now.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex gap-4">
+                        <button 
+                            onClick={() => setViewingService(null)}
+                            className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-500 font-black text-[9px] uppercase tracking-widest rounded-xl hover:bg-slate-100 transition-all shadow-sm"
+                        >
+                            Close
+                        </button>
+                        {viewingService.approvalStatus === 'Pending' && (
+                            <button 
+                                onClick={() => { handleApprove(viewingService._id); setViewingService(null); }}
+                                className="flex-[1.5] py-3.5 bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-md shadow-slate-900/10 hover:bg-black transition-all flex items-center justify-center gap-2"
+                            >
+                                <CheckCircle2 size={14} />
+                                Approve Price
+                            </button>
+                        )}
+                    </div>
+                </motion.div>
+            </div>
+        )}
+      </AnimatePresence>
 
       {/* Distribution Performance Index */}
       <div className="bg-white border-b border-slate-200 relative z-10">

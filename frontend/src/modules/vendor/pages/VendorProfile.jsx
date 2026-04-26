@@ -1,16 +1,144 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { authApi } from '../../../lib/api';
 
 const VendorProfile = () => {
     const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                const userId = storedUser.id || storedUser._id;
+                
+                if (!userId) {
+                    navigate('/auth');
+                    return;
+                }
+
+                const data = await authApi.getProfile(userId);
+                setUser(data);
+            } catch (err) {
+                console.error('Profile fetch error:', err);
+                toast.error('Failed to load profile');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, [navigate]);
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editSection, setEditSection] = useState(null); // 'shop' or 'bank'
+    const [formData, setFormData] = useState({});
+
+    const handleEditClick = (section) => {
+        setEditSection(section);
+        if (section === 'shop') {
+            setFormData({
+                shopName: user.shopDetails?.name || '',
+                phone: user.phone || '',
+                address: user.shopDetails?.address || '',
+                gst: user.shopDetails?.gst || ''
+            });
+        } else if (section === 'bank') {
+            setFormData({
+                accountHolderName: user.bankDetails?.accountHolderName || '',
+                accountNumber: user.bankDetails?.accountNumber || '',
+                ifscCode: user.bankDetails?.ifscCode || '',
+                bankName: user.bankDetails?.bankName || ''
+            });
+        }
+        setIsEditModalOpen(true);
+    };
+
+    const handleSave = async () => {
+        const loadingToast = toast.loading('Saving changes...');
+        try {
+            const userId = user.id || user._id;
+            let payload = {};
+            
+            if (editSection === 'shop') {
+                payload = {
+                    phone: formData.phone,
+                    shopDetails: {
+                        name: formData.shopName,
+                        address: formData.address,
+                        gst: formData.gst
+                    }
+                };
+            } else {
+                payload = {
+                    bankDetails: {
+                        accountHolderName: formData.accountHolderName,
+                        accountNumber: formData.accountNumber,
+                        ifscCode: formData.ifscCode,
+                        bankName: formData.bankName
+                    }
+                };
+            }
+
+            const updatedUser = await authApi.updateProfile(userId, payload);
+            setUser(updatedUser);
+            setIsEditModalOpen(false);
+            toast.success('Profile updated successfully', { id: loadingToast });
+        } catch (err) {
+            console.error('Save error:', err);
+            toast.error('Failed to save changes', { id: loadingToast });
+        }
+    };
 
     const handleSignOut = () => {
         localStorage.clear();
-        navigate('/vendor/auth');
+        navigate('/auth');
         toast.success('Signed out successfully');
     };
+
+    const handleDocumentUpdate = async (type, file) => {
+        if (!file) return;
+        
+        const loadingToast = toast.loading(`Updating ${type}...`);
+        try {
+            const formData = new FormData();
+            formData.append('document', file);
+            formData.append('type', type);
+
+            const userId = user.id || user._id;
+            const updatedUser = await authApi.updateDocuments(userId, formData);
+            
+            setUser(updatedUser);
+            toast.success(`${type} updated successfully`, { id: loadingToast });
+        } catch (err) {
+            console.error('Document update error:', err);
+            toast.error(`Failed to update ${type}`, { id: loadingToast });
+        }
+    };
+
+    useEffect(() => {
+        if (isEditModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isEditModalOpen]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="w-10 h-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    if (!user) return null;
 
     return (
         <div className="bg-[#F8FAFC] text-slate-900 min-h-screen pb-40 font-sans">
@@ -21,20 +149,21 @@ const VendorProfile = () => {
                     <div className="relative">
                         <div className="w-24 h-24 rounded-[2.2rem] bg-slate-200 border-4 border-white shadow-xl overflow-hidden">
                             <img 
-                                src="https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&q=80&w=200" 
+                                src={user.image || "https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&q=80&w=200"} 
                                 alt="Shop"
                                 className="w-full h-full object-cover"
                             />
                         </div>
                         <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-slate-950 text-white rounded-xl flex items-center justify-center border-2 border-white shadow-lg">
-                            <span className="material-symbols-outlined text-[14px]">verified</span>
+                            <span className="material-symbols-outlined text-[14px]">{user.status === 'approved' ? 'verified' : 'pending'}</span>
                         </div>
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black tracking-tighter text-slate-950 leading-none mb-2">Spinzyt South Hub</h2>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">ID: VEND_98210</p>
+                        <h2 className="text-2xl font-black tracking-tighter text-slate-950 leading-none mb-2">{user.shopDetails?.name || user.displayName}</h2>
                         <div className="flex items-center gap-2 mt-3">
-                            <span className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border border-emerald-100">Live Status: ON</span>
+                            <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${user.status === 'approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                                STATUS: {user.status.toUpperCase()}
+                            </span>
                         </div>
                     </div>
                 </header>
@@ -43,44 +172,54 @@ const VendorProfile = () => {
                 <section className="space-y-4">
                     <div className="flex items-center justify-between px-1">
                         <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Business Details</h3>
-                        <span className="material-symbols-outlined text-slate-200">business_center</span>
+                        <button 
+                            onClick={() => handleEditClick('shop')}
+                            className="material-symbols-outlined text-slate-300 hover:text-slate-900 transition-colors"
+                        >
+                            edit_note
+                        </button>
                     </div>
                     
                     <div className="bg-white p-7 rounded-[2.8rem] border border-slate-100 shadow-sm space-y-6">
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-1">
                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Shop Name</p>
-                                <p className="text-[13px] font-black text-slate-900 tracking-tight">Spinzyt Dry Cleaners</p>
+                                <p className="text-[13px] font-black text-slate-900 tracking-tight">{user.shopDetails?.name || 'N/A'}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Owner Name</p>
-                                <p className="text-[13px] font-black text-slate-900 tracking-tight">Rohan Sharma</p>
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Phone</p>
+                                <p className="text-[13px] font-black text-slate-900 tracking-tight">{user.phone}</p>
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Registered Address</p>
-                            <p className="text-[13px] font-black text-slate-900 tracking-tight leading-snug">45-B, Scheme No. 78, Vijay Nagar, Indore, MP 452010</p>
+                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Business Address</p>
+                            <p className="text-[13px] font-black text-slate-900 tracking-tight leading-snug">{user.shopDetails?.address || 'N/A'}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-6 pt-2">
                             <div className="space-y-1">
                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">GST Number</p>
-                                <p className="text-[13px] font-black text-slate-900 tracking-tight">23AAAAA0000A1Z5</p>
+                                <p className="text-[13px] font-black text-slate-900 tracking-tight">{user.shopDetails?.gst || 'Individual'}</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">MSME Status</p>
-                                <p className="text-[13px] font-black text-emerald-600 tracking-tight flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[14px]">check_circle</span> Verified
+                                <p className="text-[13px] font-black text-emerald-600 tracking-tight flex items-center gap-1 uppercase">
+                                    <span className="material-symbols-outlined text-[14px]">check_circle</span> {user.shopDetails?.msmeStatus || 'N/A'}
                                 </p>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* 2. FINANCIAL PAYOUT DETAILS SECTION */}
+                {/* 3. FINANCIAL PAYOUT DETAILS SECTION */}
                 <section className="space-y-4">
                     <div className="flex items-center justify-between px-1">
-                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Financial Payouts</h3>
-                        <span className="material-symbols-outlined text-slate-200">account_balance</span>
+                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Bank Details</h3>
+                        <button 
+                            onClick={() => handleEditClick('bank')}
+                            className="material-symbols-outlined text-slate-300 hover:text-slate-900 transition-colors"
+                        >
+                            edit_note
+                        </button>
                     </div>
                     
                     <div className="bg-slate-950 text-white p-7 rounded-[2.8rem] shadow-2xl shadow-slate-900/20 space-y-6 relative overflow-hidden">
@@ -88,108 +227,169 @@ const VendorProfile = () => {
                         
                         <div className="space-y-1 relative z-10">
                             <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Account Holder</p>
-                            <p className="text-[15px] font-black text-white tracking-tight">Spinzyt Enterprises LLP</p>
+                            <p className="text-[15px] font-black text-white tracking-tight">{user.bankDetails?.accountHolderName || 'N/A'}</p>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-6 relative z-10">
                             <div className="space-y-1">
                                 <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Bank Name</p>
-                                <p className="text-[13px] font-black text-white tracking-tight">HDFC Bank Ltd.</p>
+                                <p className="text-[13px] font-black text-white tracking-tight">{user.bankDetails?.bankName || 'N/A'}</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">IFSC Code</p>
-                                <p className="text-[13px] font-black text-white tracking-tight uppercase">HDFC0001234</p>
+                                <p className="text-[13px] font-black text-white tracking-tight uppercase">{user.bankDetails?.ifscCode || 'N/A'}</p>
                             </div>
                         </div>
 
                         <div className="flex items-center justify-between pt-2 relative z-10">
                             <div className="space-y-1">
                                 <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Account Number</p>
-                                <p className="text-[13px] font-black text-white tracking-[0.2em]">**** **** 9821</p>
-                            </div>
-                            <div className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
-                                <p className="text-[7px] font-black text-white/60 uppercase tracking-widest leading-none mb-1">Cycle</p>
-                                <p className="text-[10px] font-black text-white tracking-widest uppercase">Weekly</p>
+                                <p className="text-[13px] font-black text-white tracking-[0.2em]">
+                                    {user.bankDetails?.accountNumber ? `**** **** ${user.bankDetails.accountNumber.slice(-4)}` : 'N/A'}
+                                </p>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* 3. PERFORMANCE METRICS SECTION */}
+                {/* 4. DOCUMENTS SECTION */}
                 <section className="space-y-4">
                     <div className="flex items-center justify-between px-1">
-                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Performance</h3>
-                        <span className="material-symbols-outlined text-slate-200">insights</span>
+                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Business Documents</h3>
+                        <span className="material-symbols-outlined text-slate-200">folder_shared</span>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                        {[
-                            { label: 'Avg Rating', val: '4.8', sub: 'Top 5%', icon: 'star', color: 'amber' },
-                            { label: 'Completed', val: '1,240', sub: 'Orders', icon: 'check_circle', color: 'emerald' },
-                            { label: 'Cancel Rate', val: '0.8%', sub: 'Healthy', icon: 'cancel', color: 'rose' },
-                            { label: 'Ranking', val: '#12', sub: 'In Indore', icon: 'leaderboard', color: 'blue' }
-                        ].map((metric, i) => (
-                            <div key={i} className="bg-white p-5 rounded-[2.2rem] border border-slate-100 shadow-sm space-y-2">
-                                <div className={`w-8 h-8 rounded-xl bg-${metric.color}-50 flex items-center justify-center text-${metric.color}-600`}>
-                                    <span className="material-symbols-outlined text-lg">{metric.icon}</span>
+
+                    <div className="bg-white p-7 rounded-[2.8rem] border border-slate-100 shadow-sm space-y-4">
+                        {(user.documents && user.documents.length > 0) ? (
+                            user.documents.map((doc, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-3xl border border-slate-100">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400">
+                                            <span className="material-symbols-outlined">description</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-900 uppercase tracking-tight">{doc.type}</p>
+                                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-[8px] font-black text-primary uppercase tracking-widest">View Document</a>
+                                        </div>
+                                    </div>
+                                    <label className="cursor-pointer">
+                                        <input 
+                                            type="file" 
+                                            className="hidden" 
+                                            onChange={(e) => handleDocumentUpdate(doc.type, e.target.files[0])}
+                                        />
+                                        <span className="material-symbols-outlined text-slate-300 hover:text-primary transition-colors text-xl">upload_file</span>
+                                    </label>
                                 </div>
-                                <div>
-                                    <h4 className="text-2xl font-black tracking-tighter text-slate-950">{metric.val}</h4>
-                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{metric.label} • {metric.sub}</p>
+                            ))
+                        ) : (
+                            <div className="text-center py-6">
+                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No documents found</p>
+                            </div>
+                        )}
+                        
+                        {/* Option to add missing ones if needed or standard set */}
+                        {(!user.documents || user.documents.length < 2) && (
+                            <div className="pt-2">
+                                <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-3 text-center">Add Missing Documents</p>
+                                <div className="flex gap-2">
+                                    {['GST Document', 'MSME Document'].filter(t => !user.documents?.some(d => d.type === t)).map(type => (
+                                        <label key={type} className="flex-1 cursor-pointer">
+                                            <input type="file" className="hidden" onChange={(e) => handleDocumentUpdate(type, e.target.files[0])} />
+                                            <div className="py-3 px-2 border-2 border-dashed border-slate-100 rounded-2xl text-center hover:border-primary/30 transition-colors">
+                                                <p className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">{type}</p>
+                                            </div>
+                                        </label>
+                                    ))}
                                 </div>
                             </div>
-                        ))}
+                        )}
                     </div>
-                </section>
-
-                {/* 4. UPLOAD VIDEO TOUR SECTION */}
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between px-1">
-                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Facility Tour</h3>
-                        <span className="material-symbols-outlined text-slate-200">videocam</span>
-                    </div>
-                    
-                    <motion.div 
-                        whileTap={{ scale: 0.98 }}
-                        className="bg-white p-8 rounded-[2.8rem] border-2 border-dashed border-slate-200 flex flex-col items-center text-center space-y-4 hover:border-slate-950 transition-all cursor-pointer group"
-                    >
-                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-slate-950 group-hover:text-white transition-all">
-                            <span className="material-symbols-outlined text-3xl">movie</span>
-                        </div>
-                        <div className="space-y-1">
-                            <h4 className="text-sm font-black text-slate-950 uppercase tracking-tight">Upload Video Tour</h4>
-                            <p className="text-[10px] font-bold text-slate-400 leading-relaxed uppercase tracking-widest max-w-[200px]">
-                                Show customers your high-end facility & hygiene standards.
-                            </p>
-                        </div>
-                    </motion.div>
                 </section>
 
                 {/* Action Footer */}
                 <div className="flex flex-col gap-4 pt-4">
                     <button 
-                        onClick={() => navigate('/vendor/support')}
-                        className="w-full py-5 bg-white border border-slate-200 rounded-[2rem] text-[11px] font-black text-slate-900 uppercase tracking-[0.2em] shadow-sm flex items-center justify-center gap-3 hover:bg-slate-50 transition-all"
-                    >
-                        <span className="material-symbols-outlined text-lg">support_agent</span>
-                        Contact Help Desk
-                    </button>
-                    
-                    <button 
                         onClick={handleSignOut}
                         className="w-full py-5 bg-rose-50 border border-rose-100 rounded-[2rem] text-[11px] font-black text-rose-500 uppercase tracking-[0.2em] flex items-center justify-center gap-3 active:scale-95 transition-all"
                     >
                         <span className="material-symbols-outlined text-lg">logout</span>
-                        Terminate Session
+                        Logout Profile
                     </button>
                 </div>
 
                 <div className="text-center pb-12">
-                    <p className="text-[9px] font-black text-slate-200 uppercase tracking-[0.6em]">SPINZYT VENDOR • GOLD PARTNER • v2.8.1</p>
+                    <p className="text-[9px] font-black text-slate-200 uppercase tracking-[0.6em]">EZ OF LIFE PARTNER • v3.0.0</p>
                 </div>
             </main>
+
+            <AnimatePresence>
+                {isEditModalOpen && (
+                    <div className="fixed inset-0 z-[101] flex items-end justify-center px-4 pb-10 sm:items-center">
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setIsEditModalOpen(false)}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+                        />
+                        <motion.div 
+                            initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
+                            className="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl relative z-10 max-h-[90vh] overflow-y-auto"
+                        >
+                            <h3 className="text-xl font-black text-slate-950 mb-6 uppercase tracking-tighter">Edit {editSection === 'shop' ? 'Business' : 'Bank'} Info</h3>
+                            
+                            <div className="space-y-5">
+                                {editSection === 'shop' ? (
+                                    <>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Shop Name</label>
+                                            <input value={formData.shopName} onChange={e => setFormData({...formData, shopName: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone</label>
+                                            <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Address</label>
+                                            <textarea value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none min-h-[100px]" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">GST Number</label>
+                                            <input value={formData.gst} onChange={e => setFormData({...formData, gst: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Account Holder</label>
+                                            <input value={formData.accountHolderName} onChange={e => setFormData({...formData, accountHolderName: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Bank Name</label>
+                                            <input value={formData.bankName} onChange={e => setFormData({...formData, bankName: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">IFSC Code</label>
+                                            <input value={formData.ifscCode} onChange={e => setFormData({...formData, ifscCode: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Account Number</label>
+                                            <input value={formData.accountNumber} onChange={e => setFormData({...formData, accountNumber: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 mt-8">
+                                <button onClick={() => setIsEditModalOpen(false)} className="py-4 bg-slate-50 text-slate-400 rounded-2xl text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">Cancel</button>
+                                <button onClick={handleSave} className="py-4 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 active:scale-95 transition-all">Save Changes</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
 
 export default VendorProfile;
+;

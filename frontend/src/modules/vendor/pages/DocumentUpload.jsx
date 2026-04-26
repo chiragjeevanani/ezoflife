@@ -20,8 +20,8 @@ const DocumentUpload = () => {
     });
 
     const uploadRequirements = useMemo(() => [
-        { id: 'id', title: "Government ID", desc: "Driver's License, Aadhaar, or Passport", icon: "id_card", delay: 0.2 },
-        { id: 'biz', title: "Business proof", desc: "GST Registration, Trade License, or Lease", icon: "description", delay: 0.3 }
+        { id: 'gst', title: "GST Document", desc: "GST Registration Certificate", icon: "badge", delay: 0.2 },
+        { id: 'msme', title: "MSME Document", desc: "MSME / Udyam Aadhar Certificate", icon: "description", delay: 0.3 }
     ], []);
 
     const handleFileSelect = (id, file) => {
@@ -31,7 +31,7 @@ const DocumentUpload = () => {
     };
 
     const handleSubmit = async () => {
-        if (!files.id || !files.biz) {
+        if (!files.gst || !files.msme) {
             return setError('Please upload both required documents');
         }
 
@@ -51,8 +51,8 @@ const DocumentUpload = () => {
             formData.append('bankDetails', JSON.stringify(registrationData.bankDetails));
 
             // Append actual file blobs
-            formData.append('idCard', files.id);
-            formData.append('businessProof', files.biz);
+            formData.append('gstDoc', files.gst);
+            formData.append('msmeDoc', files.msme);
 
             const response = await authApi.completeVendorProfile(formData);
 

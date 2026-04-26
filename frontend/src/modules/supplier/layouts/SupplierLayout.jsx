@@ -25,11 +25,10 @@ const SupplierLayout = () => {
             animate={{ y: 0, opacity: 1 }}
             className="bg-white/95 backdrop-blur-2xl px-3 py-2 rounded-full shadow-[0_32px_64px_rgba(0,0,0,0.12)] pointer-events-auto flex justify-around items-center w-[95%] max-w-lg border border-black/5"
           >
-            <NavItem icon="dashboard" label="Hub" path="/supplier/dashboard" active={location.pathname === '/supplier/dashboard'} />
-            <NavItem icon="inventory_2" label="Stock" path="/supplier/rates" active={location.pathname === '/supplier/rates'} />
-            <NavItem icon="local_shipping" label="Logistics" path="/supplier/logistics" active={location.pathname === '/supplier/logistics'} />
-            <NavItem icon="account_balance_wallet" label="Wallet" path="/supplier/wallet" active={location.pathname === '/supplier/wallet'} />
+            <NavItem icon="home" label="Home" path="/supplier/dashboard" active={location.pathname === '/supplier/dashboard'} />
+            <NavItem icon="inventory_2" label="Supplies" path="/supplier/supplies" active={location.pathname === '/supplier/supplies'} />
             <NavItem icon="person" label="Profile" path="/supplier/profile" active={location.pathname === '/supplier/profile'} />
+            <NavItem icon="menu" label="More" path="/supplier/more" active={location.pathname === '/supplier/more'} />
           </motion.div>
         </nav>
       )}

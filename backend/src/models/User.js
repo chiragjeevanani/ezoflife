@@ -104,6 +104,10 @@ const userSchema = new mongoose.Schema({
     otpExpiry: {
         type: Date,
         default: null
+    },
+    isOnline: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

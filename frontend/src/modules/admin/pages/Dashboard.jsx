@@ -49,16 +49,17 @@ export default function Dashboard() {
   }, []);
 
   const financialMetrics = useMemo(() => [
-    { label: 'Gross Merchandise (GMV)', value: `₹${(liveStats?.totalRevenue || 0).toLocaleString()}`, delta: '+14.2%', icon: TrendingUp, color: 'white' },
-    { label: 'Active Vendors', value: liveStats?.activeVendors || 0, delta: `${liveStats?.pendingApprovals || 0} Pending`, icon: Store, color: 'white' },
-    { label: 'Industrial Suppliers', value: liveStats?.totalSuppliers || 0, delta: `${liveStats?.pendingSuppliers || 0} Pending`, icon: Zap, color: 'sky-400' },
-    { label: 'Total Users', value: liveStats?.totalUsers || 0, delta: 'Verified', icon: UsersIcon, color: 'white' }
+    { label: 'Total Orders', value: (liveStats?.totalOrders || 0).toLocaleString(), delta: 'Life-to-date', icon: ShoppingCart, color: 'white' },
+    { label: 'Active Riders', value: liveStats?.activeRiders || 0, delta: 'Real-time Online', icon: Activity, color: 'emerald-400' },
+    { label: 'Today Revenue', value: `₹${(liveStats?.todayRevenue || 0).toLocaleString()}`, delta: 'Since Midnight', icon: IndianRupee, color: 'white' },
+    { label: 'Pending Issues', value: liveStats?.pendingIssues || 0, delta: 'Support Queue', icon: AlertCircle, color: 'rose-400' },
+    { label: 'Delayed Orders', value: liveStats?.delayedOrders || 0, delta: 'Action Required', icon: Clock, color: 'amber-400' }
   ], [liveStats]);
 
   const healthStats = useMemo(() => [
-    { label: 'API Latency', value: '38ms', icon: Cpu },
-    { label: 'Active Riders', value: liveStats?.totalRiders || 0, icon: Activity },
-    { label: 'Pending Approvals', value: (liveStats?.pendingApprovals || 0) + (liveStats?.pendingSuppliers || 0), icon: Clock }
+    { label: 'Total Users', value: liveStats?.totalUsers || 0, icon: UsersIcon },
+    { label: 'Active Vendors', value: liveStats?.activeVendors || 0, icon: Store },
+    { label: 'API Latency', value: '38ms', icon: Cpu }
   ], [liveStats]);
 
   const alerts = useMemo(() => [
@@ -112,12 +113,12 @@ export default function Dashboard() {
       {/* Financial Performance Matrix (Phase 3 Requirement) */}
       <div className="bg-slate-900 border-b border-slate-800 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(2,132,199,0.15),transparent)] pointer-events-none"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-x divide-slate-800 max-w-[1600px] mx-auto w-full relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 divide-x divide-slate-800 max-w-[1600px] mx-auto w-full relative z-10">
           {financialMetrics.map((metric, i) => (
             <div key={i} className="p-8 flex flex-col gap-2">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">{metric.label}</span>
               <div className="flex items-baseline gap-2">
-                <span className={`text-3xl font-black text-${metric.color || 'white'} tracking-tighter italic tabular-nums`}>{metric.value}</span>
+                <span className={`text-3xl font-black text-${metric.color || 'white'} tracking-tighter tabular-nums`}>{metric.value}</span>
                 <span className={`text-[10px] font-black text-${metric.color === 'white' ? 'emerald-400' : metric.color} flex items-center gap-1 uppercase tracking-widest`}>
                   {metric.icon && <metric.icon size={12} />} {metric.delta}
                 </span>
@@ -156,94 +157,19 @@ export default function Dashboard() {
 
 
       <div className="p-6 space-y-6 max-w-[1600px] mx-auto w-full">
-        {/* Real-time Alert Panel (BRD 3.2.C) */}
-        <div className="bg-white rounded-sm border border-slate-200 overflow-hidden shadow-sm">
-          <div className="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <AlertCircle size={14} className="text-amber-400" />
-              <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Priority Operational Alerts</h3>
-            </div>
-            <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest bg-amber-400/10 px-2 py-0.5 rounded-sm">2 Critical Issues</span>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {alerts.map((alert, i) => (
-              <div key={i} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-sm bg-${alert.variant}-50 text-${alert.variant}-500 flex items-center justify-center border border-${alert.variant}-100`}>
-                    <alert.icon size={18} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[11px] font-black text-slate-900 uppercase">{alert.title}</span>
-                      <span className={`px-1.5 py-0.5 bg-${alert.variant}-500 text-white text-[8px] font-black rounded-sm`}>{alert.type}</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order #{alert.id} · {alert.desc}</p>
-                  </div>
+        {/* Real-time statistics only for now to keep it clean */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-white p-8 rounded-sm border border-slate-200 shadow-sm flex items-center justify-between group hover:border-slate-400 transition-all">
+                <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Platform Status</p>
+                    <h4 className="text-xl font-black text-slate-900 uppercase">Operational</h4>
                 </div>
-                <button 
-                  onClick={() => navigate(alert.action)}
-                  className="px-4 py-2 bg-white border border-slate-200 text-slate-900 text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all rounded-sm flex items-center gap-2"
-                >
-                  {alert.actionLabel} <ArrowRight size={10} />
-                </button>
-              </div>
-            ))}
-          </div>
+                <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-sm flex items-center justify-center border border-emerald-100">
+                    <Activity size={24} />
+                </div>
+            </div>
+            {/* Add more live data cards here as needed */}
         </div>
-        {/* Analytics Grid: Enterprise Dark Border Technique */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 bg-slate-200 gap-px border border-slate-200 transition-all rounded-sm overflow-hidden min-h-[400px]">
-          <ChartPanel 
-            key="revenue-chart"
-            title="Revenue Over Time" 
-            subtitle="Platform revenue growth analysis"
-            actions={<button className="p-1 px-3 bg-slate-900 text-white rounded-[1px] text-[9px] font-bold uppercase tracking-widest">Refresh Data</button>}
-            height={340}
-          >
-             <div className="w-full h-full p-4 overflow-visible">
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={revenueFlow}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} dy={10} />
-                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} />
-                        <Tooltip content={<ProfessionalTooltip />} />
-                        <Line 
-                            type="monotone" 
-                            dataKey="revenue" 
-                            stroke="#0284c7" 
-                            strokeWidth={3} 
-                            dot={{ r: 4, fill: '#0284c7', strokeWidth: 2, stroke: '#fff' }} 
-                            activeDot={{ r: 6, strokeWidth: 0 }}
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
-             </div>
-          </ChartPanel>
-
-          <ChartPanel 
-            title="Orders vs Fulfillment Rate" 
-            subtitle="Order volume and completion rate analysis"
-            actions={<div className="flex gap-1.5"><Calendar size={12} className="text-slate-400" /><span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Last 24 Hours</span></div>}
-          >
-             <ComparisonChart 
-                data={orderStats}
-                type="composed"
-                metrics={[
-                    { key: "orders", name: "Unit Volume", color: "#0f172a", type: "area" },
-                    { key: "fulfillment", name: "Node Response", color: "#64748b", type: "bar" }
-                ]}
-                height={340}
-             />
-          </ChartPanel>
-        </div>
-
-        {/* Recent Payouts */}
-        <DataGrid 
-            title="Recent Payout Requests"
-            columns={settlementColumns}
-            data={payoutRequests}
-            onAction={(row) => console.log('Auditing settlement row', row.id)}
-        />
-        
       </div>
     </div>
   );

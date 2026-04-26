@@ -6,8 +6,7 @@ const navItems = [
   { label: 'Home', icon: 'home', path: '/vendor/dashboard' },
   { label: 'Services', icon: 'tune', path: '/vendor/services' },
   { label: 'Profile', icon: 'person', path: '/vendor/profile' },
-  { label: 'Orders', icon: 'receipt_long', path: '/vendor/order-history' },
-  { label: 'More', icon: 'menu', path: '/user/more' },
+  { label: 'More', icon: 'menu', path: '/vendor/more' },
 ];
 
 const VendorBottomNav = () => {
@@ -26,7 +25,7 @@ const VendorBottomNav = () => {
   if (hideRoutes.some(route => location.pathname === route)) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] pb-8 pt-4 px-6 md:hidden flex justify-center pointer-events-none">
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] pb-8 pt-4 px-6 flex justify-center pointer-events-none">
       <motion.div 
         layout
         initial={{ y: 80, opacity: 0 }}
@@ -46,18 +45,13 @@ const VendorBottomNav = () => {
               }`}
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <AnimatePresence>
                 {isActive && (
                   <motion.div 
                     layoutId="vendorNavBubble"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
                     className="absolute w-14 h-14 bg-black rounded-full shadow-xl shadow-black/30 z-0"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-              </AnimatePresence>
               
               <div className="relative z-10 flex flex-col items-center justify-center gap-0.5 pointer-events-none">
                 <span 

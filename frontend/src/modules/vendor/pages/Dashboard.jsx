@@ -730,65 +730,68 @@ const Dashboard = () => {
                     </div>
                 </section>
 
-                {/* 2. MATERIAL SUPPLY REQUEST */}
+                {/* 2. MATERIAL SUPPLY REQUEST (COMPACT DESIGN) */}
                 <section className="space-y-4">
-                    <div className="bg-slate-900 rounded-[2.5rem] p-6 shadow-xl shadow-slate-900/10 relative overflow-hidden group">
-                        <div className="absolute -right-4 -top-4 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all"></div>
-                        <div className="relative z-10 flex items-center justify-between gap-6">
-                            <div className="flex-1 space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                                    <h3 className="text-[10px] font-black text-primary uppercase tracking-widest">Inventory Management</h3>
-                                </div>
-                                <h4 className="text-xl font-black text-white tracking-tight">Need Supplies?</h4>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-                                    Request Detergents, Packing Bags, or Labels from the material supplier.
-                                </p>
-                            </div>
-                            <motion.button 
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => navigate('/vendor/material-request')}
-                                className="bg-primary text-white p-5 rounded-2xl shadow-lg shadow-primary/20 flex items-center justify-center group-hover:bg-white group-hover:text-primary transition-all"
-                            >
-                                <span className="material-symbols-outlined text-2xl">shopping_cart_checkout</span>
-                            </motion.button>
-                        </div>
-                    </div>
-                </section>
-
-                {/* 3. SKILLED LABOR REQUEST (NEW SECTION) */}
-                <section className="space-y-4">
-                    <div className="bg-white rounded-[2.5rem] p-6 border border-slate-200 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -right-4 -top-4 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 transition-all"></div>
+                    <motion.div 
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => navigate('/vendor/material-request')}
+                        className="bg-gradient-to-br from-slate-800 to-slate-950 rounded-[2rem] p-5 shadow-lg shadow-slate-900/20 relative overflow-hidden group cursor-pointer"
+                    >
+                        {/* Decorative background element */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -mr-12 -mt-12 transition-all group-hover:scale-150"></div>
                         
-                        <div className="relative z-10 flex items-center justify-between gap-6">
-                            <div className="flex-1 space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                                    <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Workforce Support</h3>
+                        <div className="relative z-10 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-primary border border-white/10">
+                                    <span className="material-symbols-outlined text-[24px]">inventory</span>
                                 </div>
-                                <h4 className="text-xl font-black text-slate-900 tracking-tight">Request Skilled Labor</h4>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {['Ironman', 'Washerman', 'Helper'].map((tag) => (
-                                        <span key={tag} className="bg-slate-50 px-2.5 py-1 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest border border-slate-100">
-                                            {tag}
-                                        </span>
-                                    ))}
+                                <div>
+                                    <h4 className="text-[13px] font-black text-white tracking-tight leading-none">Inventory & Supplies</h4>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+                                        <span className="w-1 h-1 rounded-full bg-primary"></span>
+                                        Order Materials
+                                    </p>
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed pt-1">
-                                    Raise a request for additional staff during rush hours.
-                                </p>
                             </div>
                             
-                            <motion.button 
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => navigate('/vendor/labor-request')}
-                                className="bg-indigo-500 text-white p-5 rounded-2xl shadow-lg shadow-indigo-500/20 flex items-center justify-center group-hover:bg-slate-900 transition-all"
-                            >
-                                <span className="material-symbols-outlined text-2xl">person_add</span>
-                            </motion.button>
+                            <div className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/5">
+                                <span className="text-[10px] font-black text-white uppercase tracking-widest">Order</span>
+                                <span className="material-symbols-outlined text-[16px] text-primary">shopping_cart</span>
+                            </div>
                         </div>
-                    </div>
+                    </motion.div>
+                </section>
+
+                {/* 3. SKILLED LABOR REQUEST (COMPACT DESIGN) */}
+                <section className="space-y-4">
+                    <motion.div 
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => navigate('/vendor/labor-request')}
+                        className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-[2rem] p-5 shadow-lg shadow-indigo-500/20 relative overflow-hidden group cursor-pointer"
+                    >
+                        {/* Decorative background element */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-12 -mt-12 transition-all group-hover:scale-150"></div>
+                        
+                        <div className="relative z-10 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/20">
+                                    <span className="material-symbols-outlined text-[24px]">engineering</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-[13px] font-black text-white tracking-tight leading-none">Skilled Labor Support</h4>
+                                    <p className="text-[9px] font-black text-indigo-100/60 uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+                                        <span className="w-1 h-1 rounded-full bg-emerald-400"></span>
+                                        On-Demand Staffing
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl border border-white/10">
+                                <span className="text-[10px] font-black text-white uppercase tracking-widest">Request</span>
+                                <span className="material-symbols-outlined text-[16px] text-white">chevron_right</span>
+                            </div>
+                        </div>
+                    </motion.div>
                 </section>
 
                 {/* 4. STATS & QUICK ACTIONS */}

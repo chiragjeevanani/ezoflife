@@ -103,7 +103,7 @@ const CartPage = () => {
     fetchConfig();
   }, []);
 
-  const [isExpress, setIsExpress] = useState(false);
+  const [isExpress, setIsExpress] = useState(() => localStorage.getItem('is_express') === 'true');
   const [garmentPhotos, setGarmentPhotos] = useState([]);
   const fileInputRef = useRef(null);
 
@@ -132,10 +132,10 @@ const CartPage = () => {
     return dates;
   }, []);
 
-  const [selectedPickup, setSelectedPickup] = useState(`${availableDates[0].day}, ${availableDates[0].date}`);
-  const [pickupTime, setPickupTime] = useState('02:00 PM - 04:00 PM');
-  const [selectedDelivery, setSelectedDelivery] = useState(`${availableDates[1].day}, ${availableDates[1].date}`);
-  const [deliveryTime, setDeliveryTime] = useState('06:00 PM - 08:00 PM');
+  const [selectedPickup, setSelectedPickup] = useState(() => localStorage.getItem('pickup_date') || `${availableDates[0].day}, ${availableDates[0].date}`);
+  const [pickupTime, setPickupTime] = useState(() => localStorage.getItem('pickup_time') || '02:00 PM - 04:00 PM');
+  const [selectedDelivery, setSelectedDelivery] = useState(() => localStorage.getItem('delivery_date') || `${availableDates[1].day}, ${availableDates[1].date}`);
+  const [deliveryTime, setDeliveryTime] = useState(() => localStorage.getItem('delivery_time') || '06:00 PM - 08:00 PM');
   
   const [showPicker, setShowPicker] = useState(false);
   const [activePicking, setActivePicking] = useState('pickup');
@@ -219,34 +219,38 @@ const CartPage = () => {
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
       const userId = userData._id || userData.id;
       
-      // 1. Get address from localStorage (Set by UserHeader/Home)
+      const localPickup = JSON.parse(localStorage.getItem('pickup_address') || 'null');
+      const localDrop = JSON.parse(localStorage.getItem('drop_address') || 'null');
       const detectedAddr = localStorage.getItem('detected_address');
       const detectedCoords = JSON.parse(localStorage.getItem('detected_coords') || 'null');
 
       let initialAddresses = [];
-      let defaultAddress = null;
+      
+      if (localPickup) initialAddresses.push(localPickup);
+      if (localDrop && localDrop.id !== localPickup?.id) initialAddresses.push(localDrop);
 
-      if (detectedAddr) {
-          defaultAddress = { 
+      if (detectedAddr && !localPickup) {
+          initialAddresses.push({ 
             id: 'current_set', 
             type: 'Current Selection', 
             address: detectedAddr, 
             location: detectedCoords || defaultCenter 
-          };
-          initialAddresses.push(defaultAddress);
+          });
       }
 
-      // 2. Fetch profile addresses if logged in
       if (userId) {
         try {
           const profile = await authApi.getProfile(userId);
-          if (profile.address && profile.address !== detectedAddr) {
-            initialAddresses.push({ 
+          if (profile.address) {
+            const profileAddr = { 
               id: 'profile', 
               type: 'Profile Home', 
               address: profile.address, 
               location: profile.location || defaultCenter 
-            });
+            };
+            if (!initialAddresses.some(a => a.address === profile.address)) {
+              initialAddresses.push(profileAddr);
+            }
           }
         } catch (error) {
           console.error('Error fetching profile address:', error);
@@ -255,14 +259,11 @@ const CartPage = () => {
 
       setAddresses(initialAddresses);
       
-      // 3. AUTOMATICALLY set the detected address as pickup
-      if (defaultAddress) {
-          setSelectedPickupAddress(defaultAddress);
-          setSelectedDropAddress(defaultAddress);
-      } else if (initialAddresses.length > 0) {
-          setSelectedPickupAddress(initialAddresses[0]);
-          setSelectedDropAddress(initialAddresses[0]);
-      }
+      if (localPickup) setSelectedPickupAddress(localPickup);
+      else if (initialAddresses.length > 0) setSelectedPickupAddress(initialAddresses[0]);
+
+      if (localDrop) setSelectedDropAddress(localDrop);
+      else if (initialAddresses.length > 0) setSelectedDropAddress(initialAddresses[0]);
     };
 
     syncAddresses();
@@ -276,7 +277,6 @@ const CartPage = () => {
         return;
     }
 
-    // Combine into a full string for backward compatibility
     const fullAddress = `${addrDetails.line1}, ${addrDetails.line2}${addrDetails.floor ? `, Floor: ${addrDetails.floor}` : ''}${addrDetails.landmark ? `, Near ${addrDetails.landmark}` : ''}, ${addrDetails.city}, ${addrDetails.state} - ${addrDetails.pincode}`;
 
     try {
@@ -347,27 +347,7 @@ const CartPage = () => {
   };
 
   const getItemPrice = (item) => {
-    const id = item._id || item.id;
-    const unit = billingUnits[id] || 'pc';
-    const rawPrice = item.basePrice || item.price;
-    const parsePrice = (p) => {
-      if (typeof p === 'number') return p;
-      if (typeof p === 'string') {
-        const cleaned = p.replace(/[^\d.]/g, '');
-        return parseFloat(cleaned) || 0;
-      }
-      return 0;
-    };
-    const price = parsePrice(rawPrice);
-    const aggregatorFee = 1.15;
-    const finalPrice = Math.round(price * aggregatorFee);
-
-    if (id.includes('wash') || id.includes('carpet') || id.includes('curtain')) {
-      if (unit === 'kg') return finalPrice > 0 ? finalPrice : 99;
-      return 18;
-    }
-    if (unit === 'pc') return finalPrice > 0 ? finalPrice : 49;
-    return 199;
+    return item.totalPrice || item.basePrice || 0;
   };
 
   const subtotal = useMemo(() => cartItems.reduce((acc, item) => {
@@ -536,7 +516,7 @@ const CartPage = () => {
 
               <div className="p-8 bg-slate-50 border-t border-slate-100">
                 <button 
-                  onClick={finalSubmitOrder}
+                  onClick={handlePlaceOrder}
                   disabled={loading}
                   className={`w-full py-6 rounded-[1.5rem] bg-black text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all hover:bg-emerald-500 flex items-center justify-center gap-3 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
@@ -582,7 +562,7 @@ const CartPage = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-8">
-                      {/* NEW PILL-STYLE QTY CONTROL - MATCHING IMAGE */}
+                      {/* QTY CONTROL */}
                       <div className="bg-slate-50 rounded-[2rem] px-1.5 py-1 flex items-center gap-2 md:gap-4 border border-slate-100/50 shadow-inner w-full sm:w-auto justify-between sm:justify-start">
                         <button 
                           onClick={() => updateQuantity(itemId, -1)}
@@ -604,7 +584,6 @@ const CartPage = () => {
                         </button>
                       </div>
 
-                      {/* Pricing Section - MATCHING IMAGE */}
                       <div className="flex items-center justify-between sm:justify-start gap-6 md:gap-8 w-full sm:w-auto pt-2 sm:pt-0">
                         <div className="flex flex-col">
                           <p className="text-[8px] md:text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none">Price/Unit</p>
@@ -618,7 +597,6 @@ const CartPage = () => {
                     </div>
                   </div>
 
-                  {/* Circular Remove Button - TOP RIGHT */}
                   <button 
                     onClick={() => updateQuantity(itemId, -qty)}
                     className="absolute top-3 right-3 md:top-4 md:right-4 w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm"
@@ -630,175 +608,53 @@ const CartPage = () => {
             })}
           </div>
 
-          {/* 2. Premium Delivery Selection Section - FROM IMAGE */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl overflow-hidden">
-            {/* Tabs Header */}
-            <div className="bg-slate-50 p-2 flex border-b border-slate-100">
-              <button 
-                className="flex-1 py-3.5 rounded-2xl text-[11px] font-black tracking-tight bg-black text-white shadow-lg"
-              >
-                Delivery Type
-              </button>
-            </div>
-
-            {/* Delivery Options */}
-            <div className="divide-y divide-slate-100">
-              {/* Express Option */}
-              <div 
-                onClick={() => setIsExpress(true)}
-                className={`p-6 flex items-center justify-between cursor-pointer transition-all ${isExpress ? 'bg-amber-50/30' : 'hover:bg-slate-50/50'}`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isExpress ? 'border-amber-500' : 'border-slate-200'}`}>
-                    {isExpress && <div className="w-3 h-3 rounded-full bg-amber-500" />}
+          {/* 2. ORDER CONTEXT INFO (Display Only) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] space-y-4">
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Logistics Priority</p>
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-amber-400">{isExpress ? 'bolt' : 'schedule'}</span>
+                  <p className="text-xl font-black tracking-tight">{isExpress ? 'Express Delivery' : 'Standard Delivery'}</p>
+                </div>
+                <p className="text-[11px] font-medium text-white/60">Preferences set on Home Page</p>
+             </div>
+             <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] space-y-4 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Scheduling</p>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-slate-900 uppercase">Pickup:</span>
+                    <span className="text-[11px] font-bold text-slate-500">{selectedPickup} • {pickupTime}</span>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className={`font-black text-sm ${isExpress ? 'text-amber-600' : 'text-slate-900'}`}>Express ⚡</h4>
-                      <div className="h-4 w-px bg-slate-200" />
-                      <span className="text-slate-400 line-through text-[10px]">₹{expressChargeConfig + 20}</span>
-                      <span className="text-slate-900 font-black text-xs">₹{expressChargeConfig}</span>
-                    </div>
-                    <p className="text-[11px] font-medium text-slate-400 mt-1">Fastest delivery, directly to you!</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-slate-900 uppercase">Delivery:</span>
+                    <span className="text-[11px] font-bold text-slate-500">{selectedDelivery} • {deliveryTime}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className={`text-xs font-black ${isExpress ? 'text-amber-600' : 'text-slate-400'}`}>35-40 mins</span>
-                </div>
-              </div>
-
-              {/* Standard Option (Normal) */}
-              <div 
-                onClick={() => setIsExpress(false)}
-                className={`p-6 flex items-center justify-between cursor-pointer transition-all ${!isExpress ? 'bg-slate-50/50' : 'hover:bg-slate-50/30'}`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${!isExpress ? 'border-black' : 'border-slate-200'}`}>
-                    {!isExpress && <div className="w-3 h-3 rounded-full bg-black" />}
-                  </div>
-                  <div>
-                    <h4 className="font-black text-sm text-slate-900">Normal (Standard)</h4>
-                    <p className="text-[11px] font-medium text-slate-400 mt-1">Minimal order grouping</p>
-                    <p className="text-[10px] font-black text-slate-900 mt-1">₹{normalLogisticsConfig}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className={`text-xs font-black ${!isExpress ? 'text-slate-900' : 'text-slate-400'}`}>40-45 mins</span>
-                </div>
-              </div>
-            </div>
+             </div>
           </div>
 
-          {/* 3. Address Management Section - NEW */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-            <div className="p-8 space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="font-headline font-black text-xl flex items-center gap-3 text-slate-900 uppercase tracking-tighter">
-                  <span className="material-symbols-outlined text-black">location_on</span>Address Details.
-                </h3>
-              </div>
-
-              {/* Pickup Address Box */}
-              <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-900 shadow-sm shrink-0">
-                    <span className="material-symbols-outlined text-xl">directions_run</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Pickup Address</p>
-                    <p className="text-sm font-bold text-slate-900 truncate">
-                      {selectedPickupAddress?.address || 'No address selected'}
-                    </p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => { setActiveAddressType('pickup'); setShowAddressPicker(true); }}
-                  className="px-5 py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/20 hover:scale-105 transition-all shrink-0"
-                >
-                  Change
-                </button>
-              </div>
-
-              {/* Drop Address Option */}
-              <div className="space-y-4 pt-2">
-                <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-slate-400 text-lg">local_shipping</span>
-                    <p className="text-xs font-black text-slate-600 uppercase tracking-tight">Drop to different location?</p>
-                  </div>
-                  <div 
-                    onClick={() => setIsSameAddress(!isSameAddress)}
-                    className={`w-12 h-6 rounded-full relative transition-all cursor-pointer ${!isSameAddress ? 'bg-black' : 'bg-slate-200'}`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${!isSameAddress ? 'left-7' : 'left-1'}`} />
-                  </div>
-                </div>
-
-                {!isSameAddress && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm shrink-0">
-                        <span className="material-symbols-outlined text-xl">location_home</span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Drop Address</p>
-                        <p className="text-sm font-bold text-slate-900 truncate">
-                          {selectedDropAddress?.address || 'Select Drop Location'}
-                        </p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => { setActiveAddressType('drop'); setShowAddressPicker(true); }}
-                      className="px-5 py-2 bg-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shrink-0"
-                    >
-                      Set
-                    </button>
-                  </motion.div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* 4. Pickup & Delivery Slots Section - NEW */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-6">
+          {/* 3. Address Preview (Display Only) */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-headline font-black text-xl flex items-center gap-3 text-slate-900 uppercase tracking-tighter">
-                <span className="material-symbols-outlined text-black">schedule</span>Slots Selection.
+                <span className="material-symbols-outlined text-black">location_on</span>Address Details.
               </h3>
+              <button onClick={() => navigate('/user/home')} className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-4 py-2 rounded-xl">Change on Home</button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Pickup Slot Card */}
-              <div 
-                onClick={() => { setActivePicking('pickup'); setShowPicker(true); }}
-                className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 cursor-pointer hover:bg-white transition-all group"
-              >
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-black transition-colors">Pickup</p>
-                <div className="flex flex-col">
-                  <p className="text-sm font-black text-slate-900">{selectedPickup}</p>
-                  <p className="text-[11px] font-bold text-slate-500 mt-1">{pickupTime}</p>
-                </div>
+            <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center gap-4">
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-900 shadow-sm shrink-0">
+                <span className="material-symbols-outlined text-xl">directions_run</span>
               </div>
-
-              {/* Delivery Slot Card */}
-              <div 
-                onClick={() => { setActivePicking('delivery'); setShowPicker(true); }}
-                className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 cursor-pointer hover:bg-white transition-all group"
-              >
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-black transition-colors">Delivery</p>
-                <div className="flex flex-col">
-                  <p className="text-sm font-black text-slate-900">{selectedDelivery}</p>
-                  <p className="text-[11px] font-bold text-slate-500 mt-1">{deliveryTime}</p>
-                </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Delivery Location</p>
+                <p className="text-sm font-bold text-slate-900 truncate">
+                  {selectedPickupAddress?.address || 'Set in Home Page'}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* 5. Pre Pickup Photo Upload - NEW */}
+          {/* 4. Pre Pickup Photo Upload */}
           <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-6">
             <div className="flex flex-col gap-1">
               <h3 className="font-headline font-black text-xl flex items-center gap-3 text-slate-900 uppercase tracking-tighter">
@@ -824,7 +680,6 @@ const CartPage = () => {
                 <span className="text-xs font-black uppercase tracking-widest text-slate-400 group-hover:text-black">Upload Garment Photos 📷</span>
               </button>
 
-              {/* Photos Preview */}
               {garmentPhotos.length > 0 && (
                 <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
                   {garmentPhotos.map((url, i) => (
@@ -843,7 +698,7 @@ const CartPage = () => {
             </div>
           </div>
 
-          {/* 6. Promo Code Selection */}
+          {/* 5. Promo Code Selection */}
           <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-4">
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Promo Code</h3>
             <div className="flex gap-3">
@@ -865,7 +720,7 @@ const CartPage = () => {
             {isPromoApplied && <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-4">Coupon Applied Successfully!</p>}
           </div>
 
-          {/* 7. Notes / Instructions Section */}
+          {/* 6. Notes / Instructions Section */}
           <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-4">
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Notes / Instructions</h3>
             <textarea 
@@ -876,24 +731,7 @@ const CartPage = () => {
             />
           </div>
 
-          {/* 8. Payment Info Logic */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-6">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Payment Info</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-emerald-50 p-6 rounded-[2rem] border border-emerald-100 flex flex-col gap-2">
-                <span className="material-symbols-outlined text-emerald-500">payments</span>
-                <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest leading-none">Pay 5% Now</p>
-                <p className="text-xs font-bold text-emerald-600">Secure booking deposit</p>
-              </div>
-              <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex flex-col gap-2">
-                <span className="material-symbols-outlined text-slate-400">handshake</span>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Rest After Delivery</p>
-                <p className="text-xs font-bold text-slate-400">Pay remaining 95% later</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 9. Price Breakdown & Final Action */}
+          {/* 7. Price Breakdown & Final Action */}
           <div className="bg-black rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
             <div className="flex flex-col gap-1 mb-8">
               <h3 className="font-headline font-black text-2xl text-white uppercase tracking-tighter">Price Breakdown.</h3>
@@ -920,7 +758,7 @@ const CartPage = () => {
 
               <div className="flex justify-between text-sm font-black uppercase tracking-widest text-white/60">
                 <span>Taxes (GST)</span>
-                <span className="text-white">₹{(grandTotal * 0.05).toFixed(0)}</span> {/* 5% tax example */}
+                <span className="text-white">₹{(grandTotal * 0.05).toFixed(0)}</span>
               </div>
 
               <div className="h-px bg-white/10 my-4"></div>
@@ -932,7 +770,6 @@ const CartPage = () => {
                 </div>
                 <div className="text-right flex flex-col">
                   <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Remaining After Delivery</p>
-                  <p className="text-xl font-black text-white/60 tracking-tighter line-through">₹{(finalTotal * 0.95).toFixed(0)}</p>
                   <p className="text-2xl font-black text-white tracking-tighter mt-1">₹{(finalTotal * 0.95).toFixed(0)}</p>
                 </div>
               </div>
@@ -948,184 +785,6 @@ const CartPage = () => {
 
         </div>
       </motion.main>
-
-      <AnimatePresence>
-        {showPicker && (
-            <div className="fixed inset-0 z-[100] flex items-end justify-center">
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowPicker(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
-                <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-2xl rounded-t-[3rem] p-10 relative z-10 shadow-2xl max-h-[80vh] overflow-y-auto">
-                    <h3 className="text-3xl font-black mb-8 text-slate-900">{activePicking === 'pickup' ? 'Schedule Pickup' : 'Select Delivery'}</h3>
-                    <div className="space-y-8">
-                        <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
-                            {availableDates.map((d, i) => (
-                                <button key={i} onClick={() => { if (activePicking === 'pickup') setSelectedPickup(`${d.day}, ${d.date}`); else setSelectedDelivery(`${d.day}, ${d.date}`); }} className={`px-8 py-5 rounded-[2rem] flex flex-col items-center min-w-[120px] transition-all ${(activePicking === 'pickup' ? selectedPickup : selectedDelivery).includes(d.date) ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-900'}`}><span className="text-[10px] font-black uppercase mb-1">{d.day}</span><span className="text-xl font-black">{d.date}</span></button>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-1 gap-3">
-                            {timeSlots.map((time, i) => (
-                                <button key={i} onClick={() => { if (activePicking === 'pickup') setPickupTime(time); else setDeliveryTime(time); setShowPicker(false); }} className={`p-6 rounded-2xl text-left border-2 transition-all ${(activePicking === 'pickup' ? pickupTime : deliveryTime) === time ? 'border-primary text-primary' : 'bg-slate-50 border-transparent text-slate-900'}`}><span className="text-sm font-black">{time}</span></button>
-                            ))}
-                        </div>
-                    </div>
-                </motion.div>
-            </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showAddressPicker && (
-            <div className="fixed inset-0 z-[150] flex items-end justify-center">
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddressPicker(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
-                <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-2xl rounded-t-[3rem] p-10 relative z-10 shadow-2xl max-h-[80vh] overflow-y-auto">
-                    <h3 className="text-3xl font-black mb-8 text-slate-900">Locale</h3>
-                    <div className="space-y-4">
-                        <button onClick={() => setShowMapPicker(true)} className="w-full p-8 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex items-center justify-center gap-4 text-slate-900 bg-slate-50 hover:bg-white transition-all">
-                            <span className="material-symbols-outlined text-2xl">add_location_alt</span>
-                            <span className="text-xs font-black uppercase tracking-widest">Add New Address</span>
-                        </button>
-                        {addresses.map(addr => (
-                            <div 
-                              key={addr.id} 
-                              onClick={() => { 
-                                if (activeAddressType === 'pickup') {
-                                    setSelectedPickupAddress(addr);
-                                    if (isSameAddress) setSelectedDropAddress(addr);
-                                } else {
-                                    setSelectedDropAddress(addr);
-                                }
-                                setShowAddressPicker(false); 
-                              }} 
-                              className="p-6 rounded-[2rem] bg-slate-50 flex items-center gap-5 cursor-pointer"
-                            >
-                                <span className="material-symbols-outlined text-primary text-2xl">home</span>
-                                <div>
-                                    <p className="text-xs font-black text-slate-900 leading-none mb-1">{addr.type}</p>
-                                    <p className="text-[10px] font-bold text-slate-400 truncate max-w-[200px]">{addr.address}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </motion.div>
-            </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showMapPicker && (
-            <div className="fixed inset-0 z-[200] flex items-end justify-center">
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMapPicker(false)} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-                <motion.div 
-                    initial={{ y: "100%" }} 
-                    animate={{ y: 0 }} 
-                    exit={{ y: "100%" }} 
-                    className="bg-white w-full max-w-2xl rounded-t-[3rem] p-8 md:p-10 relative z-10 shadow-2xl flex flex-col max-h-[95vh] overflow-y-auto hide-scrollbar"
-                >
-                    <div className="flex flex-col mb-8">
-                        <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6" />
-                        <h3 className="text-4xl font-black italic tracking-tighter leading-none mb-2">LOCATE<br/>ADDRESS.</h3>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Details for accurate delivery</p>
-                    </div>
-                    
-                    <div className="space-y-8">
-                        {/* Address Type Selection */}
-                        <div className="flex gap-3">
-                            {['HOME', 'OFFICE', 'OTHER'].map(t => (
-                                <button 
-                                    key={t}
-                                    onClick={() => setAddrDetails(prev => ({ ...prev, type: t }))}
-                                    className={`flex-1 py-4 rounded-2xl text-[10px] font-black tracking-widest transition-all ${addrDetails.type === t ? 'bg-black text-white shadow-xl scale-[1.02]' : 'bg-slate-50 text-slate-400'}`}
-                                >
-                                    {t}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">Address Line 1</label>
-                                <input 
-                                    className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
-                                    placeholder="Flat/House No, Building Name"
-                                    value={addrDetails.line1}
-                                    onChange={(e) => setAddrDetails(prev => ({ ...prev, line1: e.target.value }))}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">Address Line 2</label>
-                                <input 
-                                    className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
-                                    placeholder="Street, Area Name"
-                                    value={addrDetails.line2}
-                                    onChange={(e) => setAddrDetails(prev => ({ ...prev, line2: e.target.value }))}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">Floor / Apt</label>
-                                    <input 
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
-                                        placeholder="e.g. 4th Floor"
-                                        value={addrDetails.floor}
-                                        onChange={(e) => setAddrDetails(prev => ({ ...prev, floor: e.target.value }))}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">Landmark</label>
-                                    <input 
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
-                                        placeholder="Near Temple/Gym"
-                                        value={addrDetails.landmark}
-                                        onChange={(e) => setAddrDetails(prev => ({ ...prev, landmark: e.target.value }))}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">Pincode</label>
-                                    <input 
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
-                                        placeholder="6-digit ZIP"
-                                        value={addrDetails.pincode}
-                                        onChange={(e) => setAddrDetails(prev => ({ ...prev, pincode: e.target.value }))}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">City</label>
-                                    <input 
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
-                                        placeholder="City Name"
-                                        value={addrDetails.city}
-                                        onChange={(e) => setAddrDetails(prev => ({ ...prev, city: e.target.value }))}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1">State</label>
-                                <input 
-                                    className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all"
-                                    placeholder="State Name"
-                                    value={addrDetails.state}
-                                    onChange={(e) => setAddrDetails(prev => ({ ...prev, state: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-
-                        <button 
-                            onClick={confirmMapAddress} 
-                            disabled={!addrDetails.line1 || !addrDetails.pincode}
-                            className="w-full py-6 bg-black text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl disabled:opacity-30 disabled:grayscale transition-all mt-6 active:scale-95"
-                        >
-                            Secure Location
-                        </button>
-                    </div>
-                </motion.div>
-            </div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };

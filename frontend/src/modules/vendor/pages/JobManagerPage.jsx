@@ -210,7 +210,7 @@ const JobManagerPage = () => {
                                     >
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <h4 className="text-lg font-black text-slate-900 tracking-tight leading-none mb-1">{app.applicantName}</h4>
+                                                <h4 className="text-lg font-black text-slate-900 tracking-tight leading-none mb-1">{app.applicantName || app.applicant?.displayName}</h4>
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                                     Interested in <span className="text-primary">{app.jobId?.title || 'Unknown Role'}</span>
                                                 </p>

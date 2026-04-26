@@ -278,8 +278,17 @@ const ServiceManagement = () => {
                                             <div>
                                                 <h4 className="text-sm font-black text-slate-900 tracking-tight">{service.name}</h4>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${service.active ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{service.active ? 'Accepting Orders' : 'Offline'}</p>
+                                                    {isPending ? (
+                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-lg">
+                                                            <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse"></span>
+                                                            <p className="text-[8px] font-black text-amber-600 uppercase tracking-widest leading-none">Waiting for Admin Approval</p>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${service.active ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{service.active ? 'Accepting Orders' : 'Offline'}</p>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

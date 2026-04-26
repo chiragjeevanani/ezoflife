@@ -1,5 +1,5 @@
-export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-export const UPLOADS_URL = BASE_URL.replace('/api', '');
+export const BASE_URL = 'http://localhost:5001/api';
+export const UPLOADS_URL = BASE_URL.replace('/api', '') + '/uploads/';
 
 export const authApi = {
     requestOtp: async (phone, channel, mode, options = {}) => {
@@ -120,11 +120,12 @@ export const authApi = {
             throw error;
         }
     },
-    becomeVendor: async (id) => {
+    becomeVendor: async (id, data) => {
         try {
             const response = await fetch(`${BASE_URL}/auth/become-vendor/${id}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
             });
             return await response.json();
         } catch (error) {
@@ -143,6 +144,18 @@ export const authApi = {
             return await response.json();
         } catch (error) {
             console.error('Become Supplier API Error:', error);
+            throw error;
+        }
+    },
+    updateDocuments: async (id, formData) => {
+        try {
+            const response = await fetch(`${BASE_URL}/auth/update-documents/${id}`, {
+                method: 'PATCH',
+                body: formData
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Update Documents API Error:', error);
             throw error;
         }
     }
@@ -297,6 +310,12 @@ export const b2bOrderApi = {
 };
 
 export const adminApi = {
+    clearAllOrders: async () => {
+        const response = await fetch(`${BASE_URL}/admin/force-clear-orders`, {
+            method: 'POST'
+        });
+        return await response.json();
+    },
     getStats: async () => {
         try {
             const response = await fetch(`${BASE_URL}/admin/stats`);
@@ -321,6 +340,38 @@ export const adminApi = {
             return await response.json();
         } catch (error) {
             console.error('Admin Customers Error:', error);
+            throw error;
+        }
+    },
+    getAllUsers: async (role) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/users${role ? `?role=${role}` : ''}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Admin All Users Error:', error);
+            throw error;
+        }
+    },
+    toggleUserStatus: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/users/${id}/toggle-status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Toggle User Status Error:', error);
+            throw error;
+        }
+    },
+    deleteUser: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/users/${id}`, {
+                method: 'DELETE'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete User Error:', error);
             throw error;
         }
     },
@@ -467,6 +518,21 @@ export const adminApi = {
             return await response.json();
         } catch (error) {
             console.error('Delete Supplier Error:', error);
+            throw error;
+        }
+    },
+    clearAllOrders: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/force-clear-orders`, {
+                method: 'POST'
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to clear orders');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Clear All Orders Error:', error);
             throw error;
         }
     }
@@ -1144,135 +1210,48 @@ export const promotionApi = {
 
 export const jobApi = {
     create: async (data) => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Create Job Error:', error);
-            throw error;
-        }
+        const response = await fetch(`${BASE_URL}/jobs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        return await response.json();
     },
     getVendorJobs: async (vendorId) => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs/vendor?vendorId=${vendorId}`);
-            return await response.json();
-        } catch (error) {
-            console.error('Get Vendor Jobs Error:', error);
-            throw error;
-        }
+        const response = await fetch(`${BASE_URL}/jobs/vendor?vendorId=${vendorId}`);
+        return await response.json();
+    },
+    getActiveJobs: async () => {
+        const response = await fetch(`${BASE_URL}/jobs/active`);
+        return await response.json();
     },
     getVendorApplications: async (vendorId) => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs/vendor/${vendorId}/applications`);
-            return await response.json();
-        } catch (error) {
-            console.error('Fetch Vendor Applications Error:', error);
-            throw error;
-        }
-    },
-    getAdminAll: async () => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs/admin/all`);
-            return await response.json();
-        } catch (error) {
-            console.error('Admin Jobs Error:', error);
-            throw error;
-        }
-    },
-    getApproved: async () => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs/approved`);
-            return await response.json();
-        } catch (error) {
-            console.error('Approved Jobs Error:', error);
-            throw error;
-        }
-    },
-    updateStatus: async (id, status) => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs/${id}/status`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Update Job Status Error:', error);
-            throw error;
-        }
-    },
-    update: async (id, data) => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Update Job Error:', error);
-            throw error;
-        }
-    },
-    delete: async (id) => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs/${id}`, { method: 'DELETE' });
-            return await response.json();
-        } catch (error) {
-            console.error('Delete Job Error:', error);
-            throw error;
-        }
+        const response = await fetch(`${BASE_URL}/jobs/vendor/${vendorId}/applications`);
+        return await response.json();
     },
     apply: async (data) => {
-        try {
-            const isFormData = data instanceof FormData;
-            const response = await fetch(`${BASE_URL}/jobs/apply`, {
-                method: 'POST',
-                headers: isFormData ? {} : { 'Content-Type': 'application/json' },
-                body: isFormData ? data : JSON.stringify(data)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Job Apply Error:', error);
-            throw error;
-        }
+        const isFormData = data instanceof FormData;
+        const response = await fetch(`${BASE_URL}/jobs/apply`, {
+            method: 'POST',
+            headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+            body: isFormData ? data : JSON.stringify(data)
+        });
+        return await response.json();
+    },
+    getAdminAll: async () => {
+        const response = await fetch(`${BASE_URL}/jobs/admin/all`);
+        return await response.json();
     },
     getAdminApplications: async () => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs/admin/applications`);
-            return await response.json();
-        } catch (error) {
-            console.error('Admin Applications Error:', error);
-            throw error;
-        }
+        const response = await fetch(`${BASE_URL}/jobs/admin/applications`);
+        return await response.json();
     },
-    updateApplicationStatus: async (id, status) => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs/applications/${id}/status`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Update Application Status Error:', error);
-            throw error;
-        }
-    },
-    deleteApplication: async (id) => {
-        try {
-            const response = await fetch(`${BASE_URL}/jobs/applications/${id}`, { method: 'DELETE' });
-            return await response.json();
-        } catch (error) {
-            console.error('Delete Application Error:', error);
-            throw error;
-        }
+    delete: async (id) => {
+        const response = await fetch(`${BASE_URL}/jobs/${id}`, { method: 'DELETE' });
+        return await response.json();
     }
 };
+
 
 export const masterServiceApi = {
     getAll: async () => {

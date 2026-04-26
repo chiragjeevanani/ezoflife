@@ -25,7 +25,10 @@ export const approveVendor = async (req, res) => {
         const { id } = req.params;
         const vendor = await User.findByIdAndUpdate(
             id, 
-            { status: 'approved' }, 
+            { 
+                status: 'approved',
+                role: 'Vendor' // Flip role to Vendor
+            }, 
             { new: true }
         );
 
@@ -33,7 +36,7 @@ export const approveVendor = async (req, res) => {
             return res.status(404).json({ message: 'Vendor not found' });
         }
 
-        res.status(200).json({ message: 'Vendor approved successfully', vendor });
+        res.status(200).json({ message: 'Vendor approved and promoted to Vendor role', vendor });
     } catch (err) {
         console.error('Approve Vendor Error:', err);
         res.status(500).json({ message: 'Error approving vendor' });
@@ -106,9 +109,16 @@ export const getAllSuppliers = async (req, res) => {
 export const approveSupplier = async (req, res) => {
     try {
         const { id } = req.params;
-        const supplier = await User.findByIdAndUpdate(id, { status: 'approved' }, { new: true });
+        const supplier = await User.findByIdAndUpdate(
+            id, 
+            { 
+                status: 'approved',
+                role: 'Supplier' // Flip role to Supplier
+            }, 
+            { new: true }
+        );
         if (!supplier) return res.status(404).json({ message: 'Supplier not found' });
-        res.status(200).json({ message: 'Supplier approved successfully', supplier });
+        res.status(200).json({ message: 'Supplier approved and promoted to Supplier role', supplier });
     } catch (err) {
         res.status(500).json({ message: 'Error approving supplier' });
     }
@@ -146,47 +156,116 @@ export const updateSupplier = async (req, res) => {
     }
 };
 
-// Delete a supplier
-export const deleteSupplier = async (req, res) => {
+// Get all users with optional role filter
+export const getAllUsers = async (req, res) => {
     try {
-        const { id } = req.params;
-        const supplier = await User.findByIdAndDelete(id);
-        if (!supplier) return res.status(404).json({ message: 'Supplier not found' });
-        res.status(200).json({ message: 'Supplier deleted successfully' });
+        const { role } = req.query;
+        
+        // Final Strict Filter: 
+        // 1. Role must NOT be Admin
+        // 2. MUST BE (Customer) OR (Vendor/Supplier AND status === approved)
+        let query = { 
+            role: { $ne: 'Admin' },
+            $or: [
+                { role: 'Customer' },
+                { status: 'approved' }
+            ]
+        };
+        
+        if (role && role !== 'All') {
+            query.role = role;
+        }
+
+        const users = await User.find(query).select('-otp -otpExpiry').sort({ createdAt: -1 }).lean();
+        res.status(200).json(users);
     } catch (err) {
-        res.status(500).json({ message: 'Error deleting supplier' });
+        console.error('Get All Users Error:', err);
+        res.status(500).json({ message: 'Error fetching users' });
     }
 };
 
-// Get Dashboard Stats (Live Data)
+// Delete a user
+export const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findByIdAndDelete(id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error deleting user' });
+    }
+};
+
+// Clear all users except Admin
+export const clearAllUsers = async (req, res) => {
+    try {
+        const result = await User.deleteMany({ role: { $ne: 'Admin' } });
+        console.log(`🧹 [CLEANUP] Deleted ${result.deletedCount} users from system`);
+        res.status(200).json({ message: 'System cleared: All users (except Admins) have been purged.' });
+    } catch (err) {
+        console.error('Clear All Users Error:', err);
+        res.status(500).json({ message: 'Internal server error during cleanup' });
+    }
+};
+
+// Toggle user status (Block/Unblock)
+export const toggleUserStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.status = user.status === 'approved' ? 'rejected' : 'approved';
+        await user.save();
+
+        res.status(200).json({ message: `User status changed to ${user.status}`, user });
+    } catch (err) {
+        res.status(500).json({ message: 'Error updating user status' });
+    }
+};
+
+// Get Dashboard Stats (Enhanced for Requested Metrics)
 export const getDashboardStats = async (req, res) => {
     try {
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+
+        const Ticket = (await import('../models/Ticket.js')).default;
+
         const [
-            totalUsers,
-            activeVendors,
-            pendingApprovals,
-            totalRiders,
-            totalSuppliers,
-            pendingSuppliers
+            totalOrders,
+            activeRiders,
+            pendingIssues,
+            todayOrders
         ] = await Promise.all([
-            User.countDocuments({ role: 'Customer' }),
-            User.countDocuments({ role: 'Vendor', status: 'approved' }),
-            User.countDocuments({ role: 'Vendor', status: 'pending' }),
-            User.countDocuments({ role: 'Rider' }),
-            User.countDocuments({ role: 'Supplier' }),
-            User.countDocuments({ role: 'Supplier', status: 'pending' })
+            Order.countDocuments({}),
+            User.countDocuments({ role: 'Rider', isOnline: true }),
+            Ticket.countDocuments({ status: 'Open' }),
+            Order.find({ createdAt: { $gte: startOfToday } }).select('totalAmount status deliverySlot')
         ]);
+
+        const todayRevenue = todayOrders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
+        
+        // Simple logic for delayed: status not Delivered and it's from yesterday or earlier
+        // (Improving this would require parsing deliverySlot.date string, but for now we check createdAt)
+        const yesterday = new Date(startOfToday);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const delayedOrders = await Order.countDocuments({
+            status: { $nin: ['Delivered', 'Cancelled'] },
+            createdAt: { $lt: startOfToday } // Simplified delayed logic: not delivered and older than today
+        });
 
         res.status(200).json({
             stats: {
-                totalUsers,
-                activeVendors,
-                pendingApprovals,
-                totalRiders,
-                totalSuppliers,
-                pendingSuppliers,
-                totalRevenue: 0,
-                activeOrders: 0 
+                totalOrders,
+                activeRiders,
+                todayRevenue,
+                pendingIssues,
+                delayedOrders,
+                // Keep some legacy fields for compatibility if needed
+                totalUsers: await User.countDocuments({ role: 'Customer' }),
+                activeVendors: await User.countDocuments({ role: 'Vendor', status: 'approved' })
             }
         });
     } catch (err) {
@@ -243,22 +322,7 @@ export const getVendorById = async (req, res) => {
 // Get all customers
 export const getCustomers = async (req, res) => {
     try {
-        let customers = await User.find({ role: 'Customer' }).select('-otp -otpExpiry').lean();
-        
-        // Auto-seed if less than 5 customers
-        if (!customers || customers.length < 5) {
-            const seedData = [
-                { phone: '7000000001', displayName: 'Rahul Sharma', role: 'Customer', status: 'approved', address: 'Sector 56, Gurgaon' },
-                { phone: '7000000002', displayName: 'Priya Verma', role: 'Customer', status: 'approved', address: 'Palam Vihar, Gurgaon' },
-                { phone: '7000000003', displayName: 'Amit Goel', role: 'Customer', status: 'approved', address: 'Sushant Lok, Gurgaon' },
-                { phone: '7000000004', displayName: 'Sneha Gupta', role: 'Customer', status: 'approved', address: 'Sector 44, Gurgaon' },
-                { phone: '7000000005', displayName: 'Vikas Singh', role: 'Customer', status: 'approved', address: 'Sector 50, Gurgaon' }
-            ];
-            for (const u of seedData) {
-                await User.updateOne({ phone: u.phone }, { $set: u }, { upsert: true });
-            }
-            customers = await User.find({ role: 'Customer' }).select('-otp -otpExpiry').lean();
-        }
+        const customers = await User.find({ role: 'Customer' }).select('-otp -otpExpiry').lean();
         res.status(200).json(customers);
     } catch (err) {
         res.status(500).json({ message: 'Error fetching customers', error: err.message });
@@ -317,7 +381,15 @@ export const updateVendorServiceStatus = async (req, res) => {
 
         // 1. Check Custom Services (Service Collection)
         const Service = (await import('../models/Service.js')).default;
-        const customService = await Service.findOne({ _id: serviceId, vendorId });
+        const mongoose = (await import('mongoose')).default;
+        
+        const customService = await Service.findOne({ 
+            _id: serviceId,
+            $or: [
+                { vendorId: vendorId },
+                { vendorId: mongoose.Types.ObjectId.isValid(vendorId) ? new mongoose.Types.ObjectId(vendorId) : null }
+            ].filter(q => q.vendorId !== null)
+        });
         
         if (customService) {
             customService.approvalStatus = status === 'approved' ? 'Approved' : 'Rejected';
@@ -345,18 +417,20 @@ export const updateVendorServiceStatus = async (req, res) => {
             await vendor.save();
         }
 
-        // Optional: Trigger notification to vendor
+        // Trigger notification to vendor
         if (status === 'rejected') {
              try {
                 const Notification = (await import('../models/Notification.js')).default;
                 await new Notification({
-                    userId: vendorId,
+                    recipient: vendorId,
+                    role: 'vendor',
                     title: 'Service Rejected',
-                    message: `Your service update was rejected: ${message}`,
-                    type: 'alert'
+                    message: `Your service update was rejected: ${message || 'Criteria not met'}`,
+                    type: 'order_placed' // Fallback to a valid enum type
                 }).save();
+                console.log(`✅ [NOTIF] Rejection sent to vendor ${vendorId}`);
              } catch (notifErr) {
-                 console.error('Failed to send rejection notification:', notifErr);
+                 console.error('Failed to send rejection notification:', notifErr.message);
              }
         }
 
@@ -438,5 +512,30 @@ export const uploadVendorDocument = async (req, res) => {
     } catch (err) {
         console.error('Admin Document Upload Error:', err);
         res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
+};
+
+// Clear all services
+export const clearAllServices = async (req, res) => {
+    try {
+        const Service = (await import('../models/Service.js')).default;
+        await Service.deleteMany({});
+        res.status(200).json({ message: 'All services cleared successfully' });
+    } catch (err) {
+        console.error('Clear Services Error:', err);
+        res.status(500).json({ message: 'Error clearing services' });
+    }
+};
+
+// Clear all orders
+export const clearAllOrders = async (req, res) => {
+    console.log('🗑️ [ADMIN_PURGE] Received request to clear all orders');
+    try {
+        const result = await Order.deleteMany({});
+        console.log(`🧹 [CLEANUP] Deleted ${result.deletedCount} orders from system`);
+        res.status(200).json({ message: 'System cleared: All orders have been purged.' });
+    } catch (err) {
+        console.error('Clear All Orders Error:', err);
+        res.status(500).json({ message: 'Internal server error during order cleanup' });
     }
 };

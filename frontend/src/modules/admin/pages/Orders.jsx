@@ -7,7 +7,7 @@ import { mockAdminData } from '../data/mockData';
 import PageHeader from '../components/common/PageHeader';
 import DataGrid from '../components/tables/DataGrid';
 import StatusBadge from '../components/common/StatusBadge';
-import { orderApi } from '../../../lib/api';
+import { orderApi, adminApi } from '../../../lib/api';
 
 export default function Orders() {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ export default function Orders() {
   const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const tabs = useMemo(() => ['All', 'Assigned', 'In Progress', 'Ready', 'Delivered', 'Cancelled'], []);
+  const tabs = useMemo(() => ['All', 'Pending', 'In Progress', 'Delivered', 'Cancelled'], []);
 
   const fetchAllOrders = async () => {
     try {
@@ -94,6 +94,26 @@ export default function Orders() {
     
     doc.save(`EzofLife_Orders_${activeTab}_${new Date().getTime()}.pdf`);
     console.log('PDF Download Started');
+  };
+
+  const handleClearAllOrders = async () => {
+    if (!window.confirm('⚠️ WARNING: This will permanently delete ALL orders from the system. This action cannot be undone. Are you sure?')) return;
+    
+    try {
+        setLoading(true);
+        const result = await adminApi.clearAllOrders();
+        if (result.message) {
+            setAllOrders([]);
+            alert(result.message);
+        } else {
+            throw new Error('Invalid response from server');
+        }
+    } catch (err) {
+        console.error('Clear all orders error:', err);
+        alert(`Failed to clear orders: ${err.message}`);
+    } finally {
+        setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -193,6 +213,7 @@ export default function Orders() {
       <PageHeader 
         title="Orders" 
         actions={[
+          { label: 'Clear All Orders', icon: Trash2, variant: 'secondary', onClick: handleClearAllOrders },
           { label: 'Export Order List', icon: FileText, variant: 'secondary', onClick: handleExportPDF },
           { label: 'Create Manual Order', icon: PlusCircle, variant: 'primary' }
         ]}

@@ -1,36 +1,16 @@
 import mongoose from 'mongoose';
 
 const jobApplicationSchema = new mongoose.Schema({
-    jobId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Job',
-        required: true
-    },
-    applicantName: {
-        type: String,
-        required: true
-    },
-    applicantEmail: {
-        type: String,
-        required: true
-    },
-    applicantPhone: {
-        type: String,
-        required: true
-    },
-    resumeLink: {
-        type: String
-    },
-    coverLetter: {
-        type: String
-    },
-    status: {
-        type: String,
-        enum: ['Pending', 'Reviewed', 'Recommended', 'Approved', 'Rejected'],
-        default: 'Pending'
-    }
+    job: { type: mongoose.Schema.Types.ObjectId, ref: 'Job', required: true },
+    applicant: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    applicantName: { type: String, required: true },
+    applicantEmail: { type: String },
+    vendor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    creatorRole: { type: String, enum: ['Admin', 'Vendor'], default: 'Vendor' },
+    status: { type: String, enum: ['Pending', 'Reviewed', 'Selected', 'Rejected'], default: 'Pending' },
+    experience: { type: String },
+    contactNumber: { type: String },
+    resumeLink: { type: String }
 }, { timestamps: true });
 
-const JobApplication = mongoose.model('JobApplication', jobApplicationSchema);
-
-export default JobApplication;
+export default mongoose.model('JobApplication', jobApplicationSchema);

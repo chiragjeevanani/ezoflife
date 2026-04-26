@@ -24,8 +24,8 @@ const CareersPage = () => {
 
     const fetchJobs = async () => {
         try {
-            const data = await jobApi.getApproved();
-            setJobs(data);
+            const data = await jobApi.getActiveJobs();
+            setJobs(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Fetch jobs error:', error);
         } finally {
@@ -35,23 +35,38 @@ const CareersPage = () => {
 
     const handleApply = async (e) => {
         e.preventDefault();
+        const userDataRaw = localStorage.getItem('userData') || localStorage.getItem('user') || '{}';
+        const userData = JSON.parse(userDataRaw);
+        const applicantId = userData._id || userData.id || userData.user?._id || userData.user?.id;
+
+        if (!applicantId) {
+            alert('Please login to apply for jobs.');
+            return;
+        }
+
         try {
             const formData = new FormData();
+            formData.append('jobId', isApplying._id);
+            formData.append('applicantId', applicantId);
             formData.append('applicantName', applyForm.applicantName);
             formData.append('applicantEmail', applyForm.applicantEmail);
-            formData.append('applicantPhone', applyForm.applicantPhone);
-            formData.append('coverLetter', applyForm.coverLetter);
-            formData.append('jobId', isApplying._id);
+            formData.append('creatorRole', isApplying.creatorRole || 'Vendor');
+            if (isApplying.vendor?._id || isApplying.vendor) {
+                formData.append('vendorId', isApplying.vendor?._id || isApplying.vendor);
+            }
+            formData.append('experience', applyForm.experience || 'Not Specified');
+            formData.append('contactNumber', applyForm.applicantPhone);
             
             if (applyForm.resume) {
                 formData.append('resume', applyForm.resume);
             }
 
             await jobApi.apply(formData);
-            setIsApplied(isApplying.creatorRole || 'Vendor');
+            setIsApplied('Vendor');
             setIsApplying(null);
             setApplyForm({ applicantName: '', applicantEmail: '', applicantPhone: '', resume: null, coverLetter: '' });
             setTimeout(() => setIsApplied(false), 3000);
+            fetchJobs(); 
         } catch (error) {
             alert('Application failed, please try again.');
         }
@@ -139,11 +154,11 @@ const CareersPage = () => {
                                         <div className="flex-1">
                                             <h3 className="font-black text-lg tracking-tight text-on-surface mb-1">{job.title}</h3>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary">{job.companyName || (job.creatorRole === 'Admin' ? 'Spinzyt Internal' : 'Skilled Labor (Vendor)')}</span>
+                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary">{job.vendor?.displayName || 'Vendor Post'}</span>
                                                 <span className="w-1 h-1 rounded-full bg-outline-variant/30"></span>
-                                                <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-widest">{job.creatorRole === 'Admin' ? 'Internal' : 'Vendor Post'}</span>
+                                                <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-widest">{job.applicantsCount || 0} Applicants</span>
                                                 <span className="w-1 h-1 rounded-full bg-outline-variant/30"></span>
-                                                <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{job.type}</span>
+                                                <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{job.jobType}</span>
                                             </div>
                                         </div>
                                         <div className="bg-surface-container-low px-3 py-1.5 rounded-xl border border-outline-variant/10 flex items-center gap-1.5 shrink-0">

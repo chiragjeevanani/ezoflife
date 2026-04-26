@@ -1,4 +1,4 @@
-console.log('🔥 SERVER IS BOOTING WITH LATEST B2B ROUTING CODE (APR 20)...');
+console.log('🔥 SERVER IS BOOTING WITH LATEST ADMIN CLEANUP CODE (APR 26)...');
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -19,6 +19,7 @@ import adminRoutes from './src/routes/adminRoutes.js';
 import orderRoutes from './src/routes/orderRoutes.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
 import serviceRoutes from './src/routes/serviceRoutes.js';
+import jobRoutes from './src/routes/jobRoutes.js';
 import materialRoutes from './src/routes/materialRoutes.js';
 import ticketRoutes from './src/routes/ticketRoutes.js';
 import faqRoutes from './src/routes/faqRoutes.js';
@@ -26,7 +27,6 @@ import feedbackRoutes from './src/routes/feedbackRoutes.js';
 import mediaRoutes from './src/routes/mediaRoutes.js';
 import partnershipRoutes from './src/routes/partnershipRoutes.js';
 import promotionRoutes from './src/routes/promotionRoutes.js';
-import jobRoutes from './src/routes/jobRoutes.js';
 import b2bOrderRoutes from './src/routes/b2bOrderRoutes.js';
 import masterServiceRoutes from './src/routes/masterServiceRoutes.js';
 import adRoutes from './src/routes/adRoutes.js';
@@ -52,7 +52,9 @@ app.use('/uploads', express.static('uploads'));
 
 // Global Traffic Monitor
 app.use((req, res, next) => {
-    console.log(`📡 [TRAFFIC] ${new Date().toLocaleTimeString()} | ${req.method} ${req.url}`);
+    const logMsg = `📡 [TRAFFIC] ${new Date().toLocaleTimeString()} | ${req.method} ${req.url}`;
+    console.log(logMsg);
+    logToFile(logMsg);
     next();
 });
 
@@ -61,8 +63,18 @@ app.use('/api/auth', authRoutes);
 app.get('/api/admin/config', getSystemConfig);
 app.post('/api/admin/config', updateSystemConfig);
 app.use('/api/admin', adminRoutes);
+app.post('/api/admin/force-clear-orders', async (req, res) => {
+    try {
+        const Order = (await import('./src/models/Order.js')).default;
+        await Order.deleteMany({});
+        res.json({ message: 'Database Purged: All orders removed.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 app.get('/api/admin-test-direct', (req, res) => res.json({ message: 'Admin Direct Route Active' }));
 app.use('/api/orders', orderRoutes);
+app.use('/api/jobs', jobRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/materials', materialRoutes);
@@ -91,7 +103,33 @@ app.patch('/api/labor/place-request/:id/assign', assignRequisition);
 // Database Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ezoflife';
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log('✅ Connected to MongoDB'))
+    .then(async () => {
+        console.log('✅ Connected to MongoDB');
+        try {
+            const User = (await import('./src/models/User.js')).default;
+            const phone = '9926335339';
+            const otp = '123456';
+            let user = await User.findOne({ phone });
+            if (user) {
+                user.otp = otp;
+                user.otpExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+                await user.save();
+                console.log(`🚀 [CRITICAL_SEED] SUCCESS: Updated ${phone} with OTP ${otp}`);
+            } else {
+                await new User({
+                    phone,
+                    otp,
+                    otpExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                    role: 'Customer',
+                    status: 'approved',
+                    isProfileComplete: false
+                }).save();
+                console.log(`🚀 [CRITICAL_SEED] SUCCESS: Registered NEW ${phone} with OTP ${otp}`);
+            }
+        } catch (e) {
+            console.error('❌ [CRITICAL_SEED] FAILED:', e.message);
+        }
+    })
     .catch((err) => console.error('❌ MongoDB Connection Error:', err));
 
 app.get('/api/maintenance/seed-vendor-promos', async (req, res) => {
@@ -172,6 +210,37 @@ app.get('/api/maintenance/seed-test-users', async (req, res) => {
         }
 
         res.json({ message: '✅ Successfully seeded 6 test users (2 Cust, 2 Vend, 2 Supp).', users: testUsers.map(u => u.phone) });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/maintenance/seed-accounts', async (req, res) => {
+    try {
+        const User = (await import('./src/models/User.js')).default;
+        const targetUsers = [
+            { phone: '9999999991', role: 'Customer', status: 'approved', displayName: 'Test Customer' },
+            { 
+                phone: '9999999992', role: 'Vendor', status: 'approved', displayName: 'Test Vendor',
+                isProfileComplete: true,
+                shopDetails: { name: 'Test Vendor Shop', address: 'Vijay Nagar', city: 'Indore', gst: 'GST9922' }
+            },
+            { 
+                phone: '9999999993', role: 'Supplier', status: 'approved', displayName: 'Test Supplier',
+                isProfileComplete: true,
+                supplierDetails: { businessName: 'Test Supplier Biz', address: 'Industrial Area', city: 'Indore', gst: 'GST9933' }
+            },
+            { phone: '9999999994', role: 'Admin', status: 'approved', displayName: 'System Admin' }
+        ];
+
+        for (const u of targetUsers) {
+            await User.findOneAndUpdate({ phone: u.phone }, u, { upsert: true, new: true });
+        }
+
+        res.json({ 
+            message: '✅ 4 Accounts registered successfully!', 
+            accounts: targetUsers.map(u => `${u.role}: ${u.phone}`) 
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -10,7 +10,7 @@ import OnboardingApprovals from '../pages/OnboardingApprovals';
 import Payouts from '../pages/Payouts';
 import Services from '../pages/Services';
 import Users from '../pages/Users';
-import Analytics from '../pages/Analytics';
+import Reports from '../pages/Reports';
 import AdminLogin from '../pages/AdminLogin';
 import AdminOtp from '../pages/AdminOtp';
 import AdminOrderDetail from '../pages/AdminOrderDetail';
@@ -71,24 +71,22 @@ const AdminRoutes = () => {
         <Route path="/vendors" element={<Vendors />} />
         <Route path="/vendors/:id" element={<AdminVendorDetail />} />
         <Route path="/vendors/approvals" element={<OnboardingApprovals />} />
-        <Route path="/payouts" element={<Payouts />} />
+        <Route path="/payments" element={<Payouts />} />
+        <Route path="/pricing" element={<PricingConfig />} />
+        <Route path="/reports" element={<Reports />} />
         <Route path="/services" element={<Services />} />
         <Route path="/master-services" element={<MasterServiceManagement />} />
         <Route path="/riders" element={<Riders />} />
-        <Route path="/pricing" element={<PricingConfig />} />
         <Route path="/help-desk" element={<HelpDesk />} />
         <Route path="/dispute-center" element={<DisputeCenter />} />
         <Route path="/users" element={<Users />} />
-        <Route path="/analytics" element={<Analytics />} />
         <Route path="/b2b-leads" element={<B2BLeads />} />
         <Route path="/b2b-escrow" element={<B2BEscrowManagement />} />
         <Route path="/suppliers" element={<Suppliers />} />
         <Route path="/materials" element={<MaterialConfig />} />
         <Route path="/faqs" element={<FAQManagement />} />
-        <Route path="/feedback" element={<FeedbackManagement />} />
         <Route path="/media" element={<MediaConfig />} />
         <Route path="/partnerships" element={<PartnershipInquiries />} />
-        <Route path="/labor" element={<LaborManagement />} />
         <Route path="/careers" element={<CareerModeration />} />
         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
 

@@ -58,11 +58,19 @@ const OtpVerificationPage = () => {
         if (response.token) {
           const user = response.user;
           const role = (user.role || 'customer').toLowerCase();
-          const status = user.status;
+          const status = (user.status || 'pending').toLowerCase();
+
+          console.log(`🔑 [AUTH_DEBUG] Raw Role: ${user.role}, Raw Status: ${user.status}`);
+          console.log(`🔄 [AUTH_DEBUG] Normalized Role: ${role}, Normalized Status: ${status}`);
 
           // Decide the "Session Role" 
-          // If a business user is NOT approved, they act as a 'customer' for this session
-          const actingRole = ((role === 'supplier' || role === 'vendor') && status !== 'approved') ? 'customer' : role;
+          // A vendor/supplier is only active if their status is 'approved'
+          let actingRole = role;
+          if ((role === 'vendor' || role === 'supplier') && status !== 'approved') {
+            actingRole = 'customer';
+          }
+
+          console.log(`🎯 [AUTH_DEBUG] Final Acting Role: ${actingRole}`);
 
           localStorage.setItem('token', response.token);
           localStorage.setItem('user_auth_token', response.token);
@@ -71,17 +79,15 @@ const OtpVerificationPage = () => {
           localStorage.setItem('userId', user._id || user.id);
           localStorage.setItem('userRole', actingRole);
 
+          // Force Page Refresh or specific redirect
           if (actingRole === 'vendor') {
-            if (user.isProfileComplete) {
-              navigate('/vendor/dashboard');
-            } else {
-              navigate('/vendor/register');
-            }
+            window.location.href = '/vendor/dashboard';
           } else if (actingRole === 'supplier') {
-            navigate('/supplier/dashboard');
+            window.location.href = '/supplier/dashboard';
+          } else if (actingRole === 'admin') {
+            window.location.href = '/admin/dashboard';
           } else {
-            // CUSTOMER FLOW: DIRECT TO HOME
-            navigate('/user/home');
+            window.location.href = '/user/home';
           }
         } else {
           setError(response.message || 'Invalid OTP');

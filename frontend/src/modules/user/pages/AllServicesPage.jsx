@@ -12,8 +12,17 @@ const AllServicesPage = () => {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const data = await serviceApi.getAll({ approvedOnly: true });
-      setServices(data.filter(s => s.status === 'Active' && s.approvalStatus === 'Approved'));
+      const [masterRes, customRes] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/master-services`).then(res => res.json()),
+        serviceApi.getAll({ approvedOnly: true })
+      ]);
+
+      const combined = [
+        ...(Array.isArray(masterRes) ? masterRes.map(s => ({ ...s, isMaster: true })) : []),
+        ...(Array.isArray(customRes) ? customRes.map(s => ({ ...s, isMaster: false })) : [])
+      ];
+
+      setServices(combined.filter(s => (s.status === 'Active' || s.isActive === true) && (s.isMaster || s.approvalStatus === 'Approved')));
     } catch (error) {
       console.error('Error fetching services:', error);
     } finally {
@@ -118,7 +127,7 @@ const AllServicesPage = () => {
                   desc: service.description, 
                   image: service.image, 
                   color: 'primary', 
-                  price: `₹${service.basePrice}/${service.unit}` 
+                  price: `₹${service.totalPrice}/${service.unit}` 
                 } } })}
                 className="bg-white rounded-[2.5rem] p-7 border border-outline-variant/10 shadow-sm flex items-center justify-between group cursor-pointer hover:shadow-xl hover:shadow-primary/5 transition-all"
               >
@@ -133,7 +142,7 @@ const AllServicesPage = () => {
                   <div>
                     <h3 className="font-headline font-black text-lg text-on-surface leading-tight mb-1">{service.name}</h3>
                     <p className="text-on-surface-variant text-[11px] font-bold opacity-60 leading-relaxed line-clamp-1">{service.description}</p>
-                    <div className="mt-2 text-[10px] font-black text-primary uppercase tracking-widest">₹{service.basePrice}/{service.unit}</div>
+                    <div className="mt-2 text-[10px] font-black text-primary uppercase tracking-widest">₹{service.totalPrice}/{service.unit}</div>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-outline-variant group-hover:text-primary transition-all opacity-0 group-hover:opacity-100 translate-x-[-10px] group-hover:translate-x-0">chevron_right</span>

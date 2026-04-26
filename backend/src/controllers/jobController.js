@@ -1,59 +1,113 @@
 import Job from '../models/Job.js';
-import mongoose from 'mongoose';
+import JobApplication from '../models/JobApplication.js';
 
+// Vendor: Post a new job
 export const createJob = async (req, res) => {
     try {
-        const job = new Job(req.body);
-        // All jobs created by Admin or Vendor are Approved by default as per user request
-        job.status = 'Approved';
-        if (req.body.creatorRole === 'Admin') job.isDirectAdminPost = true;
-        
-        await job.save();
-        res.status(201).json(job);
+        const { title, category, jobType, description, experience, salary, location, skills, vendorId, companyName, creatorRole } = req.body;
+        const newJob = new Job({
+            title, category, jobType, description, experience, salary, location, skills,
+            vendor: creatorRole === 'Admin' ? null : vendorId,
+            companyName,
+            creatorRole: creatorRole || 'Vendor',
+            status: 'Active'
+        });
+        await newJob.save();
+        res.status(201).json(newJob);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
+// Vendor: Get jobs posted by specific vendor
 export const getVendorJobs = async (req, res) => {
     try {
-        const { vendorId } = req.query;
-        if (!vendorId) return res.status(400).json({ message: 'Vendor ID is required' });
-        
-        // Use ObjectId for precise matching
-        const jobs = await Job.find({ 
-            createdBy: new mongoose.Types.ObjectId(vendorId) 
-        }).sort({ createdAt: -1 });
-        
+        const vendorId = req.params.vendorId || req.query.vendorId;
+        const jobs = await Job.find({ vendor: vendorId }).sort({ createdAt: -1 });
         res.json(jobs);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-export const getAllJobsForAdmin = async (req, res) => {
+// Customer/Public: Get all active jobs
+export const getAllActiveJobs = async (req, res) => {
     try {
-        const jobs = await Job.find().populate('createdBy', 'displayName shopDetails').sort({ createdAt: -1 });
+        const jobs = await Job.find({ status: 'Active' })
+            .populate('vendor', 'displayName profileImage')
+            .sort({ createdAt: -1 });
         res.json(jobs);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-export const updateJobStatus = async (req, res) => {
+// Customer: Apply for a job
+export const applyToJob = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { status } = req.body;
-        const job = await Job.findByIdAndUpdate(id, { status }, { new: true });
-        res.json(job);
+        const { jobId, applicantId, vendorId, experience, contactNumber, applicantName, applicantEmail, creatorRole } = req.body;
+        
+        // Check if already applied
+        const existing = await JobApplication.findOne({ job: jobId, applicant: applicantId });
+        if (existing) {
+            return res.status(400).json({ message: 'You have already applied for this job.' });
+        }
+
+        const application = new JobApplication({
+            job: jobId, 
+            applicant: applicantId, 
+            applicantName,
+            applicantEmail,
+            vendor: creatorRole === 'Admin' ? null : vendorId, 
+            creatorRole: creatorRole || 'Vendor',
+            experience, 
+            contactNumber,
+            resumeLink: req.file ? req.file.filename : null
+        });
+        await application.save();
+
+        // Increment applicant count in Job
+        await Job.findByIdAndUpdate(jobId, { $inc: { applicantsCount: 1 } });
+
+        res.status(201).json(application);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-export const getApprovedJobs = async (req, res) => {
+// Vendor: Get applications for their jobs
+export const getVendorApplications = async (req, res) => {
     try {
-        const jobs = await Job.find({ status: 'Approved' }).sort({ createdAt: -1 });
+        const applications = await JobApplication.find({ 
+            vendor: req.params.vendorId,
+            creatorRole: 'Vendor'
+        })
+            .populate('job', 'title')
+            .populate('applicant', 'displayName profileImage email')
+            .sort({ createdAt: -1 });
+        res.json(applications);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getAdminApplications = async (req, res) => {
+    try {
+        const applications = await JobApplication.find({ 
+            creatorRole: 'Admin'
+        })
+            .populate('job', 'title')
+            .populate('applicant', 'displayName profileImage email')
+            .sort({ createdAt: -1 });
+        res.json(applications);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getAdminAllJobs = async (req, res) => {
+    try {
+        const jobs = await Job.find().sort({ createdAt: -1 });
         res.json(jobs);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -63,17 +117,9 @@ export const getApprovedJobs = async (req, res) => {
 export const deleteJob = async (req, res) => {
     try {
         await Job.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Job deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-export const updateJob = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const job = await Job.findByIdAndUpdate(id, req.body, { new: true });
-        res.json(job);
+        // Also delete associated applications
+        await JobApplication.deleteMany({ job: req.params.id });
+        res.json({ message: 'Job and associated applications deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

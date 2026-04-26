@@ -28,19 +28,6 @@ const VendorHeader = () => {
           <div onClick={() => navigate('/vendor/dashboard')} className="cursor-pointer">
             <h1 className="font-headline font-black text-xl text-primary tracking-tighter leading-none uppercase">SPINZYT</h1>
           </div>
-          
-          <div className="h-6 w-px bg-slate-200" /> {/* Divider */}
-
-          {/* 2. Current Address (Shop/Office) */}
-          <div className="flex flex-col max-w-[150px] md:max-w-[200px] cursor-pointer group" onClick={() => setShowAddressModal(true)}>
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded-md transition-colors group-hover:bg-primary group-hover:text-white">SHOP</span>
-              <span className="material-symbols-outlined text-slate-400 text-[14px] group-hover:text-primary transition-colors">expand_more</span>
-            </div>
-            <p className="text-[11px] font-bold text-slate-500 truncate leading-tight mt-0.5 group-hover:text-slate-900 transition-colors">
-              {shopAddress}
-            </p>
-          </div>
         </div>
 
         {/* Right Side Actions */}

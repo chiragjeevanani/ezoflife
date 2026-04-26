@@ -46,40 +46,86 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
         {
             group: 'Operations', items: [
                 { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+                { icon: Users, label: 'User Management', path: '/admin/users' },
+                { icon: ShieldCheck, label: 'Vendor Approvals', path: '/admin/vendors/approvals' },
                 { icon: ShoppingBag, label: 'Orders', path: '/admin/orders' },
-                { icon: Bike, label: 'Fleet Management', path: '/admin/riders' },
-                { icon: HelpCircle, label: 'Help Desk', path: '/admin/help-desk' },
-                { icon: MessageSquare, label: 'FAQ Manager', path: '/admin/faqs' },
-                { icon: UserCircle, label: 'User Feedback', path: '/admin/feedback' },
-                { icon: Bell, label: 'Notifications', path: '/admin/notifications' },
+                { 
+                    icon: CreditCard, 
+                    label: 'Payments', 
+                    path: '/admin/payments',
+                    subItems: [
+                        { label: 'Customer Payments', path: '/admin/payments?tab=customer' },
+                        { label: 'Vendor Payouts', path: '/admin/payments?tab=vendor' },
+                        { label: 'Supplier Payouts', path: '/admin/payments?tab=supplier' },
+                        { label: 'Pending COD', path: '/admin/payments?tab=cod' },
+                        { label: 'Refunds', path: '/admin/payments?tab=refunds' },
+                    ]
+                },
+                { 
+                    icon: Layers, 
+                    label: 'Services & Pricing', 
+                    path: '/admin/services',
+                    subItems: [
+                        { label: 'Services', path: '/admin/services' },
+                        { label: 'Master Services', path: '/admin/master-services' },
+                        { label: 'Edit Rates', path: '/admin/pricing' },
+                        { label: 'Essential Fee', path: '/admin/pricing?type=essential' },
+                        { label: 'Heritage Fee', path: '/admin/pricing?type=heritage' },
+                        { label: 'Express Surcharge', path: '/admin/pricing?type=express' },
+                    ]
+                },
+                { 
+                    icon: MessageSquare, 
+                    label: 'Support Tickets', 
+                    path: '/admin/help-desk',
+                    subItems: [
+                        { label: 'Customer Issues', path: '/admin/help-desk?category=Customer' },
+                        { label: 'Vendor Issues', path: '/admin/help-desk?category=Vendor' },
+                        { label: 'Missing Item Dispute', path: '/admin/disputes' },
+                        { label: 'Technical Problem', path: '/admin/help-desk?category=Technical' },
+                    ]
+                },
+                { 
+                    icon: BarChart3, 
+                    label: 'Reports', 
+                    path: '/admin/reports',
+                    subItems: [
+                        { label: 'Financial Settlement', path: '/admin/reports?type=settlement' },
+                        { label: 'Vendor TAT Report', path: '/admin/reports?type=tat' },
+                        { label: 'Geospatial Heatmaps', path: '/admin/reports?type=heatmap' },
+                        { label: 'Revenue Leakage', path: '/admin/reports?type=leakage' },
+                        { label: 'Repeat Customers', path: '/admin/reports?type=customers' },
+                        { label: 'B2B Leads', path: '/admin/b2b-leads' },
+                    ]
+                },
+                { 
+                    icon: Bell, 
+                    label: 'Notifications', 
+                    path: '/admin/notifications',
+                    subItems: [
+                        { label: 'Offers', path: '/admin/notifications?type=offers' },
+                        { label: 'Maintenance alert', path: '/admin/notifications?type=maintenance' },
+                        { label: 'Payment reminder', path: '/admin/notifications?type=payment' },
+                    ]
+                },
+                { icon: HelpCircle, label: 'FAQ Manager', path: '/admin/faqs' },
                 { icon: Rocket, label: 'Splash Ads', path: '/admin/ads' },
                 { icon: Handshake, label: 'Partnerships', path: '/admin/partnerships' },
             ]
         },
         {
             group: 'Network', items: [
-                { icon: Store, label: 'Vendors', path: '/admin/vendors' },
-                { icon: ShieldCheck, label: 'Approvals', path: '/admin/vendors/approvals' },
-                { icon: Factory, label: 'Suppliers', path: '/admin/suppliers' },
-                { icon: Users, label: 'Users', path: '/admin/users' },
+                { icon: Briefcase, label: 'Career Center', path: '/admin/careers' },
             ]
         },
         {
             group: 'Financials', items: [
-                { icon: CreditCard, label: 'Payouts', path: '/admin/payouts' },
                 { icon: ShieldCheck, label: 'B2B Settlements', path: '/admin/b2b-escrow' },
-                { icon: Tags, label: 'Pricing Policy', path: '/admin/pricing' },
-                { icon: TrendingUp, label: 'Analytics', path: '/admin/analytics' },
             ]
         },
         {
             group: 'Core Assets', items: [
-                { icon: ClipboardList, label: 'Master Services', path: '/admin/master-services' },
-                { icon: Package, label: 'Services', path: '/admin/services' },
                 { icon: Layers, label: 'Material Catalog', path: '/admin/materials' },
-                { icon: UserCircle, label: 'Labor Manager', path: '/admin/labor' },
-                { icon: Briefcase, label: 'Career Center', path: '/admin/careers' },
-                { icon: ShieldAlert, label: 'Dispute Center', path: '/admin/dispute-center' },
             ]
         },
         {
@@ -152,12 +198,19 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
                             )}
                             {group.items.map((item) => {
                                 const isActive = location.pathname === item.path;
+                                const isExpanded = expandedMenu === item.label;
+                                const hasSubItems = item.subItems && item.subItems.length > 0;
+
                                 return (
                                     <div key={item.label}>
                                         <button
                                             onClick={() => {
-                                                navigate(item.path);
-                                                setIsMobileOpen(false);
+                                                if (hasSubItems) {
+                                                    setExpandedMenu(isExpanded ? null : item.label);
+                                                } else {
+                                                    navigate(item.path);
+                                                    setIsMobileOpen(false);
+                                                }
                                             }}
                                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-sm transition-all duration-200 group relative ${
                                                 isActive 
@@ -167,13 +220,51 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
                                         >
                                             <item.icon size={16} className={`shrink-0 ${isActive ? "text-white" : "group-hover:text-slate-900 transition-colors"}`} />
                                             {(!isCollapsed || isMobileOpen) && (
-                                                <span className={`font-bold text-[11px] uppercase tracking-[0.1em] flex-1 text-left whitespace-nowrap overflow-hidden transition-all ${
-                                                    isActive ? "opacity-100" : "opacity-80 group-hover:opacity-100"
-                                                }`}>
-                                                    {item.label}
-                                                </span>
+                                                <>
+                                                    <span className={`font-bold text-[11px] uppercase tracking-[0.1em] flex-1 text-left whitespace-nowrap overflow-hidden transition-all ${
+                                                        isActive ? "opacity-100" : "opacity-80 group-hover:opacity-100"
+                                                    }`}>
+                                                        {item.label}
+                                                    </span>
+                                                    {hasSubItems && (
+                                                        <ChevronDown 
+                                                            size={12} 
+                                                            className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} 
+                                                        />
+                                                    )}
+                                                </>
                                             )}
                                         </button>
+
+                                        {/* Sub Items Rendering */}
+                                        <AnimatePresence>
+                                            {hasSubItems && isExpanded && (!isCollapsed || isMobileOpen) && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-hidden bg-slate-50/50 rounded-sm mt-1 ml-4 border-l border-slate-200"
+                                                >
+                                                    {item.subItems.map((sub) => {
+                                                        const isSubActive = location.pathname + location.search === sub.path;
+                                                        return (
+                                                            <button
+                                                                key={sub.label}
+                                                                onClick={() => {
+                                                                    navigate(sub.path);
+                                                                    setIsMobileOpen(false);
+                                                                }}
+                                                                className={`w-full text-left px-6 py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                                                    isSubActive ? "text-slate-900 bg-slate-100/50" : "text-slate-400 hover:text-slate-900 hover:bg-slate-100/30"
+                                                                }`}
+                                                            >
+                                                                {sub.label}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
                                 );
                             })}

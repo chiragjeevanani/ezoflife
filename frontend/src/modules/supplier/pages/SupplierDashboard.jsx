@@ -51,28 +51,39 @@ const SupplierDashboard = () => {
         visible: { y: 0, opacity: 1 }
     }), []);
 
+
     const dashboardTabs = useMemo(() => ['Incoming Orders', 'History', 'Logistics'], []);
 
     return (
         <div className="bg-background text-on-surface min-h-screen pb-60 font-body">
             {/* Header */}
-            <header className="px-6 pt-4 flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-on-surface border border-black/5 cursor-pointer">
-                        <span className="material-symbols-outlined text-xl">inventory_2</span>
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-black tracking-tighter italic text-on-surface uppercase leading-none">B2B Hub</h1>
-                        <p className="text-[9px] font-black text-on-surface/40 uppercase tracking-widest mt-1">Material Supplier Portal</p>
-                    </div>
+            <header className="px-6 pt-6 flex items-center justify-between mb-10">
+                <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-black tracking-tighter text-slate-950 uppercase leading-none">Spinzyt</h1>
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1 animate-pulse"></div>
                 </div>
-                <motion.div 
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => navigate('/supplier/profile')}
-                    className="w-10 h-10 rounded-full bg-white border border-black/5 overflow-hidden shadow-sm cursor-pointer"
-                >
-                    <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100" alt="Supplier" className="w-full h-full object-cover" />
-                </motion.div>
+
+                <div className="flex items-center gap-4">
+                    <motion.button 
+                        whileTap={{ scale: 0.9 }}
+                        className="w-10 h-10 rounded-xl bg-white border border-black/5 flex items-center justify-center text-slate-400 shadow-sm relative"
+                    >
+                        <span className="material-symbols-outlined text-xl">notifications</span>
+                        <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white"></span>
+                    </motion.button>
+
+                    <motion.div 
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => navigate('/supplier/profile')}
+                        className="w-10 h-10 rounded-full bg-white border border-black/5 overflow-hidden shadow-sm cursor-pointer"
+                    >
+                        <img 
+                            src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100" 
+                            alt="Supplier" 
+                            className="w-full h-full object-cover" 
+                        />
+                    </motion.div>
+                </div>
             </header>
 
             <main className="px-6 space-y-8 flex-1 max-w-xl mx-auto">
@@ -183,19 +194,22 @@ const SupplierDashboard = () => {
                     </div>
                 </section>
 
-                <section className="grid grid-cols-2 gap-4">
-                    <div className="bg-white p-5 rounded-3xl border border-black/5 shadow-sm transition-all hover:shadow-md">
-                        <p className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest mb-1">Active Orders</p>
-                        <h2 className="text-2xl font-black text-on-surface tracking-tighter">{orders.filter(o => o.status !== 'Delivered').length} <span className="text-[10px] opacity-40">Orders</span></h2>
-                        <span className="text-[9px] text-primary font-black uppercase mt-1.5 block flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[12px]">local_shipping</span>
-                            Regional Logisitics Active
+                <section>
+                    <div className="bg-white p-6 rounded-[2.5rem] border border-black/5 shadow-sm transition-all hover:shadow-md">
+                        <p className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest mb-2 px-1">Active Orders & Operations</p>
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-3xl font-black text-on-surface tracking-tighter">
+                                {orders.filter(o => o.status !== 'Delivered').length} 
+                                <span className="text-sm opacity-40 ml-2 font-black uppercase">Active Orders</span>
+                            </h2>
+                            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                                <span className="material-symbols-outlined text-xl">local_shipping</span>
+                            </div>
+                        </div>
+                        <span className="text-[9px] text-primary font-black uppercase mt-4 block flex items-center gap-1.5 px-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                            Regional Logisitics Active • Real-time tracking
                         </span>
-                    </div>
-                    <div className="bg-primary text-on-primary p-5 rounded-3xl shadow-xl shadow-black/20 transition-all hover:scale-[1.02]">
-                        <p className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Local Area</p>
-                        <h2 className="text-3xl font-black tracking-tighter leading-none">{user.supplierDetails?.pincode || '452001'}</h2>
-                        <p className="text-[9px] font-black uppercase mt-2.5 opacity-60">{user.supplierDetails?.city || 'Indore'}</p>
                     </div>
                 </section>
 
