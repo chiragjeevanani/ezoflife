@@ -1,5 +1,5 @@
 import Order from '../models/Order.js';
-import shiprocketService from '../services/shiprocketService.js';
+import shiprocketService from '../services/ShiprocketService.js';
 
 /**
  * Logistics Handshake Controller
