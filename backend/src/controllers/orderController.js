@@ -154,7 +154,7 @@ export const createOrder = async (req, res) => {
         if (!customerId) return res.status(400).json({ message: 'Customer ID required' });
 
         // Search vendors near pickup location
-        const nearbyVendors = await getNearbyVendors(pickupLocation.lat, pickupLocation.lng, 4);
+        const nearbyVendors = await getNearbyVendors(pickupLocation.lat, pickupLocation.lng, 3);
         
         const newOrder = new Order({
             customer: customerId,
@@ -465,7 +465,7 @@ export const getPoolOrders = async (req, res) => {
         const pool = orders.filter(order => {
             if (!order.pickupLocation?.lat) return false;
             const dist = calculateHaversineDistance(vLat, vLng, order.pickupLocation.lat, order.pickupLocation.lng);
-            return dist <= 4; // 4km radius
+            return dist <= 3; // 3km radius
         }).map(o => ({
             ...o._doc,
             distance: calculateHaversineDistance(vLat, vLng, o.pickupLocation.lat, o.pickupLocation.lng).toFixed(2),
@@ -601,6 +601,18 @@ export const vendorAcceptOrder = async (req, res) => {
             });
         });
 
+        // Notify the CUSTOMER specifically
+        const customerId = updatedOrder.customer?.toString() || updatedOrder.customer;
+        if (customerId) {
+            console.log(`🔔 [NOTIFICATION] Notifying Customer: ${customerId}`);
+            io.to(`user_${customerId}`).emit('order_status_update', updatedOrder);
+            io.to(`user_${customerId}`).emit('push_notification', {
+                title: 'Order Confirmed! 🚀',
+                body: `Your order has been accepted and a rider is assigned for pickup.`,
+                orderId: updatedOrder.orderId
+            });
+        }
+
         res.status(200).json(updatedOrder);
     } catch (err) {
         console.error('Vendor Accept Error:', err);
@@ -714,9 +726,160 @@ export const verifyPickupOtp = async (req, res) => {
         io.emit('rider_pool_update', { orderId: id, action: 'removed' });
         io.to(`order_${id}`).emit('order_status_update', populatedOrder);
 
+        // Trigger notification to the customer
+        io.to(`user_${order.customer}`).emit('push_notification', {
+            title: 'Items Picked Up! 👕',
+            body: `Rider ${order.rider?.displayName || 'Partner'} has collected your garments.`,
+            orderId: order.orderId
+        });
+
         res.status(200).json({ message: 'Pickup verified and completed!', order: populatedOrder });
     } catch (err) {
         res.status(500).json({ message: 'Verification error', error: err.message });
+    }
+};
+
+/**
+ * PHASE 2: Mark Order as Ready & Generate Reverse Handover OTP
+ * Vendor -> Rider (Handover)
+ */
+export const markOrderReady = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findById(id);
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        order.status = 'Ready';
+        
+        // Generate Reverse Handshake OTP (Rider provides this to Vendor)
+        const handoverOtp = Math.floor(1000 + Math.random() * 9000).toString();
+        
+        // Add to handshakes array
+        order.logisticsHandshakes.push({
+            phase: 'Reverse',
+            otp: handoverOtp,
+            initiator: 'Rider',
+            verifier: 'Vendor'
+        });
+
+        await order.save();
+
+        console.log('\n========================================');
+        console.log('🔄 [LOGISTICS] REVERSE HANDSHAKE INITIATED');
+        console.log(`📦 Order: ${order.orderId}`);
+        console.log(`🔑 RIDER OTP FOR VENDOR: ${handoverOtp}`);
+        console.log('========================================\n');
+
+        const populatedOrder = await Order.findById(id)
+            .populate('customer', 'displayName phone address email')
+            .populate('vendor', 'shopDetails address location')
+            .populate('rider', 'displayName phone location');
+
+        const io = getIO();
+        io.to(`order_${id}`).emit('order_status_update', populatedOrder);
+        
+        // Notify customer
+        io.to(`user_${order.customer}`).emit('push_notification', {
+            title: 'Your items are ready! ✨',
+            body: `Vendor has packed your garments. A rider is arriving for delivery.`,
+            orderId: order.orderId
+        });
+
+        res.status(200).json({ 
+            message: 'Order marked as ready. Handover OTP generated for Rider.',
+            order: populatedOrder 
+        });
+    } catch (error) {
+        console.error('Mark Ready Error:', error);
+        res.status(500).json({ message: 'Error updating order status' });
+    }
+};
+
+/**
+ * Generic Handshake Verification
+ * Can be used for Collection, Reverse, Completion etc.
+ */
+export const verifyHandshake = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { phase, otp } = req.body;
+
+        const order = await Order.findById(id);
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        const handshake = order.logisticsHandshakes.find(h => h.phase === phase && !h.isVerified);
+        if (!handshake) {
+            return res.status(400).json({ message: `No active ${phase} handshake found.` });
+        }
+
+        if (handshake.otp !== otp) {
+            return res.status(400).json({ message: 'Invalid OTP. Verification failed.' });
+        }
+
+        // Mark as verified
+        handshake.isVerified = true;
+        handshake.verifiedAt = new Date();
+
+        // Update Order Status based on Phase
+        if (phase === 'Reverse') {
+            order.status = 'Out for Delivery';
+            // Generate next phase (Completion) OTP for final delivery to customer
+            const deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+            order.deliveryOtp = deliveryOtp; 
+            order.logisticsHandshakes.push({
+                phase: 'Completion',
+                otp: deliveryOtp,
+                initiator: 'Rider',
+                verifier: 'Customer'
+            });
+            
+            console.log('\n========================================');
+            console.log('🏁 [LOGISTICS] FINAL LEG STARTED');
+            console.log(`📦 Order: ${order.orderId}`);
+            console.log(`🔑 RIDER OTP FOR CUSTOMER: ${deliveryOtp}`);
+            console.log('========================================\n');
+        }
+
+        if (phase === 'Completion') {
+            order.status = 'Payment Pending';
+            
+            // Emit payment trigger to customer
+            const io = getIO();
+            if (io) {
+                const customerId = order.customer._id || order.customer;
+                const targetRoom = `user_${customerId.toString()}`;
+                console.log(`[DEBUG] Emitting payment_trigger to room: ${targetRoom}`);
+                io.to(targetRoom).emit('payment_trigger', {
+                    orderId: order._id,
+                    orderNumber: order.orderId,
+                    amount: order.totalAmount,
+                    message: 'Items delivered successfully. Please complete the payment.'
+                });
+            }
+
+            console.log('\n========================================');
+            console.log('💰 [PAYMENT] TRIGGERED FOR CUSTOMER');
+            console.log(`📦 Order: ${order.orderId}`);
+            console.log(`💵 Amount Due: ₹${order.totalAmount}`);
+            console.log(`🎯 Target User: ${order.customer.toString()}`);
+            console.log('========================================\n');
+        }
+
+        await order.save();
+
+        const populatedOrder = await Order.findById(id)
+            .populate('customer', 'displayName phone address email')
+            .populate('vendor', 'shopDetails address location')
+            .populate('rider', 'displayName phone location');
+
+        const io = getIO();
+        io.to(`order_${id}`).emit('order_status_update', populatedOrder);
+        io.to(`user_${order.customer.toString()}`).emit('order_status_update', populatedOrder);
+
+        res.status(200).json({ message: `${phase} Handshake Verified!`, order: populatedOrder });
+    } catch (error) {
+        console.error('Handshake Verification Error:', error);
+        res.status(500).json({ message: 'Error verifying handshake' });
     }
 };
 

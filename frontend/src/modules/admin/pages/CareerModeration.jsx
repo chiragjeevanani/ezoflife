@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jobApi } from '../../../lib/api';
+import toast from 'react-hot-toast';
 
 const CareerModeration = () => {
     const [jobs, setJobs] = useState([]);
@@ -15,7 +16,6 @@ const CareerModeration = () => {
     const [form, setForm] = useState({
         title: '',
         companyName: 'EzOfLife Corporate',
-        category: 'Laundry Operations',
         description: '',
         requirements: '',
         experience: '1-2 Years',
@@ -56,8 +56,9 @@ const CareerModeration = () => {
         try {
             await jobApi.updateStatus(id, status);
             fetchJobs();
+            toast.success(`Job ${status} Successfully`);
         } catch (error) {
-            alert('Update failed');
+            toast.error('Update failed');
         }
     };
 
@@ -65,8 +66,9 @@ const CareerModeration = () => {
         try {
             await jobApi.updateApplicationStatus(id, status);
             fetchApplications();
+            toast.success(`Application ${status} Successfully`);
         } catch (error) {
-            alert('Update failed');
+            toast.error('Update failed');
         }
     };
 
@@ -87,10 +89,10 @@ const CareerModeration = () => {
             await jobApi.create(jobData);
             fetchJobs();
             setIsCreating(false);
+            toast.success('Corporate Job Posted Successfully');
             setForm({ 
                 title: '', 
                 companyName: 'EzOfLife Corporate', 
-                category: 'Laundry Operations',
                 description: '', 
                 requirements: '', 
                 experience: '1-2 Years',
@@ -111,9 +113,11 @@ const CareerModeration = () => {
             companyName: job.companyName,
             description: job.description,
             requirements: Array.isArray(job.requirements) ? job.requirements.join(', ') : job.requirements,
+            experience: job.experience,
             location: job.location,
             type: job.type || 'Full-time',
-            salary: job.salary
+            salary: job.salary,
+            skills: job.skills || []
         });
         setIsEditing(true);
     };
@@ -355,27 +359,9 @@ const CareerModeration = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Category</label>
-                                        <select 
-                                            value={form.category} 
-                                            onChange={e => setForm({...form, category: e.target.value})} 
-                                            className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold border-none outline-none focus:ring-2 focus:ring-slate-200"
-                                        >
-                                            <option>Laundry Operations</option>
-                                            <option>Dry Cleaning</option>
-                                            <option>Customer Support</option>
-                                            <option>Logistics / Delivery</option>
-                                            <option>Quality Control</option>
-                                            <option>Warehouse</option>
-                                            <option>Corporate / Admin</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Required Experience</label>
                                         <input required placeholder="e.g. 1-2 Years" value={form.experience} onChange={e => setForm({...form, experience: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
                                     </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Job Type</label>
                                         <select 
@@ -390,10 +376,10 @@ const CareerModeration = () => {
                                             <option>Freelance</option>
                                         </select>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Salary Range</label>
-                                        <input required placeholder="e.g. 25k - 30k" value={form.salary} onChange={e => setForm({...form, salary: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
-                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Salary Range</label>
+                                    <input required placeholder="e.g. 25k - 30k" value={form.salary} onChange={e => setForm({...form, salary: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Location</label>
@@ -470,6 +456,10 @@ const CareerModeration = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Required Experience</label>
+                                        <input required value={form.experience} onChange={e => setForm({...form, experience: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
+                                    </div>
+                                    <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Job Type</label>
                                         <select 
                                             value={form.type} 
@@ -483,10 +473,10 @@ const CareerModeration = () => {
                                             <option>Freelance</option>
                                         </select>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Salary Range</label>
-                                        <input required value={form.salary} onChange={e => setForm({...form, salary: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
-                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Salary Range</label>
+                                    <input required value={form.salary} onChange={e => setForm({...form, salary: e.target.value})} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 ml-4 uppercase">Location</label>

@@ -31,6 +31,7 @@ import CareerModeration from '../pages/CareerModeration';
 import Suppliers from '../pages/Suppliers';
 import AdminAdvertisementPage from '../pages/AdminAdvertisementPage';
 import B2BEscrowManagement from '../pages/B2BEscrowManagement';
+import VendorRankingEngine from '../pages/VendorRankingEngine';
 
 import MasterServiceManagement from '../pages/MasterServiceManagement';
 
@@ -88,6 +89,7 @@ const AdminRoutes = () => {
         <Route path="/media" element={<MediaConfig />} />
         <Route path="/partnerships" element={<PartnershipInquiries />} />
         <Route path="/careers" element={<CareerModeration />} />
+        <Route path="/vendor-ranking" element={<VendorRankingEngine />} />
         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
 
       </Route>

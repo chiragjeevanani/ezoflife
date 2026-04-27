@@ -133,11 +133,10 @@ export default function DataGrid({
             </div>
 
             {/* Pagination / Aggregation Intelligence */}
-            <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between transition-colors hover:bg-slate-100/30">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Displaying 1 to {data.length} of {data.length} result set components</span>
+            <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end transition-colors hover:bg-slate-100/30">
                 <div className="flex items-center gap-1">
                     <button className="p-1 px-3 border border-slate-200 text-[9px] font-bold uppercase tracking-widest rounded-sm bg-white hover:bg-slate-950 hover:text-white transition-all">Prev</button>
-                    <span className="px-3 text-[9px] font-bold text-slate-900 tracking-tighter tabular-nums px-2 bg-slate-200/50 h-5 flex items-center rounded-sm">PG 01 // 01</span>
+                    <span className="px-4 text-[9px] font-black text-slate-900 tracking-widest tabular-nums bg-slate-200/50 h-6 flex items-center rounded-sm whitespace-nowrap">PG 01 / 01</span>
                     <button className="p-1 px-3 border border-slate-200 text-[9px] font-bold uppercase tracking-widest rounded-sm bg-white hover:bg-slate-950 hover:text-white transition-all">Next</button>
                 </div>
             </div>

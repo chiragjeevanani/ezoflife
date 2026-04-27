@@ -30,6 +30,7 @@ import promotionRoutes from './src/routes/promotionRoutes.js';
 import b2bOrderRoutes from './src/routes/b2bOrderRoutes.js';
 import masterServiceRoutes from './src/routes/masterServiceRoutes.js';
 import adRoutes from './src/routes/adRoutes.js';
+import logisticsRoutes from './src/routes/logisticsRoutes.js';
 import SystemConfig from './src/models/SystemConfig.js';
 import { getSystemConfig, updateSystemConfig } from './src/controllers/adminController.js';
 import { addSpecialist, getAllSpecialists, deleteSpecialist, createRequisition, getAllRequisitions, assignRequisition } from './src/controllers/laborController.js';
@@ -91,6 +92,7 @@ app.use('/api/partnerships', partnershipRoutes);
 console.log('🛠️ [DEBUG] Loading B2B Order Routes...', typeof b2bOrderRoutes);
 app.use('/api/b2b-orders', b2bOrderRoutes);
 app.use('/api/ads', adRoutes);
+app.use('/api/logistics', logisticsRoutes);
 
 // Labor Routes
 app.post('/api/labor/add', addSpecialist);

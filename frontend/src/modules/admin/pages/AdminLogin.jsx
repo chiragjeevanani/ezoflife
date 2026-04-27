@@ -48,7 +48,7 @@ const AdminLogin = () => {
 
         try {
             const response = await authApi.requestOtp(phone, otpChannel, 'login', 'Admin');
-            if (response.message === 'OTP sent successfully') {
+            if (response.message === 'OTP sent successfully' || response.message === 'Admin OTP sent successfully') {
                 navigate('/admin/otp', { state: { phone, channel: otpChannel } });
             } else {
                 setApiError(response.message || 'Access Denied');

@@ -310,9 +310,9 @@ export default function Users() {
       <PageHeader 
         title="User Management" 
         actions={[
-          { label: 'Audit Export', icon: Zap, variant: 'secondary' },
-          { label: 'Clear All', icon: Trash2, variant: 'rose', onClick: handleClearAll },
-          { label: 'Register New', icon: UserPlus, variant: 'primary' }
+          { label: 'Audit Export', icon: Zap, variant: 'secondary', className: 'hidden sm:flex' },
+          { label: 'Clear All', icon: Trash2, variant: 'rose', onClick: handleClearAll, className: 'hidden md:flex' },
+          { label: 'Register Now', icon: UserPlus, variant: 'primary', className: 'flex-1 sm:flex-none' }
         ]}
       />
 

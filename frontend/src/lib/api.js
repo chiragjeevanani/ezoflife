@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://localhost:5001/api';
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 export const UPLOADS_URL = BASE_URL.replace('/api', '') + '/uploads/';
 
 export const authApi = {
@@ -215,6 +215,8 @@ export const adApi = {
         }
     }
 };
+
+
 
 export const b2bOrderApi = {
     placeOrder: async (data) => {
@@ -722,6 +724,32 @@ export const orderApi = {
             console.error('Delivery OTP Error:', error);
             throw error;
         }
+    },
+    markOrderReady: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/orders/mark-ready/${id}`, { method: 'POST' });
+            return await response.json();
+        } catch (error) {
+            console.error('Mark Ready API Error:', error);
+            throw error;
+        }
+    },
+    verifyHandshake: async (id, phase, otp) => {
+        try {
+            const response = await fetch(`${BASE_URL}/orders/verify-handshake/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phase, otp })
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Verification failed');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Handshake Verification Error:', error);
+            throw error;
+        }
     }
 };
 
@@ -875,6 +903,15 @@ export const ticketApi = {
             return await response.json();
         } catch (error) {
             console.error('Get Customer Tickets Error:', error);
+            throw error;
+        }
+    },
+    getTicketByOrder: async (orderId) => {
+        try {
+            const response = await fetch(`${BASE_URL}/tickets/order/${orderId}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Ticket By Order Error:', error);
             throw error;
         }
     },
@@ -1306,6 +1343,35 @@ export const masterServiceApi = {
             return await response.json();
         } catch (error) {
             console.error('Get Vendor Rates Error:', error);
+            throw error;
+        }
+    }
+};
+
+export const logisticsApi = {
+    requestHandshake: async (orderId, phase) => {
+        try {
+            const response = await fetch(`${BASE_URL}/logistics/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId, phase })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Request Handshake Error:', error);
+            throw error;
+        }
+    },
+    verifyHandshake: async (orderId, phase, otp) => {
+        try {
+            const response = await fetch(`${BASE_URL}/logistics/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId, phase, otp })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Verify Handshake Error:', error);
             throw error;
         }
     }

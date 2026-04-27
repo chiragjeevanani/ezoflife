@@ -28,7 +28,7 @@ const orderSchema = new mongoose.Schema({
     ],
     status: {
         type: String,
-        enum: ['Pending', 'Assigned', 'Picked Up', 'In Progress', 'Ready', 'Out for Delivery', 'Delivered', 'Cancelled'],
+        enum: ['Pending', 'Assigned', 'Picked Up', 'In Progress', 'Ready', 'Out for Delivery', 'Payment Pending', 'Delivered', 'Cancelled'],
         default: 'Pending'
     },
     pickupSlot: {
@@ -123,6 +123,25 @@ const orderSchema = new mongoose.Schema({
         labelUrl: String,
         lastStatus: String,
         pickupTokenNumber: String
+    },
+    logisticsHandshakes: [
+        {
+            phase: { 
+                type: String, 
+                enum: ['Collection', 'Inbound', 'Fulfillment', 'Reverse', 'Completion'],
+                required: true
+            },
+            otp: String,
+            isVerified: { type: Boolean, default: false },
+            verifiedAt: Date,
+            initiator: { type: String }, // Who has the OTP (e.g., 'Rider')
+            verifier: { type: String }   // Who enters the OTP (e.g., 'Customer', 'Vendor')
+        }
+    ],
+    riderDetails: {
+        name: String,
+        phone: String,
+        photo: String
     }
 }, { timestamps: true });
 

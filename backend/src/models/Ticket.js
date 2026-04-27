@@ -15,6 +15,12 @@ const messageSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    attachments: [
+        {
+            type: { type: String, enum: ['image', 'document'], default: 'image' },
+            url: String
+        }
+    ],
     createdAt: {
         type: Date,
         default: Date.now
@@ -27,12 +33,18 @@ const ticketSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    order: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order',
+        default: null
+    },
     subject: {
         type: String,
         required: true
     },
     category: {
         type: String,
+        enum: ['Missing Items', 'Damaged Items', 'Wrong Items', 'Payment Issue', 'Rider Behavior', 'Others'],
         default: 'Others'
     },
     description: {

@@ -81,7 +81,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
                     subItems: [
                         { label: 'Customer Issues', path: '/admin/help-desk?category=Customer' },
                         { label: 'Vendor Issues', path: '/admin/help-desk?category=Vendor' },
-                        { label: 'Missing Item Dispute', path: '/admin/disputes' },
+                        { label: 'Missing Item Dispute', path: '/admin/dispute-center' },
                         { label: 'Technical Problem', path: '/admin/help-desk?category=Technical' },
                     ]
                 },
@@ -116,6 +116,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
         {
             group: 'Network', items: [
                 { icon: Briefcase, label: 'Career Center', path: '/admin/careers' },
+                { icon: Star, label: 'Ranking Engine', path: '/admin/vendor-ranking' },
             ]
         },
         {

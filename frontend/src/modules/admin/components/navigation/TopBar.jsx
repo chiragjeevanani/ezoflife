@@ -119,9 +119,6 @@ export default function TopBar({ onMenuClick }) {
                         )}
                     </button>
                     
-                    <button className="w-9 h-9 flex items-center justify-center rounded-sm bg-slate-50 text-slate-400 hover:text-slate-900 transition-all relative border border-slate-100 group">
-                        <LifeBuoy size={16} />
-                    </button>
 
                     <div className="flex items-center gap-3 pl-2 group cursor-pointer transition-all active:scale-98">
                         <div className="w-8 h-8 rounded-sm bg-slate-900 text-white flex items-center justify-center text-[10px] font-bold transition-transform overflow-hidden border border-slate-200">

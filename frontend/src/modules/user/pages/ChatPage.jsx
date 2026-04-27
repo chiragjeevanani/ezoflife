@@ -1,163 +1,294 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { ticketApi, mediaApi } from '../../../lib/api';
+import io from 'socket.io-client';
+import toast from 'react-hot-toast';
 
 const ChatPage = () => {
     const navigate = useNavigate();
     const { orderId } = useParams();
     const [message, setMessage] = useState('');
+    const [ticket, setTicket] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
     const scrollRef = useRef(null);
+    const socketRef = useRef(null);
+    const fileInputRef = useRef(null);
 
-    const initialMessages = useMemo(() => [
-        { id: 1, sender: 'support', text: 'Hello! I am Spinzyt support assistant. How can I help you with order ' + orderId + ' today?', time: '10:30 AM' },
-        { id: 2, sender: 'support', text: 'I can help with status updates, delivery preferences, or quality concerns.', time: '10:30 AM' },
-    ], [orderId]);
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const userId = userData._id || userData.id;
 
-    const [messages, setMessages] = useState(initialMessages);
+    useEffect(() => {
+        const initChat = async () => {
+            try {
+                const existingTicket = await ticketApi.getTicketByOrder(orderId);
+                if (existingTicket) {
+                    setTicket(existingTicket);
+                } else {
+                    setTicket({
+                        status: 'Open',
+                        messages: [{ 
+                            id: 'welcome', 
+                            senderRole: 'Admin', 
+                            message: 'Hello! How can we help you with Order ' + orderId + '? Please describe any missing or damaged items.', 
+                            createdAt: new Date() 
+                        }]
+                    });
+                }
+            } catch (err) {
+                console.error('Chat Init Error:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initChat();
+        socketRef.current = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+        
+        return () => {
+            if (socketRef.current) socketRef.current.disconnect();
+        };
+    }, [orderId]);
+
+    useEffect(() => {
+        if (ticket && socketRef.current) {
+            socketRef.current.emit('join_room', `ticket_${ticket._id}`);
+            
+            socketRef.current.on('new_message', (data) => {
+                if (data.ticketId === ticket._id) {
+                    setTicket(prev => ({
+                        ...prev,
+                        messages: [...prev.messages, data.message]
+                    }));
+                }
+            });
+
+            // Listen for status updates
+            socketRef.current.on('status_updated', (data) => {
+                if (data.ticketId === ticket._id) {
+                    setTicket(prev => ({
+                        ...prev,
+                        status: data.status
+                    }));
+                }
+            });
+        }
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.off('new_message');
+                socketRef.current.off('status_updated');
+            }
+        };
+    }, [ticket?._id]);
 
     useEffect(() => {
         if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [messages]);
+    }, [ticket?.messages]);
 
-    const handleSendMessage = (e) => {
-        e.preventDefault();
-        if (!message.trim()) return;
+    const handleSendMessage = async (e, attachments = []) => {
+        if (e) e.preventDefault();
+        if (ticket?.status === 'Resolved') return;
+        
+        const msgText = message.trim();
+        if (!msgText && attachments.length === 0) return;
 
-        const newMessage = {
-            id: messages.length + 1,
-            sender: 'user',
-            text: message,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
+        try {
+            let currentTicket = ticket;
 
-        setMessages([...messages, newMessage]);
-        setMessage('');
+            // Create ticket first if it doesn't exist on server (no _id)
+            if (!currentTicket._id) {
+                const newTicket = await ticketApi.createTicket({
+                    customer: userId,
+                    orderId: orderId,
+                    subject: `Dispute for Order ${orderId}`,
+                    category: 'Missing Items',
+                    description: msgText || 'Image attached for dispute',
+                    attachments: attachments
+                });
+                setTicket(newTicket);
+                setMessage('');
+                return;
+            }
 
-        // Simulation response
-        setTimeout(() => {
-            const botMessage = {
-                id: messages.length + 2,
-                sender: 'support',
-                text: 'Got it. Let me check the real-time status with our logistics partner. One moment...',
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            setMessages(prev => [...prev, botMessage]);
-        }, 1500);
+            // Otherwise send message to existing ticket
+            await ticketApi.sendMessage(currentTicket._id, {
+                sender: userId,
+                senderRole: 'Customer',
+                message: msgText,
+                attachments: attachments
+            });
+            setMessage('');
+        } catch (err) {
+            console.error('Failed to send message:', err);
+            toast.error('Failed to send message');
+        }
     };
 
-    const itemVariants = useMemo(() => ({
-        hidden: { opacity: 0, y: 10, scale: 0.95 },
-        visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3 } }
-    }), []);
+    const handleImageUpload = async (e) => {
+        if (ticket?.status === 'Resolved') return;
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('media', file);
+
+        try {
+            const res = await mediaApi.upload(formData);
+            if (res.url) {
+                await handleSendMessage(null, [{ type: 'image', url: res.url }]);
+            }
+        } catch (err) {
+            console.error('Image upload failed:', err);
+            toast.error('Image upload failed');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-surface flex items-center justify-center p-6">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-on-surface-variant font-bold text-xs uppercase tracking-[0.2em] animate-pulse">Initializing Secure Channel...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="bg-background text-on-surface min-h-[100dvh] flex flex-col max-h-[100dvh] overflow-hidden font-body">
-            {/* Header */}
-            <header className="px-6 py-4 bg-white border-b border-outline-variant/10 flex items-center justify-between sticky top-0 z-20 shadow-sm">
-                <div className="flex items-center gap-4">
-                    <motion.button 
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => navigate(-1)}
-                        className="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface border border-outline-variant/10"
-                    >
-                        <span className="material-symbols-outlined text-sm">arrow_back</span>
-                    </motion.button>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="font-black text-lg tracking-tighter leading-none italic">Order Help</h1>
-                            <span className="bg-primary/10 text-primary text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">{orderId}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-1">
-                            <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
-                            <span className="text-[10px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest">Support Online</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex -space-x-2">
-                    <div className="w-8 h-8 rounded-full border-2 border-white bg-primary-container flex items-center justify-center text-primary shadow-sm overflow-hidden">
-                        <img className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" alt="Support" />
+        <div className="flex flex-col h-[100dvh] bg-surface font-body overflow-hidden">
+            <header className="flex-shrink-0 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 px-6 py-5 flex items-center gap-5 z-20">
+                <motion.button 
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => navigate(-1)}
+                    className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface"
+                >
+                    <span className="material-symbols-outlined text-2xl">arrow_back</span>
+                </motion.button>
+                <div className="flex-1 min-w-0">
+                    <h1 className="text-xl font-black text-on-surface truncate leading-tight uppercase tracking-tight">
+                        Dispute Support
+                    </h1>
+                    <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full animate-pulse ${ticket?.status === 'Resolved' ? 'bg-emerald-500' : 'bg-primary'}`} />
+                        <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
+                            Order #{orderId?.slice(-8).toUpperCase()} · {ticket?.status || 'Active'}
+                        </p>
                     </div>
                 </div>
             </header>
 
-            {/* Chat Area */}
-            <main 
-                ref={scrollRef}
-                className="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-6 hide-scrollbar bg-surface-container-lowest"
-            >
-                <div className="text-center mb-4">
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-30">Conversation started today</span>
-                </div>
-
-                <AnimatePresence initial={false}>
-                    {messages.map((msg) => (
-                        <motion.div 
-                            key={msg.id}
-                            variants={itemVariants}
-                            initial="hidden"
-                            animate="visible"
-                            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                            <div className={`max-w-[85%] flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                                <div className={`px-5 py-4 rounded-[1.8rem] text-sm font-semibold shadow-sm ${
-                                    msg.sender === 'user' 
-                                        ? 'bg-primary text-on-primary rounded-tr-none' 
-                                        : 'bg-white text-on-surface rounded-tl-none border border-outline-variant/10'
-                                }`}>
-                                    {msg.text}
-                                </div>
-                                <span className="text-[8px] font-black text-on-surface-variant opacity-40 mt-2 uppercase tracking-widest px-1">
-                                    {msg.time}
-                                </span>
-                            </div>
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-            </main>
-
-            {/* Input Bar */}
-            <footer className="p-6 bg-white border-t border-outline-variant/10 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
-                <form 
-                    onSubmit={handleSendMessage}
-                    className="relative flex items-center gap-3"
-                >
-                    <div className="flex-1 bg-surface-container-low rounded-[2rem] px-5 py-2 border border-slate-300 focus-within:ring-2 focus-within:ring-primary/10 transition-all flex items-center min-h-[56px]">
-                        <button type="button" className="text-on-surface-variant opacity-40 hover:opacity-100 transition-opacity">
-                            <span className="material-symbols-outlined text-xl">add_circle</span>
-                        </button>
-                        <input 
-                            type="text"
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Message support..."
-                            className="bg-transparent border-none focus:ring-0 p-3 text-sm font-semibold w-full placeholder:text-outline-variant/60"
-                        />
-                        <button type="button" className="text-on-surface-variant opacity-40 hover:opacity-100 transition-opacity">
-                            <span className="material-symbols-outlined text-xl">image</span>
-                        </button>
-                    </div>
-                    <motion.button 
-                        whileTap={{ scale: 0.9 }}
-                        type="submit"
-                        disabled={!message.trim()}
-                        className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-xl ${
-                            message.trim() 
-                                ? 'bg-primary text-on-primary shadow-primary/20' 
-                                : 'bg-surface-container-high text-on-surface-variant/20 shadow-none'
-                        }`}
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-[radial-gradient(circle_at_center,rgba(var(--primary-rgb),0.02),transparent)]">
+                {ticket?.messages.map((msg, i) => (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        key={i} 
+                        className={`flex ${msg.senderRole === 'Admin' ? 'justify-start' : 'justify-end'}`}
                     >
-                        <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: message.trim() ? "'FILL' 1" : "'FILL' 0" }}>send</span>
-                    </motion.button>
-                </form>
-                <div className="text-center mt-4">
-                    <p className="text-[9px] font-bold text-on-surface-variant opacity-30 uppercase tracking-[0.1em]">By chatting, you agree to our <span className="underline">Support Terms</span></p>
-                </div>
+                        <div className={`max-w-[85%] space-y-2 ${msg.senderRole === 'Admin' ? '' : 'flex flex-col items-end'}`}>
+                            <div className={`p-5 rounded-[2rem] text-[13px] font-bold leading-relaxed shadow-sm ${
+                                msg.senderRole === 'Admin' 
+                                    ? 'bg-surface-container-high text-on-surface rounded-tl-none border border-outline-variant/20' 
+                                    : 'bg-primary text-on-primary rounded-tr-none shadow-primary/20'
+                            }`}>
+                                {msg.message}
+                                {msg.attachments?.length > 0 && (
+                                    <div className="mt-4 grid grid-cols-1 gap-2">
+                                        {msg.attachments.map((at, j) => (
+                                            <img key={j} src={at.url} alt="Evidence" className="rounded-2xl max-h-64 w-full object-cover border border-black/5" />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <span className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em] px-2">
+                                {msg.senderRole === 'Admin' ? 'Admin Support' : 'You'} · {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        </div>
+                    </motion.div>
+                ))}
+
+                {ticket?.status === 'Resolved' && (
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-emerald-50 border border-emerald-100 p-8 rounded-[2.5rem] text-center space-y-4 my-10"
+                    >
+                        <div className="w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/30">
+                            <span className="material-symbols-outlined text-3xl">check_circle</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-emerald-900 uppercase tracking-tight">Issue Resolved</h3>
+                            <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-widest leading-relaxed mt-2">
+                                Your issue is resolved and chatting is closed.
+                            </p>
+                        </div>
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate('/user/orders')}
+                            className="px-8 py-3 bg-emerald-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em]"
+                        >
+                            Back to Orders
+                        </motion.button>
+                    </motion.div>
+                )}
+                <div ref={scrollRef} />
+            </div>
+
+            <footer className="flex-shrink-0 p-6 bg-surface border-t border-outline-variant/30">
+                {ticket?.status !== 'Resolved' ? (
+                    <form onSubmit={handleSendMessage} className="flex gap-4 items-center max-w-[800px] mx-auto w-full">
+                        <div className="flex-1 bg-surface-container-high rounded-[2.5rem] flex items-center px-6 py-2 border border-outline-variant/20 focus-within:border-primary/50 transition-all shadow-sm">
+                            <input 
+                                type="file" 
+                                hidden 
+                                ref={fileInputRef}
+                                onChange={handleImageUpload}
+                                accept="image/*"
+                            />
+                            <motion.button 
+                                whileTap={{ scale: 0.9 }}
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors"
+                            >
+                                {isUploading ? <span className="material-symbols-outlined animate-spin">history</span> : <span className="material-symbols-outlined">image</span>}
+                            </motion.button>
+                            <input 
+                                type="text" 
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold text-on-surface p-4 placeholder:text-on-surface-variant/40"
+                                placeholder="Describe the issue..."
+                            />
+                        </div>
+                        <motion.button 
+                            whileTap={{ scale: 0.9 }}
+                            type="submit"
+                            disabled={!message.trim() && !isUploading}
+                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-xl ${
+                                message.trim() 
+                                    ? 'bg-primary text-on-primary shadow-primary/20' 
+                                    : 'bg-surface-container-high text-on-surface-variant/20 shadow-none'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-2xl">send</span>
+                        </motion.button>
+                    </form>
+                ) : (
+                    <div className="text-center py-4">
+                        <p className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.3em]">Conversation Terminated</p>
+                    </div>
+                )}
             </footer>
         </div>
     );
 };
 
 export default ChatPage;
-

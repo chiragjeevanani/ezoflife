@@ -1,10 +1,12 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import UserHeader from '../components/UserHeader';
 
 const PaymentSelectionPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { amount = 0, orderId = '', orderNumber = '' } = location.state || {};
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -19,13 +21,24 @@ const PaymentSelectionPage = () => {
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
   };
 
-  const [selectedMethod, setSelectedMethod] = React.useState('upi');
+  const [selectedMethod, setSelectedMethod] = React.useState('online');
 
   const paymentOptions = [
-    { id: 'upi', title: 'UPI Transfer', desc: 'Google Pay, PhonePe, Bhim', icon: 'qr_code_2', accent: 'primary' },
-    { id: 'card', title: 'Credit / Debit Card', desc: 'Vista, Mastercard, Amex', icon: 'credit_card', accent: 'secondary' },
-    { id: 'cash', title: 'Cash on Delivery', desc: 'Pay when you receive', icon: 'payments', accent: 'tertiary' }
+    { id: 'online', title: 'Online Payment', desc: 'UPI, Cards, Net Banking', icon: 'payments', accent: 'primary' },
+    { id: 'cash', title: 'Cash on Delivery', desc: 'Pay to rider after delivery', icon: 'handshake', accent: 'tertiary' }
   ];
+
+  const handleFinalizePayment = () => {
+      // Mock payment finalize
+      navigate('/user/success-feedback', { 
+          state: { 
+              orderId,
+              orderNumber,
+              amount,
+              method: selectedMethod 
+          } 
+      });
+  };
 
   return (
     <motion.div 
@@ -41,7 +54,7 @@ const PaymentSelectionPage = () => {
           animate={{ x: 0, opacity: 1 }}
           className="mb-12 ml-2"
         >
-          <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-2 block opacity-60">Secure Checkout</span>
+          <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-2 block opacity-60">Order {orderNumber}</span>
           <h1 className="text-4xl md:text-5xl font-black text-on-background leading-none tracking-tighter mb-4">
             Payment <br/><span className="text-primary tracking-tighter">Gateway</span>
           </h1>
@@ -63,7 +76,7 @@ const PaymentSelectionPage = () => {
           >
             <div className="z-10">
               <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-3 opacity-60">Amount to Pay</p>
-              <p className="text-5xl font-black text-on-surface tracking-tighter leading-none">₹899.00</p>
+              <p className="text-5xl font-black text-on-surface tracking-tighter leading-none">₹{amount.toFixed(2)}</p>
             </div>
             <div className="z-10 flex gap-2 items-center text-on-surface-variant opacity-60">
               <span className="material-symbols-outlined text-sm font-black" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
@@ -78,9 +91,9 @@ const PaymentSelectionPage = () => {
             className="bg-white rounded-[2.5rem] p-10 flex flex-col justify-center space-y-4 shadow-sm border border-outline-variant/10"
           >
             {[
-              { label: 'Subtotal', value: '₹849.00', color: 'on-surface' },
+              { label: 'Subtotal', value: `₹${(amount * 0.9).toFixed(2)}`, color: 'on-surface' },
               { label: 'Logistics', value: 'FREE', color: 'primary' },
-              { label: 'Service Tax', value: '₹50.00', color: 'on-surface' }
+              { label: 'Service Tax', value: `₹${(amount * 0.1).toFixed(2)}`, color: 'on-surface' }
             ].map((item, idx) => (
               <div key={idx} className="flex justify-between items-center group/line">
                 <span className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest">{item.label}</span>
@@ -91,10 +104,10 @@ const PaymentSelectionPage = () => {
             ))}
             <div className="h-px bg-outline-variant/5 my-2"></div>
             <button 
-              onClick={() => navigate('/user/confirmation')}
+              onClick={() => navigate(-1)}
               className="text-[9px] font-black text-primary uppercase tracking-widest text-left hover:underline"
             >
-              Modify Order Details
+              Check Order Details
             </button>
           </motion.div>
         </motion.div>
@@ -169,10 +182,10 @@ const PaymentSelectionPage = () => {
           <motion.button 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/user/success')}
+            onClick={handleFinalizePayment}
             className="w-full bg-primary-gradient py-6 rounded-2xl text-on-primary font-headline font-black text-xl flex items-center justify-center gap-3 shadow-2xl shadow-primary/20 tracking-[0.2em] uppercase"
           >
-            Confirm Payment
+            {selectedMethod === 'cash' ? 'Confirm Cash on Delivery' : 'Pay Now'}
             <span className="material-symbols-outlined text-2xl">arrow_forward</span>
           </motion.button>
         </motion.div>

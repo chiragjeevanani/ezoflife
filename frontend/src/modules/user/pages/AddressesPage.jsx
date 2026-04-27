@@ -3,26 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authApi } from '../../../lib/api';
 import toast from 'react-hot-toast';
+import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 
 const AddressesPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: ['places']
+  });
+  const [autocomplete, setAutocomplete] = useState(null);
   
   const initialAddresses = useMemo(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const list = [];
-
-    if (user.address) {
-      list.push({ 
-        id: 1, 
-        type: 'Home', 
-        address: user.address, 
-        isDefault: true, 
-        isProfileAddress: true 
-      });
-    }
-    
-    return list;
+    return user.addresses || [];
   }, []);
 
   const addressTypes = useMemo(() => ['Home', 'Office', 'Other'], []);
@@ -38,7 +33,8 @@ const AddressesPage = () => {
     landmark: '',
     pincode: '',
     city: '',
-    state: ''
+    state: '',
+    location: null
   });
 
   const containerVariants = useMemo(() => ({
@@ -73,27 +69,47 @@ const AddressesPage = () => {
         return;
       }
 
-      // We only support one primary address for now as per DB schema
-      const updatedUser = await authApi.updateProfile(userId, {
+      // 1. Prepare nex addresses array
+      let currentAddresses = user.addresses || [];
+      
+      // 2. Find if this type already exists, if so replace, else add
+      const existingIdx = currentAddresses.findIndex(a => a.type === newType);
+      
+      const newAddrObj = {
+        type: newType,
         address: fullAddressString,
+        city: formData.city,
         pincode: formData.pincode,
-        city: formData.city
+        location: formData.location,
+        isDefault: existingIdx === -1 ? (currentAddresses.length === 0) : currentAddresses[existingIdx].isDefault
+      };
+
+      if (existingIdx > -1) {
+        currentAddresses[existingIdx] = newAddrObj;
+      } else {
+        currentAddresses.push(newAddrObj);
+      }
+
+      // 3. Update Profile on Server
+      const updatedUser = await authApi.updateProfile(userId, {
+        addresses: currentAddresses,
+        // Also sync main address for backward compatibility if it's default
+        ...(newAddrObj.isDefault ? { 
+            address: fullAddressString, 
+            city: formData.city, 
+            pincode: formData.pincode, 
+            location: formData.location 
+        } : {})
       });
 
       // Update local storage
       const mergedUser = { ...user, ...updatedUser };
       localStorage.setItem('user', JSON.stringify(mergedUser));
       
-      // Update UI list (simulating list behavior with the single primary address)
-      setAddresses([{ 
-        id: 1, 
-        type: newType, 
-        address: fullAddressString, 
-        raw: formData,
-        isDefault: true 
-      }]);
+      // Update UI list
+      setAddresses(mergedUser.addresses || []);
 
-      toast.success('Official business address updated!');
+      toast.success(`${newType} address updated!`);
       closeModal();
     } catch (err) {
       console.error('Save Address Error:', err);
@@ -106,7 +122,7 @@ const AddressesPage = () => {
   const openAddModal = () => {
     setEditingAddress(null);
     setNewType('Home');
-    setFormData({ line1: '', line2: '', floor: '', landmark: '', pincode: '', city: '', state: '' });
+    setFormData({ line1: '', line2: '', floor: '', landmark: '', pincode: '', city: '', state: '', location: null });
     setIsModalOpen(true);
   };
 
@@ -261,8 +277,53 @@ const AddressesPage = () => {
               </h3>
               <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40 mb-10 text-center md:text-left">Details for accurate delivery</p>
               
-              <div className="space-y-6">
-                <div className="flex gap-3">
+                <div className="space-y-6">
+                  {/* Google Maps Search Bar */}
+                  <div className="space-y-1.5 px-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-primary ml-1">Search Your Location</p>
+                    {isLoaded ? (
+                      <Autocomplete
+                        onLoad={ac => setAutocomplete(ac)}
+                        onPlaceChanged={() => {
+                          const place = autocomplete.getPlace();
+                          if (place.geometry) {
+                            const lat = place.geometry.location.lat();
+                            const lng = place.geometry.location.lng();
+                            
+                            // Parse components
+                            let city = '';
+                            let state = '';
+                            let pincode = '';
+                            place.address_components.forEach(comp => {
+                              if (comp.types.includes('locality')) city = comp.long_name;
+                              if (comp.types.includes('administrative_area_level_1')) state = comp.long_name;
+                              if (comp.types.includes('postal_code')) pincode = comp.long_name;
+                            });
+
+                            setFormData({
+                              ...formData,
+                              line1: place.name || '',
+                              line2: place.formatted_address || '',
+                              city,
+                              state,
+                              pincode,
+                              location: { lat, lng }
+                            });
+                            toast.success('Location detected!');
+                          }
+                        }}
+                      >
+                        <input 
+                          placeholder="Search for your house/building..."
+                          className="w-full bg-slate-900 text-white placeholder:text-white/30 border-none rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:ring-4 focus:ring-primary/20 transition-all shadow-xl" 
+                        />
+                      </Autocomplete>
+                    ) : (
+                      <div className="w-full h-14 bg-slate-50 rounded-2xl animate-pulse" />
+                    )}
+                  </div>
+
+                  <div className="flex gap-3">
                   {addressTypes.map(type => (
                     <button
                       key={type}

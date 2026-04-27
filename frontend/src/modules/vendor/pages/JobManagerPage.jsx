@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jobApi, UPLOADS_URL } from '../../../lib/api';
+import toast from 'react-hot-toast';
 import VendorHeader from '../components/VendorHeader';
 
 const JobManagerPage = () => {
@@ -65,15 +66,16 @@ const JobManagerPage = () => {
                 ...form,
                 requirements: requirementsArray,
                 companyName: vendorData.shopDetails?.shopName || 'Vendor Laundry',
-                createdBy: vendorId,
+                vendorId: vendorId,
                 creatorRole: 'Vendor'
             };
             await jobApi.create(jobData);
             fetchJobs();
             setIsCreating(false);
+            toast.success('Job Posted Successfully!');
             setForm({ title: '', description: '', requirements: '', location: '', type: 'Full-time', salary: '' });
         } catch (error) {
-            alert('Error creating job');
+            toast.error('Error creating job');
         }
     };
 
@@ -81,8 +83,9 @@ const JobManagerPage = () => {
         try {
             await jobApi.updateApplicationStatus(id, status);
             fetchApplications();
+            toast.success(`Application ${status} Successfully`);
         } catch (error) {
-            alert('Status update failed');
+            toast.error('Status update failed');
         }
     };
 
@@ -212,7 +215,7 @@ const JobManagerPage = () => {
                                             <div>
                                                 <h4 className="text-lg font-black text-slate-900 tracking-tight leading-none mb-1">{app.applicantName || app.applicant?.displayName}</h4>
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                    Interested in <span className="text-primary">{app.jobId?.title || 'Unknown Role'}</span>
+                                                    Interested in <span className="text-primary">{app.job?.title || 'Unknown Role'}</span>
                                                 </p>
                                             </div>
                                             <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border ${getStatusStyle(app.status)}`}>
@@ -223,13 +226,33 @@ const JobManagerPage = () => {
                                         <div className="bg-slate-50 p-4 rounded-3xl grid grid-cols-2 gap-4">
                                             <div>
                                                 <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">Contact</p>
-                                                <p className="text-[11px] font-bold text-slate-700">{app.applicantPhone}</p>
+                                                <p className="text-[11px] font-bold text-slate-700">{app.contactNumber}</p>
                                             </div>
                                             <div>
                                                 <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">Email</p>
                                                 <p className="text-[11px] font-bold text-slate-700 truncate">{app.applicantEmail}</p>
                                             </div>
+                                            <div>
+                                                <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">Experience</p>
+                                                <p className="text-[11px] font-bold text-slate-700 truncate">{app.experience || 'Not specified'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">Status</p>
+                                                <p className="text-[11px] font-bold text-slate-700 truncate">{app.status}</p>
+                                            </div>
                                         </div>
+
+                                        {app.coverLetter && (
+                                            <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                                                <p className="text-[8px] font-black text-primary uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-[12px]">chat_bubble</span>
+                                                    Cover Note
+                                                </p>
+                                                <p className="text-[11px] font-medium text-slate-600 leading-relaxed italic">
+                                                    "{app.coverLetter}"
+                                                </p>
+                                            </div>
+                                        )}
 
                                         <div className="flex gap-2">
                                             <a 

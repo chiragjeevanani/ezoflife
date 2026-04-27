@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
-import { orderApi } from '../../../lib/api';
+import { orderApi, logisticsApi } from '../../../lib/api';
 import socket from '../../../lib/socket';
+import { toast } from 'react-hot-toast';
 
 const OrderTrackingPage = () => {
   const { id } = useParams();
@@ -11,6 +12,9 @@ const OrderTrackingPage = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isHandshakeModalOpen, setIsHandshakeModalOpen] = useState(false);
+  const [handshakeOtp, setHandshakeOtp] = useState('');
+  const [verifying, setVerifying] = useState(false);
   const mapRef = useRef(null);
 
   const fetchOrder = async (isManual = false) => {
@@ -23,6 +27,35 @@ const OrderTrackingPage = () => {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const handleRequestHandshake = async () => {
+    try {
+        const phase = order.status === 'Assigned' ? 'Collection' : 'Completion';
+        toast.loading(`Requesting ${phase} Handshake...`, { id: 'handshake' });
+        await logisticsApi.requestHandshake(id, phase);
+        toast.success('Rider received OTP on SMS!', { id: 'handshake' });
+        setIsHandshakeModalOpen(true);
+    } catch (error) {
+        toast.error('Failed to request handshake', { id: 'handshake' });
+    }
+  };
+
+  const handleVerifyHandshake = async () => {
+    if (handshakeOtp.length !== 4) return toast.error('Enter 4-digit OTP');
+    try {
+        setVerifying(true);
+        const phase = order.status === 'Assigned' ? 'Collection' : 'Completion';
+        const res = await logisticsApi.verifyHandshake(id, phase, handshakeOtp);
+        toast.success(res.message);
+        setIsHandshakeModalOpen(false);
+        setHandshakeOtp('');
+        fetchOrder();
+    } catch (error) {
+        toast.error('Invalid OTP. Please check with Rider.');
+    } finally {
+        setVerifying(false);
     }
   };
 
@@ -105,6 +138,14 @@ const OrderTrackingPage = () => {
       steps[2].status = 'completed';
       steps[3].status = 'completed';
       steps[4].status = 'active';
+    }
+
+    if (status === 'Payment Pending' || status === 'Delivered') {
+      steps[0].status = 'completed';
+      steps[1].status = 'completed';
+      steps[2].status = 'completed';
+      steps[3].status = 'completed';
+      steps[4].status = 'completed';
     }
     if (status === 'Delivered') {
       steps.forEach(s => s.status = 'completed');
@@ -273,34 +314,86 @@ const OrderTrackingPage = () => {
           </div>
         </motion.section>
 
-        {/* OTP Verification Section (Phase 5 Secure Logistics) */}
-        {((order?.status === 'Assigned' && order?.pickupOtp) || (order?.status === 'Out for Delivery' && order?.deliveryOtp)) && (
+        {/* Pickup Verification (Phase 1: Customer enters OTP from Rider) */}
+        {order?.status === 'Assigned' && (
           <motion.section 
             variants={itemVariants}
             className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl -mr-16 -mt-16"></div>
-            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/20 blur-3xl -mr-24 -mt-24"></div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex-1 space-y-2 text-center md:text-left">
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Security Protocol</p>
-                <h2 className="text-3xl font-black tracking-tighter uppercase">
-                  {order.status === 'Out for Delivery' ? 'Delivery Verification' : 'Pickup Verification'}
-                </h2>
-                <p className="text-xs font-bold text-slate-400 leading-relaxed">
-                  Please share this secret code with the rider only when they arrive at your door for {order.status === 'Out for Delivery' ? 'delivery' : 'pickup'}.
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                    <span className="material-symbols-outlined text-amber-400 animate-pulse">lock</span>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Secure Handover</p>
+                </div>
+                <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">Confirm Pickup</h2>
+                <p className="text-xs font-bold opacity-60 leading-relaxed max-w-md">
+                   The rider has arrived. Please ask them for the 4-digit verification code and enter it here to start the processing.
                 </p>
               </div>
               
-              <div className="bg-white/10 p-6 rounded-[2rem] border border-white/10 flex flex-col items-center gap-3 w-full md:w-auto min-w-[180px]">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Your secret OTP</span>
-                <div className="flex gap-2">
-                  {(order.status === 'Out for Delivery' ? order.deliveryOtp : order.pickupOtp).split('').map((digit, i) => (
-                    <div key={i} className="w-10 h-14 bg-white text-slate-900 rounded-xl flex items-center justify-center text-xl font-black shadow-inner">
-                      {digit}
-                    </div>
-                  ))}
+              <button 
+                onClick={handleRequestHandshake}
+                className="w-full md:w-auto bg-primary text-white px-10 py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl shadow-black/10 hover:scale-105 active:scale-95 transition-all border border-white/10"
+              >
+                Verify Pickup
+              </button>
+            </div>
+          </motion.section>
+        )}
+
+        {/* Delivery Verification (Phase 3: Customer enters OTP from Rider) */}
+        {order?.status === 'Out for Delivery' && (
+          <motion.section 
+            variants={itemVariants}
+            className="space-y-6"
+          >
+            {/* Final Verification Card */}
+            <div className="bg-primary rounded-[2.5rem] p-8 text-on-primary relative overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 blur-3xl -mr-24 -mt-24"></div>
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex-1 space-y-2 text-center md:text-left">
+                  <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                      <span className="material-symbols-outlined text-amber-300 animate-pulse">verified_user</span>
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em]">Final Handshake Protocol</p>
+                  </div>
+                  <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">Confirm Delivery</h2>
+                  <p className="text-xs font-bold opacity-80 leading-relaxed max-w-md">
+                     Rider is arriving. Please verify your items and enter the 4-digit code provided by the rider.
+                  </p>
                 </div>
+                
+                <button 
+                    onClick={handleRequestHandshake}
+                    className="w-full md:w-auto bg-white text-primary px-10 py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl shadow-black/10 hover:scale-105 active:scale-95 transition-all"
+                >
+                    Verify Delivery
+                </button>
               </div>
+            </div>
+
+            {/* Verification Photos Card */}
+            <div className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
+                <div className="flex justify-between items-center">
+                    <h3 className="font-headline font-black text-xl text-primary tracking-tighter uppercase">Verify Returned Articles</h3>
+                    <span className="material-symbols-outlined text-primary">photo_library</span>
+                </div>
+                <p className="text-xs font-bold text-on-surface-variant opacity-60 leading-relaxed">
+                    Compare your items against the original photos taken during pickup.
+                </p>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="aspect-square rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden relative group cursor-pointer">
+                            <img 
+                                src={`https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=${i}`} 
+                                className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                                alt="Pickup Verification"
+                            />
+                        </div>
+                    ))}
+                </div>
             </div>
           </motion.section>
         )}
@@ -338,6 +431,75 @@ const OrderTrackingPage = () => {
           </div>
         </motion.section>
       </motion.main>
+
+      {/* Handshake Verification Modal */}
+      <AnimatePresence>
+        {isHandshakeModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !verifying && setIsHandshakeModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 relative z-10 shadow-2xl text-center"
+            >
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="material-symbols-outlined text-4xl text-primary animate-bounce">lock_open</span>
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase mb-2">Secure Handover</h3>
+              <p className="text-sm font-bold text-slate-500 mb-8">Enter the 4-digit code provided by the rider to verify.</p>
+              
+              <div className="flex justify-center gap-3 mb-10">
+                {[0, 1, 2, 3].map((i) => (
+                  <input
+                    key={i}
+                    type="text"
+                    maxLength="1"
+                    value={handshakeOtp[i] || ''}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        if (val && !/^\d+$/.test(val)) return;
+                        const newOtp = handshakeOtp.split('');
+                        newOtp[i] = val;
+                        setHandshakeOtp(newOtp.join(''));
+                        // Auto focus next
+                        if (val && i < 3) {
+                            const next = e.target.nextElementSibling;
+                            if (next) next.focus();
+                        }
+                    }}
+                    className="w-12 h-16 bg-slate-50 border-2 border-slate-100 rounded-2xl text-center text-2xl font-black text-slate-900 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+                  />
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={handleVerifyHandshake}
+                  disabled={handshakeOtp.length !== 4 || verifying}
+                  className="w-full bg-primary text-on-primary py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                >
+                  {verifying ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : 'Verify & Continue'}
+                </button>
+                <button 
+                   onClick={() => !verifying && setIsHandshakeModalOpen(false)}
+                   className="text-[10px] font-black text-slate-400 uppercase tracking-widest py-2"
+                >
+                    Cancel Handshake
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

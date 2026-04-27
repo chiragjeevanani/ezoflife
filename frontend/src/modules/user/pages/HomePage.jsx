@@ -167,7 +167,7 @@ const HomePage = () => {
   const cartItemsCount = useMemo(() => Object.values(selectedQuantities).reduce((acc, q) => acc + q, 0), [selectedQuantities]);
   const cartTotal = useMemo(() => Object.entries(selectedQuantities).reduce((acc, [id, q]) => {
     const service = services.find(s => (s._id || s.id) === id);
-    const price = service?.totalPrice || 0;
+    const price = service?.totalPrice || service?.basePrice || 0;
     return acc + price * q; 
   }, 0), [selectedQuantities, services]);
 

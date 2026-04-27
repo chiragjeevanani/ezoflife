@@ -14,7 +14,9 @@ import {
     getPoolOrders,
     verifyDeliveryOtp,
     deleteOrder,
-    createWalkInOrder
+    createWalkInOrder,
+    markOrderReady,
+    verifyHandshake
 } from '../controllers/orderController.js';
 
 const router = express.Router();
@@ -34,6 +36,8 @@ router.post('/walk-in', createWalkInOrder);
 
 // Update order status
 router.patch('/status/:id', updateOrderStatus);
+router.post('/mark-ready/:id', markOrderReady);
+router.post('/verify-handshake/:id', verifyHandshake);
 
 // Rider Specific Routes
 router.post('/accept/:id', acceptOrder);

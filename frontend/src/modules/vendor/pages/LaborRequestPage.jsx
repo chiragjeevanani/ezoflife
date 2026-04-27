@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jobApi, UPLOADS_URL } from '../../../lib/api';
+import toast from 'react-hot-toast';
 
 const LaborRequestPage = () => {
     const navigate = useNavigate();
@@ -59,9 +60,9 @@ const LaborRequestPage = () => {
             await jobApi.create({ ...formData, vendorId });
             setShowCreateModal(false);
             fetchLiveHub();
-            alert('Job Posted & Broadcasted Successfully!');
+            toast.success('Job Posted & Broadcasted Successfully!');
         } catch (err) {
-            alert('Failed to post job');
+            toast.error('Failed to post job');
         }
     };
 
@@ -135,7 +136,7 @@ const LaborRequestPage = () => {
                                 <div className="space-y-4">
                                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">My Posted Jobs</h3>
                                     {myJobs.map(job => (
-                                        <div key={job.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:border-indigo-100 transition-all group">
+                                        <div key={job._id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:border-indigo-100 transition-all group">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div>
                                                     <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${job.status === 'Active' ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-100 text-slate-500'}`}>
@@ -163,7 +164,7 @@ const LaborRequestPage = () => {
                                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Recent Applications</h3>
                                     {applications.map(app => (
                                         <div 
-                                            key={app.id} 
+                                            key={app._id} 
                                             onClick={() => setViewingApplication(app)}
                                             className="bg-white p-5 rounded-[2.2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-indigo-100 transition-all cursor-pointer"
                                         >

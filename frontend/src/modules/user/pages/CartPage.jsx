@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MASTER_SERVICES } from '../../../shared/data/sharedData';
-import { orderApi, serviceApi, authApi, promotionApi } from '../../../lib/api';
+import { orderApi, serviceApi, authApi, promotionApi, masterServiceApi } from '../../../lib/api';
 import { shippingConfigApi } from '../../../lib/shippingApi';
 import { GoogleMap, useLoadScript, Marker, Autocomplete } from '@react-google-maps/api';
 
@@ -24,8 +24,17 @@ const CartPage = () => {
     const fetchServices = async () => {
       try {
         setLoading(true);
-        const data = await serviceApi.getAll();
-        setServices(data);
+        const [masterRes, customRes] = await Promise.all([
+          masterServiceApi.getAll(),
+          serviceApi.getAll({ approvedOnly: true })
+        ]);
+        
+        const combinedData = [
+          ...(Array.isArray(masterRes) ? masterRes.map(s => ({ ...s, isMaster: true })) : []),
+          ...(Array.isArray(customRes) ? customRes.map(s => ({ ...s, isMaster: false })) : [])
+        ];
+        
+        setServices(combinedData);
       } catch (error) {
         console.error('Error fetching services for cart:', error);
       } finally {

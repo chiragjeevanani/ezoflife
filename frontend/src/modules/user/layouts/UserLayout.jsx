@@ -10,6 +10,7 @@ import socket from '../../../lib/socket';
 import { orderApi } from '../../../lib/api';
 import useNotificationStore from '../../../shared/stores/notificationStore';
 import useVendorOrderStore from '../../../shared/stores/vendorOrderStore';
+import toast from 'react-hot-toast';
 
 const UserLayout = () => {
   const location = useLocation();
@@ -52,61 +53,105 @@ const UserLayout = () => {
     }
   }, [timeLeft, incomingRequest, clearIncomingRequest, userRole]);
 
-  // Socket Logic (Vendor Only)
-  useEffect(() => {
-    if (userRole !== 'vendor' || !vendorId) return;
-
-    const handleNewOrder = async (data) => {
-      setIncomingRequest({
-        _id: data.orderId,
-        orderId: data.displayId,
-        items: [{ name: 'New Order Request', quantity: 1 }],
-        specialInstructions: ''
-      });
-
-      try {
-        const fullDetail = await orderApi.getById(data.orderId);
-        setIncomingRequest(fullDetail);
-        addNotification('order_available', 'New Order Nearby', `Order ${data.displayId} is available.`, 'vendor');
-      } catch (err) {
-        console.error('Error fetching full order in layout', err);
-      }
-    };
-
-    const handleNewNotification = (data) => {
-        console.log('⚡ [VENDOR_LAYOUT] Notification received:', { 
-            dataRole: data.role, 
-            dataRecipient: data.recipient, 
-            currentVendorId: vendorId 
-        });
-
-        if (data.role === 'vendor' || data.recipient?.toString() === vendorId?.toString()) {
-            addNotification(
-                data.notification.type || 'info',
-                data.notification.title,
-                data.notification.message,
-                'vendor',
-                { id: data.notification._id }
-            );
+    // Socket Logic (Global Notifications & Vendor Requests)
+    useEffect(() => {
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        const userId = userData._id || userData.id;
+        
+        if (!userId) {
+            console.warn('⚠️ [SOCKET] No user ID found in localStorage. Cannot join room.');
+            return;
         }
-    };
 
-    const joinRooms = () => {
-      socket.emit('join_room', 'vendors_pool');
-      if (vendorId) {
-          socket.emit('join_room', `user_${vendorId}`);
-      }
-    };
+        const roomName = `user_${userId}`;
+        
+        const joinRooms = () => {
+            console.log(`📡 [SOCKET] Attempting to join room: ${roomName}`);
+            socket.emit('join_room', roomName);
+            if (userRole === 'vendor') {
+                socket.emit('join_room', 'vendors_pool');
+            }
+        };
 
-    joinRooms();
-    socket.on('new_order_available', handleNewOrder);
-    socket.on('new_notification', handleNewNotification);
+        // Join on mount or reconnect
+        if (socket.connected) joinRooms();
+        socket.on('connect', joinRooms);
 
-    return () => {
-      socket.off('new_order_available', handleNewOrder);
-      socket.off('new_notification', handleNewNotification);
-    };
-  }, [vendorId, userRole, addNotification, setIncomingRequest]);
+        // 1. Browser Notification Permission
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // 2. Handle Push Notifications (Socket fallback)
+        const handlePushNotification = (data) => {
+            console.log('🔔 [NOTIFICATION_RECEIVED] Incoming data:', data);
+            
+            if (addNotification) {
+                addNotification('order_update', data.title, data.body, userRole);
+            }
+
+            try {
+                if (Notification.permission === 'granted') {
+                    new Notification(data.title, { body: data.body });
+                }
+            } catch (err) {
+                console.error('❌ [NOTIFICATION_ERROR]', err);
+            }
+            
+            toast.success(`${data.title}: ${data.body}`, { icon: '🔔', duration: 5000 });
+        };
+
+        socket.on('push_notification', handlePushNotification);
+        
+        // 3. Handle Payment Trigger (Phase 3)
+        if (userId) {
+            console.log(`[DEBUG] Joining user room: user_${userId}`);
+            socket.emit('join_user_room', userId);
+        }
+
+        const handlePaymentTrigger = (data) => {
+            console.log('💰 [DEBUG] Payment Trigger Received:', data);
+            toast.success(data.message || 'Items delivered! Proceed to payment.', { icon: '💰', duration: 8000 });
+            // Automatically redirect to payment page
+            navigate('/user/payment', { 
+                state: { 
+                    orderId: data.orderId, 
+                    amount: data.amount,
+                    orderNumber: data.orderNumber
+                } 
+            });
+        };
+
+        socket.on('payment_trigger', handlePaymentTrigger);
+
+        // --- Vendor Specific ---
+        const handleNewOrder = async (data) => {
+            if (userRole !== 'vendor') return;
+            setIncomingRequest({
+                _id: data.orderId,
+                orderId: data.displayId,
+                items: [{ name: 'New Order Request', quantity: 1 }],
+                specialInstructions: ''
+            });
+
+            try {
+                const fullDetail = await orderApi.getById(data.orderId);
+                setIncomingRequest(fullDetail);
+                addNotification('order_available', 'New Order Nearby', `Order ${data.displayId} is available.`, 'vendor');
+            } catch (err) {
+                console.error('Error fetching full order in layout', err);
+            }
+        };
+
+        socket.on('new_order_available', handleNewOrder);
+
+        return () => {
+            socket.off('connect', joinRooms);
+            socket.off('push_notification', handlePushNotification);
+            socket.off('new_order_available', handleNewOrder);
+            socket.off('payment_trigger', handlePaymentTrigger);
+        };
+    }, [userRole, addNotification, setIncomingRequest]);
 
   const handleAccept = async (orderId) => {
     try {

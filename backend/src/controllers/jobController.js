@@ -4,9 +4,17 @@ import JobApplication from '../models/JobApplication.js';
 // Vendor: Post a new job
 export const createJob = async (req, res) => {
     try {
-        const { title, category, jobType, description, experience, salary, location, skills, vendorId, companyName, creatorRole } = req.body;
+        const { title, category, jobType, type, description, experience, salary, location, skills, requirements, vendorId, companyName, creatorRole } = req.body;
         const newJob = new Job({
-            title, category, jobType, description, experience, salary, location, skills,
+            title, 
+            category, 
+            jobType: jobType || type, 
+            description, 
+            experience, 
+            salary, 
+            location, 
+            skills,
+            requirements,
             vendor: creatorRole === 'Admin' ? null : vendorId,
             companyName,
             creatorRole: creatorRole || 'Vendor',
@@ -45,8 +53,14 @@ export const getAllActiveJobs = async (req, res) => {
 // Customer: Apply for a job
 export const applyToJob = async (req, res) => {
     try {
-        const { jobId, applicantId, vendorId, experience, contactNumber, applicantName, applicantEmail, creatorRole } = req.body;
+        const { jobId, applicantId, experience, contactNumber, applicantName, applicantEmail, coverLetter, coverNote } = req.body;
         
+        // Find the job to get the correct vendor and creatorRole
+        const job = await Job.findById(jobId);
+        if (!job) {
+            return res.status(404).json({ message: 'Job not found' });
+        }
+
         // Check if already applied
         const existing = await JobApplication.findOne({ job: jobId, applicant: applicantId });
         if (existing) {
@@ -58,19 +72,22 @@ export const applyToJob = async (req, res) => {
             applicant: applicantId, 
             applicantName,
             applicantEmail,
-            vendor: creatorRole === 'Admin' ? null : vendorId, 
-            creatorRole: creatorRole || 'Vendor',
+            vendor: job.creatorRole === 'Admin' ? null : job.vendor, 
+            creatorRole: job.creatorRole || 'Vendor',
             experience, 
             contactNumber,
-            resumeLink: req.file ? req.file.filename : null
+            resumeLink: req.file ? req.file.filename : null,
+            coverLetter: coverLetter || coverNote
         });
         await application.save();
 
         // Increment applicant count in Job
         await Job.findByIdAndUpdate(jobId, { $inc: { applicantsCount: 1 } });
 
+        console.log(`📩 [JOBS] Application submitted for job: ${job.title} by ${applicantName}. Route: ${job.creatorRole}`);
         res.status(201).json(application);
     } catch (error) {
+        console.error('❌ [JOBS] Apply error:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -78,15 +95,20 @@ export const applyToJob = async (req, res) => {
 // Vendor: Get applications for their jobs
 export const getVendorApplications = async (req, res) => {
     try {
+        const vendorId = req.params.vendorId;
+        console.log('📡 [JOBS] Fetching applications for vendor:', vendorId);
+        
         const applications = await JobApplication.find({ 
-            vendor: req.params.vendorId,
-            creatorRole: 'Vendor'
+            vendor: vendorId
         })
-            .populate('job', 'title')
+            .populate('job', 'title creatorRole')
             .populate('applicant', 'displayName profileImage email')
             .sort({ createdAt: -1 });
+            
+        console.log(`✅ [JOBS] Found ${applications.length} applications`);
         res.json(applications);
     } catch (error) {
+        console.error('❌ [JOBS] Fetch vendor apps error:', error);
         res.status(500).json({ message: error.message });
     }
 };

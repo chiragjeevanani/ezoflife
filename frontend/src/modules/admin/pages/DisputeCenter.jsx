@@ -1,38 +1,148 @@
-import React, { useMemo, useState } from 'react';
-import { ShieldAlert, IndianRupee, Image, History, ArrowRight, User, CheckCircle2, XCircle, AlertCircle, Search, ExternalLink } from 'lucide-react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { ShieldAlert, IndianRupee, Image, History, ArrowRight, User, CheckCircle2, XCircle, AlertCircle, Search, ExternalLink, Send } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import MetricRow from '../components/cards/MetricRow';
 import StatusBadge from '../components/common/StatusBadge';
+import { ticketApi, mediaApi } from '../../../lib/api';
+import io from 'socket.io-client';
+import toast from 'react-hot-toast';
 
 export default function DisputeCenter() {
-  const disputes = useMemo(() => [
-    { id: 'DSP-9921', orderId: 'SZ-8815', vendor: 'Heritage Cleaners', amount: 1420, issue: 'Damaged Silk Saree', status: 'Pending', severity: 'High' },
-    { id: 'DSP-9918', orderId: 'SZ-7712', vendor: 'EcoWash Hub', amount: 420, issue: 'Payment Missing', status: 'In Review', severity: 'Medium' }
-  ], []);
+  const [tickets, setTickets] = useState([]);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const scrollRef = useRef(null);
+  const socketRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const adminId = adminData.id || adminData._id;
+
+  useEffect(() => {
+    fetchTickets();
+    socketRef.current = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+    
+    socketRef.current.on('new_ticket', (data) => {
+      // Refresh list if it's a dispute category
+      fetchTickets();
+      toast.success('New dispute received!');
+    });
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+    };
+  }, []);
+
+  const fetchTickets = async () => {
+    try {
+      const data = await ticketApi.getAllTickets();
+      // Filter for dispute related categories
+      const disputeTickets = data.filter(t => ['Missing Items', 'Damaged Items', 'Wrong Items'].includes(t.category));
+      setTickets(disputeTickets);
+      if (disputeTickets.length > 0 && !selectedTicket) {
+        setSelectedTicket(disputeTickets[0]);
+      }
+    } catch (err) {
+      toast.error('Failed to load disputes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedTicket && socketRef.current) {
+      socketRef.current.emit('join_room', `ticket_${selectedTicket._id}`);
+      
+      socketRef.current.on('new_message', (data) => {
+        if (data.ticketId === selectedTicket._id) {
+          setSelectedTicket(prev => ({
+            ...prev,
+            messages: [...prev.messages, data.message]
+          }));
+        }
+      });
+    }
+    return () => {
+      if (socketRef.current) socketRef.current.off('new_message');
+    };
+  }, [selectedTicket?._id]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [selectedTicket?.messages]);
+
+  const handleSendMessage = async (e, attachments = []) => {
+    if (e) e.preventDefault();
+    if (!message.trim() && attachments.length === 0) return;
+
+    try {
+      await ticketApi.sendMessage(selectedTicket._id, {
+        sender: adminId,
+        senderRole: 'Admin',
+        message: message,
+        attachments: attachments
+      });
+      setMessage('');
+    } catch (err) {
+      toast.error('Failed to send message');
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('media', file);
+
+    try {
+      const res = await mediaApi.upload(formData);
+      if (res.url) {
+        await handleSendMessage(null, [{ type: 'image', url: res.url }]);
+      }
+    } catch (err) {
+      toast.error('Image upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleResolveDispute = async () => {
+    if (!selectedTicket) return;
+    try {
+      await ticketApi.updateTicketStatus(selectedTicket._id, 'Resolved');
+      // Send a closing message
+      await ticketApi.sendMessage(selectedTicket._id, {
+        sender: adminId,
+        senderRole: 'Admin',
+        message: 'Your issue is resolved and chatting is closed.',
+        attachments: []
+      });
+      toast.success('Dispute resolved successfully');
+      fetchTickets();
+    } catch (err) {
+      toast.error('Failed to resolve dispute');
+    }
+  };
 
   const disputeStats = useMemo(() => [
-    { label: 'Open Disputes', value: '12', change: '+2', trend: 'up', icon: ShieldAlert },
+    { label: 'Open Disputes', value: tickets.filter(t => t.status !== 'Closed' && t.status !== 'Resolved').length.toString(), change: '+2', trend: 'up', icon: ShieldAlert },
     { label: 'Refund Vol (7d)', value: '₹12.4K', change: '+1.2K', trend: 'up', icon: IndianRupee, currency: 'INR' },
     { label: 'Avg Resolution', value: '4.2h', change: '-0.5h', trend: 'up', icon: History },
-    { label: 'Vendor Penalties', value: '08', change: '+1', trend: 'up', icon: AlertCircle }
-  ], []);
-
-  const [selectedDispute, setSelectedDispute] = useState(disputes[0]);
-
-  const custodyLogs = useMemo(() => [
-    { time: '10:14 AM', event: 'Order Picked up from Customer', desc: 'Rider: Marcus Chen · Photo Linked' },
-    { time: '11:20 AM', event: 'Arrived at Heritage Cleaners', desc: 'Received by: Shop Manager (Verified)' },
-    { time: '02:40 PM', event: 'Processing Marked: In Progress', desc: 'Wash Type: Delicates (Heritage Grade)' },
-    { time: '04:15 PM', event: 'Customer Flagged Damage', desc: 'Ticket #T-8821 via Mobile App' }
-  ], []);
+    { label: 'Cases Resolved', value: tickets.filter(t => t.status === 'Resolved').length.toString(), change: '+1', trend: 'up', icon: CheckCircle2 }
+  ], [tickets]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20">
+    <div className="flex flex-col min-h-screen bg-slate-50/50 pb-20 font-body">
       <PageHeader 
         title="Dispute Center" 
         actions={[
-          { label: 'Settlement Policy', icon: IndianRupee, variant: 'secondary' },
-          { label: 'Open Investigation', icon: Search, variant: 'primary' }
+          { label: 'Settlement Policy', icon: IndianRupee, variant: 'secondary' }
         ]}
       />
 
@@ -44,30 +154,32 @@ export default function DisputeCenter() {
         </div>
       </div>
 
-      <div className="p-6 grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-[1600px] mx-auto w-full">
+      <div className="p-6 grid grid-cols-1 xl:grid-cols-4 gap-6 max-w-[1600px] mx-auto w-full flex-1">
         {/* List of Disputes */}
-        <div className="xl:col-span-1 space-y-4">
-           <div className="flex items-center justify-between px-2 mb-2">
+        <div className="xl:col-span-1 space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 custom-scrollbar">
+           <div className="flex items-center justify-between px-2 mb-2 sticky top-0 bg-slate-50/50 py-2 z-10">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Investigation Queue</span>
-              <span className="text-[9px] font-bold text-slate-900 uppercase tracking-[0.2em]">{disputes.length} CASES</span>
+              <span className="text-[9px] font-bold text-slate-900 uppercase tracking-[0.2em]">{tickets.length} CASES</span>
            </div>
-           {disputes.map(dsp => (
+           
+           {loading ? (
+             <div className="p-10 text-center animate-pulse text-slate-400 font-black uppercase text-[10px]">Loading Cases...</div>
+           ) : tickets.map(ticket => (
              <div 
-               key={dsp.id} 
-               onClick={() => setSelectedDispute(dsp)}
-               className={`p-6 bg-white border border-slate-200 rounded-sm cursor-pointer transition-all hover:translate-y-[-2px] relative overflow-hidden group ${selectedDispute.id === dsp.id ? 'border-slate-900 bg-slate-50 shadow-xl' : 'hover:border-slate-400'}`}
+               key={ticket._id} 
+               onClick={() => setSelectedTicket(ticket)}
+               className={`p-6 bg-white border border-slate-200 rounded-sm cursor-pointer transition-all hover:translate-y-[-2px] relative overflow-hidden group ${selectedTicket?._id === ticket._id ? 'border-slate-900 bg-slate-50 shadow-xl' : 'hover:border-slate-400'}`}
              >
-                {dsp.severity === 'High' && <div className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-bl-sm"></div>}
                 <div className="flex justify-between items-start mb-4">
                    <div className="flex flex-col gap-1">
-                      <span className="text-[9px] font-black text-slate-400 tabular-nums uppercase leading-none">{dsp.id}</span>
-                      <h4 className="text-[12px] font-black text-slate-900 uppercase tracking-tight">Order #{dsp.orderId}</h4>
+                      <span className="text-[9px] font-black text-slate-400 tabular-nums uppercase leading-none">{ticket._id.slice(-8).toUpperCase()}</span>
+                      <h4 className="text-[12px] font-black text-slate-900 uppercase tracking-tight line-clamp-1">{ticket.subject}</h4>
                    </div>
-                   <StatusBadge status={dsp.status} />
+                   <StatusBadge status={ticket.status} />
                 </div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] mb-4 truncate">{dsp.issue}</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] mb-4 line-clamp-2">{ticket.description}</p>
                 <div className="flex justify-between items-center pt-4 border-t border-slate-50">
-                   <span className="text-[12px] font-black text-slate-950 tabular-nums">₹{dsp.amount.toLocaleString()}</span>
+                   <span className="text-[9px] font-black text-slate-950 uppercase tracking-widest">{ticket.customer?.displayName || 'Customer'}</span>
                    <button className="text-[9px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all underline underline-offset-4">
                      Review Evidence <ArrowRight size={10} />
                    </button>
@@ -76,93 +188,175 @@ export default function DisputeCenter() {
            ))}
         </div>
 
-        {/* Investigation Details */}
-        <div className="xl:col-span-2 space-y-6">
-           {selectedDispute ? (
-             <div className="bg-white border border-slate-200 rounded-sm overflow-hidden shadow-sm">
-                <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                   <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 bg-slate-900 text-white flex items-center justify-center rounded-sm">
-                         <ShieldAlert size={28} />
+        {/* Chat & Investigation Details */}
+        <div className="xl:col-span-2 space-y-6 flex flex-col h-[calc(100vh-250px)]">
+           {selectedTicket ? (
+             <div className="bg-white border border-slate-200 rounded-sm overflow-hidden shadow-sm flex flex-col flex-1">
+                {/* Chat Header */}
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                   <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-slate-900 text-white flex items-center justify-center rounded-sm">
+                         <ShieldAlert size={20} />
                       </div>
                       <div>
-                         <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase mb-1">{selectedDispute.id} · Investigation Case</h2>
+                         <h2 className="text-sm font-black text-slate-900 tracking-tighter uppercase leading-none mb-1">{selectedTicket.subject}</h2>
                          <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{selectedDispute.vendor} · AT-LOD-9201</span>
-                            <span className="px-2 py-0.5 bg-rose-50 border border-rose-100 rounded-sm text-[8px] font-black text-rose-600 uppercase tracking-widest">High Severity Issue</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">{selectedTicket.customer?.displayName} · {selectedTicket.customer?.phone}</span>
                          </div>
                       </div>
                    </div>
-                   <div className="flex gap-2.5">
-                      <button className="px-6 py-3 bg-white border border-slate-200 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-sm hover:bg-slate-100 transition-all">Reject Claim</button>
-                      <button className="px-6 py-3 bg-slate-950 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-sm shadow-xl shadow-slate-950/20 hover:bg-black transition-all">Approve Refund</button>
+                   <div className="flex gap-2">
+                      {selectedTicket.status !== 'Resolved' && (
+                        <button 
+                          onClick={handleResolveDispute}
+                          className="px-4 py-2 bg-slate-950 text-white text-[9px] font-black uppercase tracking-widest rounded-sm shadow-lg shadow-slate-950/20 hover:bg-black"
+                        >
+                          Resolve Dispute
+                        </button>
+                      )}
                    </div>
                 </div>
 
-                <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-10">
-                   {/* Operational Timeline */}
-                   <div className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2">
-                         <History size={16} className="text-slate-900" />
-                         <h3 className="text-[11px] font-black uppercase tracking-widest">Chain of Custody Log</h3>
-                      </div>
-                      <div className="relative pl-6 space-y-8 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-slate-200">
-                         {[
-                           { time: '10:14 AM', event: 'Order Picked up from Customer', desc: 'Rider: Marcus Chen · Photo Linked' },
-                           { time: '11:20 AM', event: 'Arrived at Heritage Cleaners', desc: 'Received by: Shop Manager (Verified)' },
-                           { time: '02:40 PM', event: 'Processing Marked: In Progress', desc: 'Wash Type: Delicates (Heritage Grade)' },
-                           { time: '04:15 PM', event: 'Customer Flagged Damage', desc: 'Ticket #T-8821 via Mobile App' }
-                         ].map((log, i) => (
-                           <div key={i} className="relative group">
-                              <div className="absolute -left-[27px] top-1.5 w-2.5 h-2.5 bg-white border-2 border-slate-900 rounded-full group-hover:scale-150 transition-all"></div>
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block tabular-nums">{log.time}</span>
-                              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-tight leading-none mb-1.5">{log.event}</h4>
-                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none opacity-60 tabular-nums">{log.desc}</p>
+                {/* Chat Window */}
+                <div 
+                  ref={scrollRef}
+                  className="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/30 custom-scrollbar"
+                >
+                   {selectedTicket.messages.map((msg, i) => (
+                     <div key={i} className={`flex ${msg.senderRole === 'Admin' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[85%] space-y-2 ${msg.senderRole === 'Admin' ? 'items-end flex flex-col' : ''}`}>
+                           <div className={`p-4 rounded-sm text-[11px] font-bold uppercase tracking-widest shadow-sm ${
+                             msg.senderRole === 'Admin' ? 'bg-slate-900 text-white' : 'bg-white text-slate-900 border border-slate-200'
+                           }`}>
+                              {msg.message}
+                              {msg.attachments?.length > 0 && (
+                                <div className="mt-3 grid grid-cols-1 gap-2">
+                                  {msg.attachments.map((at, j) => (
+                                    <img key={j} src={at.url} alt="Evidence" className="rounded-sm max-h-48 w-full object-cover border border-slate-100/10 cursor-pointer hover:opacity-90 transition-opacity" />
+                                  ))}
+                                </div>
+                              )}
                            </div>
-                         ))}
-                      </div>
-                   </div>
-
-                   {/* Visual Evidence (BRD 3.2.G) */}
-                   <div className="space-y-6">
-                      <div className="flex items-center justify-between mb-2">
-                         <div className="flex items-center gap-3">
-                            <Image size={16} className="text-slate-900" />
-                            <h3 className="text-[11px] font-black uppercase tracking-widest">Visual Evidence Strip</h3>
-                         </div>
-                         <button className="text-[8px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 flex items-center gap-2">Expand <ExternalLink size={10} /></button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                         {[1, 2].map(i => (
-                           <div key={i} className="bg-slate-50 border border-slate-100 aspect-square rounded-sm overflow-hidden group cursor-pointer relative">
-                              <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                                 <Search size={24} className="text-white scale-75 group-hover:scale-110 transition-transform duration-500" />
-                              </div>
-                              <div className="w-full h-full p-4 border-2 border-dashed border-slate-200 m-2 flex items-center justify-center opacity-40">
-                                 <Image size={32} />
-                              </div>
-                           </div>
-                         ))}
-                      </div>
-                      <div className="bg-amber-50 border border-amber-100 p-6 rounded-sm space-y-4">
-                         <div className="flex items-center gap-3">
-                            <AlertCircle size={16} className="text-amber-600" />
-                            <h4 className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Dispute Summary</h4>
-                         </div>
-                         <p className="text-[10px] font-bold text-amber-800 leading-relaxed uppercase tracking-widest opacity-80">
-                           Customer claims a permanent stain on the border. Pre-wash photo link shows no visible damage. 
-                           Vendor claim: Item already had damage when received.
-                         </p>
-                      </div>
-                   </div>
+                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">
+                              {msg.senderRole === 'Admin' ? 'System Admin' : (selectedTicket.customer?.displayName || 'Customer')} · {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                           </span>
+                        </div>
+                     </div>
+                   ))}
                 </div>
+
+                {/* Chat Input */}
+                {selectedTicket.status !== 'Resolved' && (
+                  <div className="p-6 bg-white border-t border-slate-100">
+                    <form onSubmit={handleSendMessage} className="flex gap-4">
+                        <div className="flex-1 bg-slate-50 border border-slate-200 rounded-sm flex items-center px-4 py-1 focus-within:border-slate-400 transition-all">
+                          <input 
+                              type="file" 
+                              hidden 
+                              ref={fileInputRef}
+                              onChange={handleImageUpload}
+                              accept="image/*"
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className="text-slate-400 hover:text-slate-900 transition-colors"
+                          >
+                            {isUploading ? <History size={18} className="animate-spin" /> : <Image size={18} />}
+                          </button>
+                          <input 
+                              type="text" 
+                              value={message}
+                              onChange={(e) => setMessage(e.target.value)}
+                              className="flex-1 bg-transparent border-none focus:ring-0 text-[11px] font-bold uppercase tracking-widest p-4 placeholder:text-slate-300"
+                              placeholder="Type investigation response..."
+                          />
+                        </div>
+                        <button 
+                          type="submit"
+                          disabled={!message.trim() && !isUploading}
+                          className="w-14 bg-slate-900 text-white flex items-center justify-center rounded-sm shadow-xl shadow-slate-900/20 hover:bg-black transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <Send size={18} />
+                        </button>
+                    </form>
+                  </div>
+                )}
              </div>
            ) : (
-             <div className="h-[600px] flex flex-col items-center justify-center opacity-10">
+             <div className="flex-1 flex flex-col items-center justify-center opacity-10 bg-white border border-slate-200 border-dashed rounded-sm">
                 <ShieldAlert size={128} className="mb-8" />
-                <p className="text-2xl font-black uppercase tracking-[0.5em]">System Idle</p>
+                <p className="text-2xl font-black uppercase tracking-[0.5em]">Select Case</p>
              </div>
            )}
+        </div>
+
+        {/* Order Details Panel */}
+        <div className="xl:col-span-1 space-y-6">
+           {selectedTicket && selectedTicket.order ? (
+             <div className="bg-white border border-slate-200 rounded-sm p-6 space-y-6 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Order Evidence</span>
+                   <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">#{selectedTicket.order._id.slice(-8).toUpperCase()}</span>
+                </div>
+                
+                <div className="space-y-4">
+                   <div className="flex justify-between items-center p-4 bg-slate-50 rounded-sm border border-slate-100">
+                      <div>
+                         <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Amount</p>
+                         <p className="text-lg font-black text-slate-900">₹{selectedTicket.order.totalAmount}</p>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Order Status</p>
+                         <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">{selectedTicket.order.status}</span>
+                      </div>
+                   </div>
+
+                   <div className="space-y-3">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Items list</p>
+                      <div className="space-y-2">
+                         {selectedTicket.order.items.map((item, idx) => (
+                           <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-50">
+                              <span className="text-[10px] font-bold text-slate-700 uppercase tracking-tight">{item.name} x {item.quantity}</span>
+                              <span className="text-[10px] font-black text-slate-900">₹{item.price * item.quantity}</span>
+                           </div>
+                         ))}
+                      </div>
+                   </div>
+
+                   <div className="pt-4 space-y-2">
+                      <div className="flex items-center gap-2 text-slate-400">
+                         <Clock size={12} />
+                         <span className="text-[9px] font-bold uppercase tracking-widest">Order Date: {new Date(selectedTicket.order.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-400">
+                         <User size={12} />
+                         <span className="text-[9px] font-bold uppercase tracking-widest">Vendor: {selectedTicket.order.vendor?.name || 'Assigned Vendor'}</span>
+                      </div>
+                   </div>
+                </div>
+
+                <button className="w-full py-4 bg-slate-50 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-sm border border-slate-200 hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
+                   View Full Order <ExternalLink size={12} />
+                </button>
+             </div>
+           ) : (
+             <div className="p-10 text-center opacity-40 border border-slate-200 border-dashed rounded-sm bg-white">
+                <AlertCircle size={32} className="mx-auto mb-4" />
+                <p className="text-[9px] font-black uppercase tracking-widest">No order context linked</p>
+             </div>
+           )}
+
+           <div className="bg-slate-900 text-white rounded-sm p-6 space-y-4 shadow-xl shadow-slate-900/20">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em]">Investigation Policy</h3>
+              <p className="text-[9px] font-bold text-slate-400 uppercase leading-relaxed tracking-wider">
+                1. Verify item weight from pickup log.<br/>
+                2. Check vendor dispatch photo.<br/>
+                3. Compare with rider delivery photo.<br/>
+                4. Match with customer provided image.
+              </p>
+           </div>
         </div>
       </div>
     </div>

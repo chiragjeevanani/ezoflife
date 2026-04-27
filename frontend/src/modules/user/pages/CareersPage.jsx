@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jobApi } from '../../../lib/api';
+import toast from 'react-hot-toast';
 
 const CareersPage = () => {
     const navigate = useNavigate();
@@ -40,7 +41,7 @@ const CareersPage = () => {
         const applicantId = userData._id || userData.id || userData.user?._id || userData.user?.id;
 
         if (!applicantId) {
-            alert('Please login to apply for jobs.');
+            toast.error('Please login to apply for jobs.');
             return;
         }
 
@@ -68,7 +69,7 @@ const CareersPage = () => {
             setTimeout(() => setIsApplied(false), 3000);
             fetchJobs(); 
         } catch (error) {
-            alert('Application failed, please try again.');
+            toast.error('Application failed, please try again.');
         }
     };
 

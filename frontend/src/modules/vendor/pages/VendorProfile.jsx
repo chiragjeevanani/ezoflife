@@ -3,11 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { authApi } from '../../../lib/api';
+import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 
 const VendorProfile = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        libraries: ['places']
+    });
+
+    const [autocomplete, setAutocomplete] = useState(null);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -40,11 +48,17 @@ const VendorProfile = () => {
     const handleEditClick = (section) => {
         setEditSection(section);
         if (section === 'shop') {
+            const addrParts = (user.shopDetails?.address || '').split(', ').filter(p => p !== 'undefined' && p !== '');
             setFormData({
                 shopName: user.shopDetails?.name || '',
                 phone: user.phone || '',
-                address: user.shopDetails?.address || '',
-                gst: user.shopDetails?.gst || ''
+                address_shop: addrParts[0] || '',
+                address_area: addrParts[1] || '',
+                address_landmark: addrParts[2] || '',
+                address_city: user.shopDetails?.city || '',
+                address_pincode: user.shopDetails?.pincode || '',
+                gst: user.shopDetails?.gst || '',
+                location: user.location || null
             });
         } else if (section === 'bank') {
             setFormData({
@@ -64,13 +78,21 @@ const VendorProfile = () => {
             let payload = {};
             
             if (editSection === 'shop') {
+                const fullAddress = [formData.address_shop, formData.address_area, formData.address_landmark]
+                    .filter(p => p && p.trim() !== '' && p !== 'undefined')
+                    .join(', ');
                 payload = {
                     phone: formData.phone,
                     shopDetails: {
                         name: formData.shopName,
-                        address: formData.address,
+                        address: fullAddress,
+                        city: formData.address_city,
+                        pincode: formData.address_pincode,
                         gst: formData.gst
-                    }
+                    },
+                    location: formData.location, // Save Lat/Lng
+                    city: formData.address_city,
+                    pincode: formData.address_pincode
                 };
             } else {
                 payload = {
@@ -349,8 +371,68 @@ const VendorProfile = () => {
                                             <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Address</label>
-                                            <textarea value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none min-h-[100px]" />
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Search Full Address (Google Maps)</label>
+                                            {isLoaded ? (
+                                                <Autocomplete
+                                                    onLoad={ac => setAutocomplete(ac)}
+                                                    onPlaceChanged={() => {
+                                                        const place = autocomplete.getPlace();
+                                                        if (place.geometry) {
+                                                            const lat = place.geometry.location.lat();
+                                                            const lng = place.geometry.location.lng();
+                                                            
+                                                            // Parse components
+                                                            let city = '';
+                                                            let pincode = '';
+                                                            place.address_components.forEach(comp => {
+                                                                if (comp.types.includes('locality')) city = comp.long_name;
+                                                                if (comp.types.includes('postal_code')) pincode = comp.long_name;
+                                                            });
+
+                                                            setFormData({
+                                                                ...formData,
+                                                                address_area: place.formatted_address,
+                                                                address_city: city,
+                                                                address_pincode: pincode,
+                                                                location: { lat, lng }
+                                                            });
+                                                            toast.success('Location detected!');
+                                                        }
+                                                    }}
+                                                >
+                                                    <input 
+                                                        placeholder="Start typing your address..."
+                                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" 
+                                                    />
+                                                </Autocomplete>
+                                            ) : (
+                                                <div className="w-full h-14 bg-slate-50 rounded-2xl animate-pulse border border-slate-100" />
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Flat/Shop No</label>
+                                                <input value={formData.address_shop} onChange={e => setFormData({...formData, address_shop: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Area (Auto-filled)</label>
+                                                <input value={formData.address_area} onChange={e => setFormData({...formData, address_area: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none opacity-70" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Landmark</label>
+                                            <input value={formData.address_landmark} onChange={e => setFormData({...formData, address_landmark: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">City</label>
+                                                <input value={formData.address_city} onChange={e => setFormData({...formData, address_city: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pincode</label>
+                                                <input value={formData.address_pincode} onChange={e => setFormData({...formData, address_pincode: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                                            </div>
                                         </div>
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">GST Number</label>

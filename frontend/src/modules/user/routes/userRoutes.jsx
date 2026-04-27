@@ -37,6 +37,7 @@ import MaterialsCatalogPage from '../pages/MaterialsCatalogPage';
 import SupportTicketsPage from '../pages/SupportTicketsPage';
 import FeedbackForm from '../pages/FeedbackForm';
 import RegisterAsSupplierPage from '../pages/RegisterAsSupplierPage';
+import RiderSimulation from '../pages/RiderSimulation';
 
 
 import UserLayout from '../layouts/UserLayout';
@@ -85,6 +86,7 @@ const UserRoutes = () => {
         <Route path="/more" element={<MoreMenuPage />} />
         <Route path="/materials" element={<MaterialsCatalogPage />} />
         <Route path="/feedback" element={<FeedbackForm />} />
+        <Route path="/rider/simulate/:id" element={<RiderSimulation />} />
       </Route>
 
       {/* Fallback to landing */}

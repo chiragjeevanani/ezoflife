@@ -77,11 +77,11 @@ const TaskDetails = () => {
 
         try {
             setLoading(true);
-            if (task.status === 'Out for Delivery') {
-                await orderApi.verifyDeliveryOtp(task._id, fullOtp);
-            } else {
-                await orderApi.verifyPickupOtp(task._id, fullOtp);
-            }
+            let phase = 'Collection';
+            if (task.status === 'Ready') phase = 'Reverse';
+            if (task.status === 'Out for Delivery') phase = 'Completion';
+
+            await orderApi.verifyHandshake(task._id, phase, fullOtp);
             navigate('/rider/dashboard');
         } catch (err) {
             alert('Verification Failed: ' + (err.message || 'Incorrect OTP'));
@@ -289,37 +289,32 @@ const TaskDetails = () => {
                                 <span className="material-symbols-outlined text-5xl text-emerald-500 mb-6 font-thin">key</span>
                                 <h3 className="text-sm font-black uppercase tracking-[0.3em] mb-2">Handoff Protocol</h3>
                                 <p className="text-[10px] opacity-60 font-bold uppercase tracking-[0.15em] mb-10 leading-relaxed italic">
-                                    Ask customer for the secret code <br/> to confirm chain of custody.
+                                    Show this secret code to the {task.status === 'Ready' ? 'Vendor' : 'Customer'} <br/> to confirm handover.
                                 </p>
 
                                 <div className="flex justify-center gap-3 mb-10">
-                                    {otp.map((digit, i) => (
-                                        <input
-                                            key={i}
-                                            ref={otpRefs[i]}
-                                            type="text"
-                                            inputMode="numeric"
-                                            maxLength="1"
-                                            value={digit}
-                                            onChange={(e) => handleOtpChange(i, e.target.value)}
-                                            onKeyDown={(e) => handleKeyDown(i, e)}
-                                            className="w-14 h-16 bg-white/10 border border-white/20 rounded-2xl text-center text-2xl font-black tabular-nums outline-none focus:border-emerald-500 transition-colors"
-                                        />
-                                    ))}
+                                    <span className="text-6xl font-black tracking-[0.2em] text-emerald-400">
+                                        {(() => {
+                                            const phase = task.status === 'Ready' ? 'Reverse' : (task.status === 'Out for Delivery' ? 'Completion' : 'Collection');
+                                            return task.logisticsHandshakes?.find(h => h.phase === phase)?.otp || task.pickupOtp || '----';
+                                        })()}
+                                    </span>
                                 </div>
 
                                 <div className="p-4 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl">
-                                    <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Awaiting Security Token</p>
+                                    <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest animate-pulse">Awaiting Verification...</p>
                                 </div>
                             </div>
                             
+                            <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest px-8">
+                                The status will automatically update once the code is entered on the other side.
+                            </p>
+
                             <button 
-                                onClick={handleVerifyOtp}
-                                disabled={otp.join('').length < 4 || loading}
-                                className="w-full py-5 bg-white text-slate-900 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                onClick={() => navigate('/rider/dashboard')}
+                                className="w-full py-5 bg-slate-200 text-slate-500 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] active:scale-95 transition-all"
                             >
-                                <span className="material-symbols-outlined text-sm">enhanced_encryption</span>
-                                {loading ? 'Securing...' : 'Verify OTP & Complete Pickup'}
+                                Cancel / Back to Dashboard
                             </button>
 
                         </motion.section>

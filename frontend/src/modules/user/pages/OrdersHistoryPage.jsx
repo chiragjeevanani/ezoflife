@@ -337,14 +337,24 @@ const OrdersHistoryPage = () => {
                         </div>
                         
                         {order.status === 'Delivered' && (
-                          <motion.button 
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate(`/user/feedback?orderId=${order._id}&vendorId=${order.vendor?._id || order.vendor}`)}
-                            className="w-full py-4 bg-primary/10 text-primary rounded-2xl font-black text-[9px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 border border-primary/20 hover:bg-primary/20 transition-all"
-                          >
-                            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                            Rate Order
-                          </motion.button>
+                          <div className="grid grid-cols-1 gap-3 mt-3">
+                            <motion.button 
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => navigate(`/user/chat/${order._id}`)}
+                              className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-[9px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 border border-slate-200 hover:bg-slate-200 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-sm">chat_bubble</span>
+                              Report Issue / Chat
+                            </motion.button>
+                            <motion.button 
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => navigate(`/user/feedback?orderId=${order._id}&vendorId=${order.vendor?._id || order.vendor}`)}
+                              className="w-full py-4 bg-primary/10 text-primary rounded-2xl font-black text-[9px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 border border-primary/20 hover:bg-primary/20 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                              Rate Order
+                            </motion.button>
+                          </div>
                         )}
                       </div>
                     </motion.div>

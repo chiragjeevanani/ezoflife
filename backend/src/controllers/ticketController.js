@@ -3,47 +3,59 @@ import Ticket from '../models/Ticket.js';
 // Create a new support ticket
 export const createTicket = async (req, res) => {
     try {
-        console.log('Incoming Ticket Data:', req.body);
-        const { customer, subject, category, description } = req.body;
+        const { customer, subject, category, description, orderId, attachments } = req.body;
         
         const newTicket = new Ticket({
             customer,
             subject,
             category,
             description,
+            order: orderId || null,
             messages: [{
                 sender: customer,
                 senderRole: 'Customer',
-                message: description
+                message: description,
+                attachments: attachments || []
             }]
         });
 
         await newTicket.save();
-        console.log('Ticket Created Successfully:', newTicket._id);
+        
+        // Emit socket event for Admin
+        const { getIO } = await import('../socket.js');
+        const io = getIO();
+        if (io) {
+            io.emit('new_ticket', {
+                ticketId: newTicket._id,
+                customerName: 'Customer', // Would be better with name from req.body or DB
+                subject: newTicket.subject
+            });
+        }
+
         res.status(201).json(newTicket);
     } catch (error) {
-        console.error('Ticket Creation Error Details:', error);
         res.status(500).json({ message: error.message });
     }
 };
 
-// Get all tickets for a specific customer
+// Get customer tickets
 export const getCustomerTickets = async (req, res) => {
     try {
         const { customerId } = req.params;
-        const tickets = await Ticket.find({ customer: customerId }).sort({ updatedAt: -1 });
+        const tickets = await Ticket.find({ customer: customerId }).sort({ createdAt: -1 });
         res.status(200).json(tickets);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// Get all tickets (For Admin)
+// Get all tickets (Admin)
 export const getAllTickets = async (req, res) => {
     try {
         const tickets = await Ticket.find()
             .populate('customer', 'displayName phone email')
-            .sort({ updatedAt: -1 });
+            .populate('order', 'totalAmount status createdAt items')
+            .sort({ createdAt: -1 });
         res.status(200).json(tickets);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -54,20 +66,38 @@ export const getAllTickets = async (req, res) => {
 export const addMessage = async (req, res) => {
     try {
         const { ticketId } = req.params;
-        const { sender, senderRole, message } = req.body;
+        const { sender, senderRole, message, attachments } = req.body;
 
         const ticket = await Ticket.findById(ticketId);
         if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
 
-        ticket.messages.push({ sender, senderRole, message });
+        const newMessage = { 
+            sender, 
+            senderRole, 
+            message,
+            attachments: attachments || [] 
+        };
+
+        ticket.messages.push(newMessage);
         ticket.lastMessageAt = Date.now();
         
-        // Auto update status if admin replies
         if (senderRole === 'Admin' && ticket.status === 'Open') {
             ticket.status = 'In Progress';
         }
 
         await ticket.save();
+
+        // Real-time Update via Socket
+        const { getIO } = await import('../socket.js');
+        const io = getIO();
+        if (io) {
+            // Emit to a specific ticket room
+            io.to(`ticket_${ticketId}`).emit('new_message', {
+                ticketId,
+                message: newMessage
+            });
+        }
+
         res.status(200).json(ticket);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -85,6 +115,16 @@ export const updateTicketStatus = async (req, res) => {
             { status }, 
             { new: true }
         );
+
+        // Emit status update to customer
+        const { getIO } = await import('../socket.js');
+        const io = getIO();
+        if (io) {
+            io.to(`ticket_${ticketId}`).emit('status_updated', {
+                ticketId,
+                status
+            });
+        }
         
         res.status(200).json(ticket);
     } catch (error) {
@@ -98,6 +138,7 @@ export const getTicketDetails = async (req, res) => {
         const { ticketId } = req.params;
         const ticket = await Ticket.findById(ticketId)
             .populate('customer', 'displayName phone email')
+            .populate('order', 'totalAmount status createdAt items')
             .populate('messages.sender', 'displayName profileImage');
             
         if (!ticket) return res.status(404).json({ message: 'Ticket not found' });

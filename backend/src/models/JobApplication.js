@@ -10,7 +10,8 @@ const jobApplicationSchema = new mongoose.Schema({
     status: { type: String, enum: ['Pending', 'Reviewed', 'Selected', 'Rejected'], default: 'Pending' },
     experience: { type: String },
     contactNumber: { type: String },
-    resumeLink: { type: String }
+    resumeLink: { type: String },
+    coverLetter: { type: String }
 }, { timestamps: true });
 
 export default mongoose.model('JobApplication', jobApplicationSchema);
