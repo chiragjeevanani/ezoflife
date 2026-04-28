@@ -147,7 +147,8 @@ export const createOrder = async (req, res) => {
             totalAmount, 
             deliveryMode,
             deliveryCharge,
-            specialInstructions 
+            specialInstructions,
+            customerPhotos
         } = req.body;
         const customerId = req.body.customerId; 
 
@@ -171,6 +172,7 @@ export const createOrder = async (req, res) => {
             promoApplied: req.body.promoApplied || null,
             discountAmount: req.body.discountAmount || 0,
             specialInstructions: specialInstructions || '',
+            customerPhotos: customerPhotos || [],
             status: 'Pending'
         });
 

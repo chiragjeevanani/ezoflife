@@ -9,6 +9,8 @@ const VendorOrderHistory = () => {
     const [tab, setTab] = useState('active');
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
     const vendorId = vendorData?._id || vendorData?.id;
@@ -34,8 +36,20 @@ const VendorOrderHistory = () => {
     }, [orders]);
 
     const completedOrders = useMemo(() => {
-        return orders.filter(o => ['Delivered', 'Cancelled'].includes(o.status));
-    }, [orders]);
+        let list = orders.filter(o => ['Delivered', 'Cancelled'].includes(o.status));
+        if (startDate && endDate) {
+            const start = new Date(startDate).setHours(0,0,0,0);
+            const end = new Date(endDate).setHours(23,59,59,999);
+            list = list.filter(o => {
+                const time = new Date(o.createdAt).getTime();
+                return time >= start && time <= end;
+            });
+            list.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        } else {
+            list = [...list].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
+        }
+        return list;
+    }, [orders, startDate, endDate]);
 
     if (loading) {
         return (
@@ -92,6 +106,36 @@ const VendorOrderHistory = () => {
                         </motion.div>
                     ) : (
                         <motion.div key="completed" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6">
+                            <div className="flex gap-3 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+                                <div className="flex-1 space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Start Date</label>
+                                    <input 
+                                        type="date" 
+                                        value={startDate}
+                                        onChange={e => setStartDate(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                                    />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">End Date</label>
+                                    <input 
+                                        type="date" 
+                                        value={endDate}
+                                        onChange={e => setEndDate(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                                    />
+                                </div>
+                                {(startDate || endDate) && (
+                                    <div className="flex items-end">
+                                        <button 
+                                            onClick={() => { setStartDate(''); setEndDate(''); }}
+                                            className="h-[42px] px-4 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-100 transition-all"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300 px-2 text-center">{completedOrders.length} completed orders</p>
                             {completedOrders.map((order, i) => (
                                 <motion.div key={order._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} whileHover={{ y: -3 }} className="bg-white rounded-3xl p-8 border border-slate-50 shadow-sm opacity-90">

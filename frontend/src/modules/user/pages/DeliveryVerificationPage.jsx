@@ -1,26 +1,48 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { orderApi } from '../../../lib/api';
 
 const DeliveryVerificationPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const orderId = location.state?.orderId;
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (orderId) {
+      orderApi.getById(orderId).then(res => {
+        setOrder(res);
+        setLoading(false);
+      }).catch(err => {
+        console.error('Error fetching order:', err);
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
+    }
+  }, [orderId]);
 
   const [otp, setOtp] = useState(['', '', '', '']);
   const otpRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
   const packageStats = useMemo(() => [
-    { label: 'Total Weight', val: '6.4 kg' },
-    { label: 'Service Type', val: 'Premium' },
-    { label: 'Items Count', val: '18 pcs' }
-  ], []);
+    { label: 'Total Weight', val: order?.totalWeight || '6.4 kg' },
+    { label: 'Service Type', val: order?.items?.[0]?.tier || 'Premium' },
+    { label: 'Items Count', val: `${order?.items?.length || 0} pcs` }
+  ], [order]);
 
-  const pickupPhotos = useMemo(() => [
-    "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?q=80&w=2071&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=1",
-    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=2",
-    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=3",
-    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=4"
-  ], []);
+  const pickupPhotos = useMemo(() => {
+    if (order?.customerPhotos && order.customerPhotos.length > 0) {
+      return order.customerPhotos;
+    }
+    return [
+      "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?q=80&w=2071&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=1",
+      "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=2"
+    ];
+  }, [order]);
 
   const handleOtpChange = (index, value) => {
     if (isNaN(value)) return;
@@ -60,6 +82,18 @@ const DeliveryVerificationPage = () => {
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
   }), []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
+
   return (
     <motion.div 
       initial="hidden"
@@ -73,7 +107,7 @@ const DeliveryVerificationPage = () => {
           variants={itemVariants}
           className="py-8 ml-2"
         >
-          <p className="font-label text-xs uppercase tracking-[0.3em] text-primary font-black mb-2 opacity-60">Order #SZ-92834</p>
+          <p className="font-label text-xs uppercase tracking-[0.3em] text-primary font-black mb-2 opacity-60">Order {order?.orderId || '#SZ-92834'}</p>
           <h2 className="font-headline text-4xl md:text-5xl font-black tracking-tighter text-on-background leading-none">
             Delivery<br/><span className="text-primary">Verification</span>
           </h2>

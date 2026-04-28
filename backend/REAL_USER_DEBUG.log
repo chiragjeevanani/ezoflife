@@ -5381,3 +5381,148 @@
 2026-04-27T15:45:23.746Z - 📡 [TRAFFIC] 9:15:23 pm | GET /api/auth/profile/69ec93ce2c76f5ab4ec7cf64
 2026-04-27T15:47:07.136Z - SOCKET_JOIN - Client VliBxlFZEydc0zQUAABl -> user_69ec93ce2c76f5ab4ec7cf64
 2026-04-27T15:47:07.164Z - SOCKET_JOIN - Client VliBxlFZEydc0zQUAABl -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:28:58.416Z - SOCKET_JOIN - Client W253a6pAmfETh3VIAABq -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:29:01.335Z - SOCKET_JOIN - Client yglXE85C6qRiu5QOAABs -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:29:01.340Z - 📡 [TRAFFIC] 9:59:01 pm | GET /api/admin/config
+2026-04-27T16:29:01.358Z - 📡 [TRAFFIC] 9:59:01 pm | GET /api/master-services
+2026-04-27T16:29:01.362Z - 📡 [TRAFFIC] 9:59:01 pm | GET /api/services?approvedOnly=true
+2026-04-27T16:29:01.467Z - SOCKET_JOIN - Client yglXE85C6qRiu5QOAABs -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:29:03.430Z - SOCKET_JOIN - Client mTj9dg-LeGGWhf7oAABx -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:29:04.984Z - 📡 [TRAFFIC] 9:59:04 pm | GET /api/orders/69ef48341134cf2f3a798dd7
+2026-04-27T16:29:05.190Z - SOCKET_JOIN - Client SeUlva_U5U7rx1HaAAB1 -> vendors_pool
+2026-04-27T16:29:05.350Z - SOCKET_JOIN - Client SeUlva_U5U7rx1HaAAB1 -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:05.352Z - SOCKET_JOIN - Client SeUlva_U5U7rx1HaAAB1 -> vendors_pool
+2026-04-27T16:29:05.360Z - SOCKET_JOIN - Client SeUlva_U5U7rx1HaAAB1 -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:06.946Z - SOCKET_JOIN - Client TPdfAVxTS3kGhH2SAAB3 -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:29:07.046Z - SOCKET_JOIN - Client TPdfAVxTS3kGhH2SAAB3 -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:29:07.144Z - SOCKET_JOIN - Client EOwQjZOK10YxWIN6AAB6 -> user_69eafd0d2c76f5ab4ec7b5f3
+2026-04-27T16:29:07.147Z - 📡 [TRAFFIC] 9:59:07 pm | GET /api/notifications?userId=69eafd0d2c76f5ab4ec7b5f3&role=admin
+2026-04-27T16:29:07.160Z - 📡 [TRAFFIC] 9:59:07 pm | GET /api/admin/config
+2026-04-27T16:29:07.182Z - SOCKET_JOIN - Client EOwQjZOK10YxWIN6AAB6 -> admins_pool
+2026-04-27T16:29:07.184Z - SOCKET_JOIN - Client EOwQjZOK10YxWIN6AAB6 -> user_69eafd0d2c76f5ab4ec7b5f3
+2026-04-27T16:29:07.185Z - SOCKET_JOIN - Client EOwQjZOK10YxWIN6AAB6 -> admins_pool
+2026-04-27T16:29:07.387Z - 📡 [TRAFFIC] 9:59:07 pm | GET /api/orders/vendor?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:07.392Z - 📡 [TRAFFIC] 9:59:07 pm | GET /api/orders/pool?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:07.397Z - 📡 [TRAFFIC] 9:59:07 pm | GET /api/notifications?userId=69ec93ce2c76f5ab4ec7cf65&role=vendor
+2026-04-27T16:29:07.404Z - SOCKET_JOIN - Client mbb2QSEUGkFncba_AAB7 -> vendors_pool
+2026-04-27T16:29:07.611Z - SOCKET_JOIN - Client mbb2QSEUGkFncba_AAB7 -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:07.613Z - SOCKET_JOIN - Client mbb2QSEUGkFncba_AAB7 -> vendors_pool
+2026-04-27T16:29:07.614Z - SOCKET_JOIN - Client mbb2QSEUGkFncba_AAB7 -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:21.418Z - 📡 [TRAFFIC] 9:59:21 pm | GET /api/notifications?userId=69eafd0d2c76f5ab4ec7b5f3&role=admin
+2026-04-27T16:29:21.423Z - 📡 [TRAFFIC] 9:59:21 pm | GET /api/admin/config
+2026-04-27T16:29:21.455Z - SOCKET_JOIN - Client gB9cd0LZljFdMpDwAACC -> user_69eafd0d2c76f5ab4ec7b5f3
+2026-04-27T16:29:21.457Z - SOCKET_JOIN - Client gB9cd0LZljFdMpDwAACC -> admins_pool
+2026-04-27T16:29:21.459Z - SOCKET_JOIN - Client gB9cd0LZljFdMpDwAACC -> user_69eafd0d2c76f5ab4ec7b5f3
+2026-04-27T16:29:21.461Z - SOCKET_JOIN - Client gB9cd0LZljFdMpDwAACC -> admins_pool
+2026-04-27T16:29:21.803Z - SOCKET_JOIN - Client ALL4q0cHDB8vv1udAACG -> vendors_pool
+2026-04-27T16:29:21.815Z - 📡 [TRAFFIC] 9:59:21 pm | GET /api/orders/69ef48341134cf2f3a798dd7
+2026-04-27T16:29:21.972Z - SOCKET_JOIN - Client ALL4q0cHDB8vv1udAACG -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:21.995Z - SOCKET_JOIN - Client ALL4q0cHDB8vv1udAACG -> vendors_pool
+2026-04-27T16:29:22.019Z - SOCKET_JOIN - Client ALL4q0cHDB8vv1udAACG -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:22.323Z - SOCKET_JOIN - Client E9vKGX8UDXDpBauNAACH -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:29:22.360Z - 📡 [TRAFFIC] 9:59:22 pm | GET /api/orders/vendor?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:22.365Z - 📡 [TRAFFIC] 9:59:22 pm | GET /api/orders/pool?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:22.413Z - SOCKET_JOIN - Client F_zdXGKtdncsiKWoAACE -> vendors_pool
+2026-04-27T16:29:22.417Z - 📡 [TRAFFIC] 9:59:22 pm | GET /api/notifications?userId=69ec93ce2c76f5ab4ec7cf65&role=vendor
+2026-04-27T16:29:22.450Z - SOCKET_JOIN - Client E9vKGX8UDXDpBauNAACH -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:29:22.670Z - SOCKET_JOIN - Client F_zdXGKtdncsiKWoAACE -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:22.672Z - SOCKET_JOIN - Client F_zdXGKtdncsiKWoAACE -> vendors_pool
+2026-04-27T16:29:22.673Z - SOCKET_JOIN - Client F_zdXGKtdncsiKWoAACE -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:22.961Z - 📡 [TRAFFIC] 9:59:22 pm | GET /api/admin/config
+2026-04-27T16:29:22.967Z - 📡 [TRAFFIC] 9:59:22 pm | GET /api/master-services
+2026-04-27T16:29:22.971Z - 📡 [TRAFFIC] 9:59:22 pm | GET /api/services?approvedOnly=true
+2026-04-27T16:29:22.985Z - SOCKET_JOIN - Client MJtIErNJHIKo1LnYAACJ -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:29:23.051Z - SOCKET_JOIN - Client MJtIErNJHIKo1LnYAACJ -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-27T16:29:46.125Z - 📡 [TRAFFIC] 9:59:46 pm | GET /api/orders/69ef48341134cf2f3a798dd7
+2026-04-27T16:29:46.131Z - 📡 [TRAFFIC] 9:59:46 pm | GET /api/orders/vendor?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:46.138Z - 📡 [TRAFFIC] 9:59:46 pm | GET /api/orders/pool?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-27T16:29:46.149Z - 📡 [TRAFFIC] 9:59:46 pm | GET /api/notifications?userId=69eafd0d2c76f5ab4ec7b5f3&role=admin
+2026-04-27T16:29:46.156Z - 📡 [TRAFFIC] 9:59:46 pm | GET /api/notifications?userId=69ec93ce2c76f5ab4ec7cf65&role=vendor
+2026-04-27T16:29:46.160Z - 📡 [TRAFFIC] 9:59:46 pm | GET /api/admin/config
+2026-04-28T03:58:22.623Z - SOCKET_JOIN - Client -Mvy-xtflAVD5mSfAACQ -> vendors_pool
+2026-04-28T03:58:22.900Z - 📡 [TRAFFIC] 9:28:22 am | GET /api/orders/vendor?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T03:58:22.913Z - 📡 [TRAFFIC] 9:28:22 am | GET /api/notifications?userId=69ec93ce2c76f5ab4ec7cf65&role=vendor
+2026-04-28T03:58:22.919Z - 📡 [TRAFFIC] 9:28:22 am | GET /api/orders/pool?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T03:58:23.837Z - SOCKET_JOIN - Client -Mvy-xtflAVD5mSfAACQ -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-28T03:58:23.838Z - SOCKET_JOIN - Client -Mvy-xtflAVD5mSfAACQ -> vendors_pool
+2026-04-28T03:58:23.855Z - SOCKET_JOIN - Client -Mvy-xtflAVD5mSfAACQ -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-28T03:58:29.946Z - 📡 [TRAFFIC] 9:28:29 am | GET /api/admin/config
+2026-04-28T03:58:29.951Z - 📡 [TRAFFIC] 9:28:29 am | GET /api/notifications?userId=69eafd0d2c76f5ab4ec7b5f3&role=admin
+2026-04-28T03:58:29.955Z - SOCKET_JOIN - Client 5i8pQ1C2s5p2g6DvAACW -> user_69eafd0d2c76f5ab4ec7b5f3
+2026-04-28T03:58:31.207Z - SOCKET_JOIN - Client 587GIrZxS6X-qyZ0AACZ -> vendors_pool
+2026-04-28T03:58:31.209Z - SOCKET_JOIN - Client 587GIrZxS6X-qyZ0AACZ -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-28T03:58:31.210Z - SOCKET_JOIN - Client 587GIrZxS6X-qyZ0AACZ -> vendors_pool
+2026-04-28T03:58:31.211Z - SOCKET_JOIN - Client 587GIrZxS6X-qyZ0AACZ -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-28T03:58:31.384Z - SOCKET_JOIN - Client jKHHeVpu-LmsMrwDAACa -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-28T03:58:31.702Z - SOCKET_JOIN - Client 5i8pQ1C2s5p2g6DvAACW -> admins_pool
+2026-04-28T03:58:31.703Z - SOCKET_JOIN - Client 5i8pQ1C2s5p2g6DvAACW -> user_69eafd0d2c76f5ab4ec7b5f3
+2026-04-28T03:58:31.705Z - SOCKET_JOIN - Client 5i8pQ1C2s5p2g6DvAACW -> admins_pool
+2026-04-28T03:58:32.089Z - 📡 [TRAFFIC] 9:28:32 am | GET /api/admin/config
+2026-04-28T03:58:32.099Z - 📡 [TRAFFIC] 9:28:32 am | GET /api/master-services
+2026-04-28T03:58:32.103Z - 📡 [TRAFFIC] 9:28:32 am | GET /api/services?approvedOnly=true
+2026-04-28T03:58:32.118Z - SOCKET_JOIN - Client UY5wf2afVuArSMGDAACc -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-28T03:58:32.309Z - SOCKET_JOIN - Client UY5wf2afVuArSMGDAACc -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-28T03:58:47.047Z - 📡 [TRAFFIC] 9:28:47 am | GET /api/notifications?userId=69eafd0d2c76f5ab4ec7b5f3&role=admin
+2026-04-28T03:58:47.050Z - 📡 [TRAFFIC] 9:28:47 am | GET /api/admin/config
+2026-04-28T03:58:52.198Z - 📡 [TRAFFIC] 9:28:52 am | GET /api/admin/config
+2026-04-28T03:58:52.202Z - 📡 [TRAFFIC] 9:28:52 am | GET /api/master-services
+2026-04-28T03:58:52.275Z - 📡 [TRAFFIC] 9:28:52 am | GET /api/services?approvedOnly=true
+2026-04-28T04:09:56.042Z - 📡 [TRAFFIC] 9:39:56 am | GET /api/orders/vendor?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:09:56.046Z - 📡 [TRAFFIC] 9:39:56 am | GET /api/orders/pool?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:09:56.049Z - 📡 [TRAFFIC] 9:39:56 am | GET /api/notifications?userId=69ec93ce2c76f5ab4ec7cf65&role=vendor
+2026-04-28T04:09:56.052Z - SOCKET_JOIN - Client tuHbxSL_V8MUi7IKAACe -> vendors_pool
+2026-04-28T04:09:56.079Z - SOCKET_JOIN - Client tuHbxSL_V8MUi7IKAACe -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:09:56.080Z - SOCKET_JOIN - Client tuHbxSL_V8MUi7IKAACe -> vendors_pool
+2026-04-28T04:09:56.080Z - SOCKET_JOIN - Client tuHbxSL_V8MUi7IKAACe -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:09:57.102Z - 📡 [TRAFFIC] 9:39:57 am | GET /api/orders/pool?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:09:57.175Z - 📡 [TRAFFIC] 9:39:57 am | GET /api/orders/vendor?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:09:57.951Z - 📡 [TRAFFIC] 9:39:57 am | GET /api/notifications?userId=69ec93ce2c76f5ab4ec7cf65&role=vendor
+2026-04-28T04:10:17.469Z - 📡 [TRAFFIC] 9:40:17 am | GET /api/admin/config
+2026-04-28T04:23:27.407Z - 📡 [TRAFFIC] 9:53:27 am | GET /api/orders/vendor?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:23:27.411Z - 📡 [TRAFFIC] 9:53:27 am | GET /api/orders/pool?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:23:27.414Z - 📡 [TRAFFIC] 9:53:27 am | GET /api/notifications?userId=69ec93ce2c76f5ab4ec7cf65&role=vendor
+2026-04-28T04:25:53.160Z - 📡 [TRAFFIC] 9:55:53 am | GET /api/orders/vendor?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:25:53.165Z - 📡 [TRAFFIC] 9:55:53 am | GET /api/orders/pool?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:25:53.167Z - 📡 [TRAFFIC] 9:55:53 am | GET /api/notifications?userId=69ec93ce2c76f5ab4ec7cf65&role=vendor
+2026-04-28T04:25:53.170Z - SOCKET_JOIN - Client OnveW9joLMg6pmNeAACg -> vendors_pool
+2026-04-28T04:25:53.211Z - SOCKET_JOIN - Client OnveW9joLMg6pmNeAACg -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:25:53.212Z - SOCKET_JOIN - Client OnveW9joLMg6pmNeAACg -> vendors_pool
+2026-04-28T04:25:53.213Z - SOCKET_JOIN - Client OnveW9joLMg6pmNeAACg -> user_69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:25:53.368Z - 📡 [TRAFFIC] 9:55:53 am | GET /api/notifications?userId=69ec93ce2c76f5ab4ec7cf65&role=vendor
+2026-04-28T04:25:53.483Z - 📡 [TRAFFIC] 9:55:53 am | GET /api/orders/pool?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:25:53.583Z - 📡 [TRAFFIC] 9:55:53 am | GET /api/orders/vendor?vendorId=69ec93ce2c76f5ab4ec7cf65
+2026-04-28T04:26:39.711Z - 📡 [TRAFFIC] 9:56:39 am | POST /api/auth/request-otp
+2026-04-28T04:26:43.281Z - 📡 [TRAFFIC] 9:56:43 am | POST /api/auth/verify-otp
+2026-04-28T04:26:44.120Z - 📡 [TRAFFIC] 9:56:44 am | GET /api/admin/config
+2026-04-28T04:26:44.125Z - 📡 [TRAFFIC] 9:56:44 am | GET /api/master-services
+2026-04-28T04:26:44.130Z - 📡 [TRAFFIC] 9:56:44 am | GET /api/services?approvedOnly=true
+2026-04-28T04:26:44.134Z - SOCKET_JOIN - Client ExnhFIhVBnUebUk2AACi -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:26:44.161Z - SOCKET_JOIN - Client ExnhFIhVBnUebUk2AACi -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:26:44.251Z - 📡 [TRAFFIC] 9:56:44 am | GET /api/admin/config
+2026-04-28T04:26:44.264Z - 📡 [TRAFFIC] 9:56:44 am | GET /api/auth/profile/69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:26:44.346Z - 📡 [TRAFFIC] 9:56:44 am | GET /api/master-services
+2026-04-28T04:26:44.349Z - 📡 [TRAFFIC] 9:56:44 am | GET /api/services?approvedOnly=true
+2026-04-28T04:26:46.102Z - 📡 [TRAFFIC] 9:56:46 am | GET /api/auth/profile/69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:26:50.156Z - 📡 [TRAFFIC] 9:56:50 am | GET /api/orders/my?customerId=69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:26:50.157Z - [DEBUG] Fetching orders for CustomerID: 69ec93ce2c76f5ab4ec7cf64. Detecting phone...
+2026-04-28T04:26:50.245Z - [DEBUG] Found phone: 9999999991 for account 69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:26:50.345Z - [DEBUG] Cross-account search for 9999999991. Found 1 linked IDs.
+2026-04-28T04:26:50.604Z - [DEBUG] Orders found for 9999999991: 12
+2026-04-28T04:26:50.610Z - 📡 [TRAFFIC] 9:56:50 am | GET /api/orders/my?customerId=69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:26:50.611Z - [DEBUG] Fetching orders for CustomerID: 69ec93ce2c76f5ab4ec7cf64. Detecting phone...
+2026-04-28T04:26:50.730Z - [DEBUG] Found phone: 9999999991 for account 69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:26:50.820Z - [DEBUG] Cross-account search for 9999999991. Found 1 linked IDs.
+2026-04-28T04:26:51.019Z - [DEBUG] Orders found for 9999999991: 12
+2026-04-28T04:30:09.176Z - 📡 [TRAFFIC] 10:00:09 am | GET /api/orders/my?customerId=69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:30:09.177Z - [DEBUG] Fetching orders for CustomerID: 69ec93ce2c76f5ab4ec7cf64. Detecting phone...
+2026-04-28T04:30:09.325Z - [DEBUG] Found phone: 9999999991 for account 69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:30:09.464Z - [DEBUG] Cross-account search for 9999999991. Found 1 linked IDs.
+2026-04-28T04:30:09.769Z - [DEBUG] Orders found for 9999999991: 12
+2026-04-28T04:30:09.778Z - 📡 [TRAFFIC] 10:00:09 am | GET /api/orders/my?customerId=69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:30:09.778Z - [DEBUG] Fetching orders for CustomerID: 69ec93ce2c76f5ab4ec7cf64. Detecting phone...
+2026-04-28T04:30:09.905Z - [DEBUG] Found phone: 9999999991 for account 69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:30:09.984Z - [DEBUG] Cross-account search for 9999999991. Found 1 linked IDs.
+2026-04-28T04:30:10.177Z - [DEBUG] Orders found for 9999999991: 12
+2026-04-28T04:54:40.699Z - 🚀 SERVER RESTARTED AT 2026-04-28T04:54:40.698Z ON PORT 5001
+2026-04-28T04:54:40.751Z - SOCKET_JOIN - Client KYSIgfPekajrOQZAAAAG -> user_69ec93ce2c76f5ab4ec7cf64
+2026-04-28T04:54:40.754Z - SOCKET_JOIN - Client TSRBXjvaG0sbwBlmAAAE -> user_69ec93ce2c76f5ab4ec7cf64

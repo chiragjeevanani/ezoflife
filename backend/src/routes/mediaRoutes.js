@@ -1,10 +1,11 @@
 import express from 'express';
-import { uploadMedia, getMediaHistory, getLatestMedia, submitInquiry, getAllInquiries } from '../controllers/mediaController.js';
 import localUpload from '../middleware/localUpload.js';
+import { uploadMedia, uploadMultipleMedia, getMediaHistory, getLatestMedia, submitInquiry, getAllInquiries } from '../controllers/mediaController.js';
 
 const router = express.Router();
 
 router.post('/upload', localUpload.single('media'), uploadMedia);
+router.post('/bulk-upload', localUpload.array('photos', 5), uploadMultipleMedia);
 router.get('/history', getMediaHistory);
 router.get('/latest', getLatestMedia);
 

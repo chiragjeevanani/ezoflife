@@ -170,6 +170,9 @@ const Dashboard = () => {
     const [acceptingId, setAcceptingId] = useState(null);
     const { fetchNotifications } = useNotificationStore();
 
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
     const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
     const vendorData = JSON.parse(vendorDataRaw);
     const vendorId = vendorData._id || vendorData.id || vendorData.user?._id || vendorData.user?.id;
@@ -259,6 +262,22 @@ const Dashboard = () => {
             'Ready': allOrders.filter(o => ['Ready', 'Out for Delivery', 'Delivered'].includes(o.status))
         };
     }, [allOrders]);
+
+    const displayCompletedOrders = useMemo(() => {
+        let list = categorizedOrders['Ready'] || [];
+        if (startDate && endDate) {
+            const start = new Date(startDate).setHours(0,0,0,0);
+            const end = new Date(endDate).setHours(23,59,59,999);
+            list = list.filter(o => {
+                const time = new Date(o.createdAt || o.updatedAt).getTime();
+                return time >= start && time <= end;
+            });
+            list.sort((a,b) => new Date(b.createdAt || b.updatedAt) - new Date(a.createdAt || a.updatedAt));
+        } else {
+            list = [...list].sort((a,b) => new Date(b.createdAt || b.updatedAt) - new Date(a.createdAt || a.updatedAt)).slice(0, 50);
+        }
+        return list;
+    }, [categorizedOrders, startDate, endDate]);
 
     const dailyEarnings = useMemo(() => {
         const today = new Date().setHours(0, 0, 0, 0);
@@ -544,7 +563,7 @@ const Dashboard = () => {
                                 >
                                     <span className="whitespace-nowrap">{tab}</span>
                                     <span className={`w-4 h-4 rounded-md flex items-center justify-center text-[7px] font-black tabular-nums transition-colors ${activeTab === tab ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>
-                                        {tab === 'Available' ? poolOrders.length : (categorizedOrders[tab === 'Completed' ? 'Ready' : tab] || []).length}
+                                        {tab === 'Available' ? poolOrders.length : (tab === 'Completed' ? displayCompletedOrders.length : (categorizedOrders[tab] || []).length)}
                                     </span>
                                 </button>
                             ))}
@@ -631,8 +650,41 @@ const Dashboard = () => {
                                     )
                                 ) : (
                                     // 2. IN PROGRESS & COMPLETED TABS
-                                    (activeTab === 'In Progress' ? (categorizedOrders['In Progress'] || []) : (categorizedOrders['Ready'] || [])).length > 0 ? (
-                                        (activeTab === 'In Progress' ? (categorizedOrders['In Progress'] || []) : (categorizedOrders['Ready'] || [])).map((order) => (
+                                    <>
+                                        {activeTab === 'Completed' && (
+                                            <div className="flex gap-3 mb-6 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+                                                <div className="flex-1 space-y-1">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Start Date</label>
+                                                    <input 
+                                                        type="date" 
+                                                        value={startDate}
+                                                        onChange={e => setStartDate(e.target.value)}
+                                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 space-y-1">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">End Date</label>
+                                                    <input 
+                                                        type="date" 
+                                                        value={endDate}
+                                                        onChange={e => setEndDate(e.target.value)}
+                                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                                                    />
+                                                </div>
+                                                {(startDate || endDate) && (
+                                                    <div className="flex items-end">
+                                                        <button 
+                                                            onClick={() => { setStartDate(''); setEndDate(''); }}
+                                                            className="h-[42px] px-4 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-100 transition-all"
+                                                        >
+                                                            Clear
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        {(activeTab === 'In Progress' ? (categorizedOrders['In Progress'] || []) : displayCompletedOrders).length > 0 ? (
+                                            (activeTab === 'In Progress' ? (categorizedOrders['In Progress'] || []) : displayCompletedOrders).map((order) => (
                                             <motion.div 
                                                 key={order._id}
                                                 layout
@@ -723,7 +775,8 @@ const Dashboard = () => {
                                             </div>
                                             <p className="text-[11px] font-black uppercase tracking-widest">No active orders</p>
                                         </div>
-                                    )
+                                    )}
+                                    </>
                                 )}
                             </AnimatePresence>
                         </div>

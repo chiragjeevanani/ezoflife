@@ -142,7 +142,8 @@ const orderSchema = new mongoose.Schema({
         name: String,
         phone: String,
         photo: String
-    }
+    },
+    customerPhotos: [{ type: String }]
 }, { timestamps: true });
 
 // Pre-save hook to generate a unique readable order ID like #EZ-8291

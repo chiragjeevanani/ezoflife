@@ -216,7 +216,23 @@ export const adApi = {
     }
 };
 
-
+export const mediaApi = {
+    bulkUpload: async (files) => {
+        try {
+            const formData = new FormData();
+            files.forEach(file => formData.append('photos', file));
+            
+            const response = await fetch(`${BASE_URL}/media/bulk-upload`, {
+                method: 'POST',
+                body: formData
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Media Upload Error:', error);
+            throw error;
+        }
+    }
+};
 
 export const b2bOrderApi = {
     placeOrder: async (data) => {

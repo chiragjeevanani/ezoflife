@@ -29,6 +29,19 @@ export const uploadMedia = async (req, res) => {
     }
 };
 
+export const uploadMultipleMedia = async (req, res) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: 'No files uploaded' });
+        }
+
+        const fileUrls = req.files.map(file => `${req.protocol}://${req.get('host')}/uploads/${file.filename}`);
+        res.status(201).json({ urls: fileUrls });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 export const getMediaHistory = async (req, res) => {
     try {
         const history = await Media.find().sort({ uploadedAt: -1 });

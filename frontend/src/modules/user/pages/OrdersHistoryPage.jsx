@@ -238,7 +238,7 @@ const OrdersHistoryPage = () => {
                         <div className="grid grid-cols-2 gap-3">
                           <motion.button 
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate('/user/verification')}
+                            onClick={() => navigate('/user/verification', { state: { orderId: order._id || order.id } })}
                             className="py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-200 transition-all"
                           >
                             <span className="material-symbols-outlined text-sm">photo_library</span>

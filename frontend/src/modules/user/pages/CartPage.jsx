@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MASTER_SERVICES } from '../../../shared/data/sharedData';
-import { orderApi, serviceApi, authApi, promotionApi, masterServiceApi } from '../../../lib/api';
+import { orderApi, serviceApi, authApi, promotionApi, masterServiceApi, mediaApi } from '../../../lib/api';
 import { shippingConfigApi } from '../../../lib/shippingApi';
 import { GoogleMap, useLoadScript, Marker, Autocomplete } from '@react-google-maps/api';
 
@@ -113,11 +113,13 @@ const CartPage = () => {
   }, []);
 
   const [isExpress, setIsExpress] = useState(() => localStorage.getItem('is_express') === 'true');
-  const [garmentPhotos, setGarmentPhotos] = useState([]);
+  const [garmentPhotos, setGarmentPhotos] = useState([]); // URLs for display
+  const [garmentFiles, setGarmentFiles] = useState([]); // Actual File objects
   const fileInputRef = useRef(null);
 
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files);
+    setGarmentFiles(prev => [...prev, ...files]);
     const newPhotos = files.map(file => URL.createObjectURL(file));
     setGarmentPhotos(prev => [...prev, ...newPhotos]);
   };
@@ -404,6 +406,16 @@ const CartPage = () => {
       const userId = userData._id || userData.id; 
       if (!userId) return alert('Please login');
 
+      // Upload photos first if any
+      let uploadedPhotoUrls = [];
+      if (garmentFiles.length > 0) {
+        setLoading(true);
+        const uploadRes = await mediaApi.bulkUpload(garmentFiles);
+        if (uploadRes.urls) {
+          uploadedPhotoUrls = uploadRes.urls;
+        }
+      }
+
       const orderData = {
         customerId: userId,
         items: cartItems.map(item => ({
@@ -424,7 +436,8 @@ const CartPage = () => {
         deliveryCharge: logisticsFee + currentExpressFee,
         promoApplied: isPromoApplied ? appliedPromoData?._id : null,
         discountAmount: discount,
-        specialInstructions
+        specialInstructions,
+        customerPhotos: uploadedPhotoUrls
       };
 
       const response = await orderApi.createOrder(orderData);
@@ -694,10 +707,13 @@ const CartPage = () => {
                   {garmentPhotos.map((url, i) => (
                     <div key={i} className="relative shrink-0">
                       <img src={url} alt="Garment" className="w-20 h-20 rounded-2xl object-cover border border-slate-100 shadow-sm" />
-                      <button 
-                        onClick={() => setGarmentPhotos(prev => prev.filter((_, idx) => idx !== i))}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-lg"
-                      >
+                        <button 
+                          onClick={() => {
+                            setGarmentPhotos(prev => prev.filter((_, idx) => idx !== i));
+                            setGarmentFiles(prev => prev.filter((_, idx) => idx !== i));
+                          }}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-lg"
+                        >
                         <span className="material-symbols-outlined text-[10px] font-black">close</span>
                       </button>
                     </div>
